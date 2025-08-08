@@ -22,3 +22,107 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# ----------------------------
+# OS 특화 잡동사니
+# ----------------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------------
+# IDE / 편집기
+# ----------------------------
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# ----------------------------
+# Gradle / 빌드 산출물
+# ----------------------------
+.gradle/
+build/
+**/build/
+out/
+**/out/
+**/target/
+bin/
+# (중요) Gradle Wrapper는 커밋해야 함
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+!gradlew
+!gradlew.bat
+
+# ----------------------------
+# 로그 / 임시
+# ----------------------------
+logs/
+*.log
+*.log.*
+*.pid
+tmp/
+temp/
+*.tmp
+hs_err_pid*
+replay_pid*
+
+# ----------------------------
+# 코드 커버리지/리포트
+# ----------------------------
+coverage/
+*.lcov
+jacoco.exec
+**/jacoco/*.exec
+**/test-results/
+**/reports/
+
+# ----------------------------
+# Spring 설정(로컬/민감정보)
+# 공개 저장소: 샘플만 커밋하고 실제 값은 무시
+# ----------------------------
+src/main/resources/application-local.yml
+src/main/resources/application-dev.yml
+src/main/resources/application-staging.yml
+src/main/resources/application-prod.yml
+src/main/resources/application-*.properties
+src/main/resources/application-*.yml
+# 예시는 허용
+!src/main/resources/application-example.yml
+!src/main/resources/application-example.properties
+
+# ----------------------------
+# 환경 변수 파일
+# ----------------------------
+.env
+.env.*
+!.env.sample
+
+# ----------------------------
+# 보안 키/인증서/크리덴셜
+# ----------------------------
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+*.crt
+*.der
+**/credentials.json
+**/aws-credentials.json
+
+# ----------------------------
+# 데이터베이스/로컬 저장 파일
+# ----------------------------
+*.h2.db
+*.mv.db
+*.db
+*.sqlite
+*.sqlite3
+
+# ----------------------------
+# 업로드/캐시 등
+# ----------------------------
+uploads/
+.cache/
+backend/src/main/resources/application.yml
+
