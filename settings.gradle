@@ -1,3 +1,6 @@
 // /WorkOut/settings.gradle
 rootProject.name = 'WorkOut'
-include 'backend'
+include 'api-admin'
+include 'api-store'
+include 'common'
+include 'queue-consumer'

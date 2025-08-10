@@ -1,0 +1,25 @@
+server:
+  port: 8284
+  shutdown: graceful
+  tomcat:
+    uri-encoding: UTF-8
+spring:
+  application:
+    name: queue_consumer
+  profiles:
+    active: local
+    group: # 포함시킬 하위 프로필명
+      test: test, common-test
+      local: local, common-local
+      dev: dev, common-dev
+      sta: sta, common-sta
+      prod: prod, common-prod
+      prod_one: prod_one, common-prod_one
+
+decorator:
+  datasource:
+    exclude-beans: dataSource, routingDataSource
+
+Logging:
+  level:
+    org.springframework.core.LocalVariableTableParameterNameDiscoverer: error

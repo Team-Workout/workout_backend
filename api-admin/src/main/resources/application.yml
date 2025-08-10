@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: api-admin
+  profiles:
+    active: local
+    group:
+      test: test, common-test
+      local: local, common-local
+      dev: dev, common-dev
+      prod: prod, common-prod
+server:
+  port: ${EXPOSE_PORT:8082}
+  shutdown: graceful
+  tomcat:
+    uri-encoding: UTF-8
+  servlet:
+    session:
+      timeout: 180m # ??????? - ?? ???? 3??
+
+
+
+Logging:
+  level:
+    org.springframework.core.LocalVariableTableParameterNameDiscoverer: error
+    org.springframework.data.web.config.SpringDataJacksonConfiguration: error
+
+decorator:
+  datasource:
+    exclude-beans: dataSource, routingDataSource

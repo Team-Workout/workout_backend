@@ -1,0 +1,145 @@
+plugins {
+	id 'org.springframework.boot' version '3.5.4'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'java'
+}
+
+ext {
+	BUILD_VERSION = new Date().format("yyyyMMddHHmmss", TimeZone.getTimeZone("Asia/Seoul"))
+	// 빌드 버전 : 빌드 시간을 War/Jar Version 과 Image Tag 로 표시
+	DEFAULT_PROFILE = "local"
+	TEST_PROFILE = "test"
+	DEV_PROFILE = "dev"
+	STA_PROFILE = "sta"
+	PROD_PROFILE = "prod"
+}
+
+
+subprojects {
+	apply plugin: 'java'
+	apply plugin: 'org.springframework.boot'
+	apply plugin: 'io.spring.dependency-management'
+
+	group = 'com.work-out'
+	version = '0.0.1-SNAPSHOT'
+	sourceCompatibility = JavaVersion.VERSION_21
+
+repositories {
+	mavenCentral()
+}
+
+	configurations {
+		compileOnly {
+			extendsFrom annotationProcessor
+		}
+	}
+
+	dependencyManagement {
+		dependencies {
+			dependency "commons-codec:commons-codec:1.15"
+		}
+	}
+
+	dependencies {
+		implementation 'org.projectlombok:lombok'
+		annotationProcessor 'org.projectlombok:lombok'
+		runtimeOnly 'com.h2database:h2'
+		implementation 'com.mysql:mysql-connector-j'
+
+		runtimeOnly 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.3'
+
+		// cache
+		implementation 'com.github.ben-manes.caffeine:caffeine'
+
+		// jackson
+		implementation 'com.fasterxml.jackson.core:jackson-databind'
+		implementation 'com.google.guava:guava:31.1-jre'
+
+		testImplementation 'org.projectlombok:lombok'
+		testAnnotationProcessor 'org.projectlombok:lombok'
+		testImplementation('org.springframework.boot:spring-boot-starter-test') {
+			//JUnit3, JUnit4 기반의 테스트를 JUnit Platform 에서 실행시키기 위한 TestEngine 을 제공하는 모듈
+			exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+		}
+
+		implementation 'org.springframework.boot:spring-boot-starter-validation'
+		testImplementation 'io.rest-assured:rest-assured'
+
+		// Swagger
+		implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+	}
+
+	test {
+		useJUnitPlatform()
+		exclude '**/*'
+	}
+
+}
+
+// queryDSL 설정
+def queryDslProjects = [project(':common')]
+configure(queryDslProjects) {
+	dependencies {
+		implementation "com.querydsl:querydsl-jpa:5.0.0:jakarta"
+		annotationProcessor "com.querydsl:querydsl-apt:${dependencyManagement.importedProperties['querydsl.version']}:jakarta"
+		annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+		annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+	}
+
+	// Querydsl 설정부 >> gradle build 와 intellij ide build 불편함 해소를 위해 추가적인 설정
+	def generated = 'src/main/generated'
+
+	// querydsl QClass 파일 생성 위치를 지정
+	tasks.withType(JavaCompile).tap {
+		configureEach {
+			options.getGeneratedSourceOutputDirectory().set(file(generated))
+		}
+	}
+
+	// java source set 에 querydsl QClass 위치 추가
+	sourceSets {
+		main.java.srcDirs += [generated]
+	}
+
+	// gradle clean 시에 Qclass 디렉토리 삭제
+	clean {
+		delete file(generated)
+	}
+
+	// compileJava 시작 전 Qclass 삭제
+	tasks.compileJava.dependsOn clean
+}
+
+
+// settings.gradle 에서 모듈을 지우면 스캔하지 않음
+project(':api-store') {
+	dependencies {
+		implementation project(':common')
+	}
+}
+
+project(':api-admin') {
+	dependencies {
+		implementation project(':common')
+	}
+}
+
+project(':queue-consumer') {
+	dependencies {
+		implementation project(':common')
+	}
+}
+
+project(':common') {
+	bootJar {
+		enabled = false
+	}
+
+	jar {
+		enabled = true
+	}
+
+	dependencies {
+	}
+}
+

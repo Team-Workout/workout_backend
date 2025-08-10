@@ -1,0 +1,40 @@
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // Spring Security
+//    implementation 'org.springframework.boot:spring-boot-starter-security'
+//    testImplementation 'org.springframework.security:spring-security-test'
+
+//    implementation 'org.springframework.session:spring-session-data-redis'
+
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // shedlock for Spring Boot Scheduler LOCK
+    implementation("net.javacrumbs.shedlock:shedlock-spring:6.3.1")
+    implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.3.1")
+}
+
+ext {
+    def isApiStore = gradle.startParameter.taskNames.any {
+        it.contains(':api-admin')
+    }
+    API_MODULE_NAME = "api-admin"
+    profile = project.findProperty("profile") ?: "${DEFAULT_PROFILE}"
+    buildVersion = project.findProperty("buildNumber") ?: "${BUILD_VERSION}"
+}
+
+group = 'com.work_out.api.admin'
+version = buildVersion + "-${API_MODULE_NAME}-SNAPSHOT"
+
+bootJar {
+    archiveBaseName = "${API_MODULE_NAME}-${profile}"
+    enabled = true
+}
+
+jar {
+    enabled = true
+}
+
+tasks.register("prepareKotlinBuildScriptModel"){}
+
