@@ -14,7 +14,7 @@ import java.util.Objects;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "gyms")
+@Table(name = "gym")
 public class Gym {
 
     @Id

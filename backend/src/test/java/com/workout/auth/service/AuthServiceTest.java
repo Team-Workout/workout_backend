@@ -10,7 +10,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 import com.workout.auth.domain.SessionConst;
-import com.workout.auth.domain.UserSessionDto;
 import com.workout.user.domain.User;
 import com.workout.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;

@@ -29,9 +29,11 @@ public class AuthController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<SigninResponse> signin(@RequestBody SigninRequest signinRequest, HttpServletRequest request) {
+    public ResponseEntity<SigninResponse> signin(@RequestBody SigninRequest signinRequest,
+        HttpServletRequest request,
+        HttpServletResponse response) { // request, response 파라미터 추가
 
-        User user = authService.login(signinRequest.email(), signinRequest.password(), request);
+        User user = authService.login(signinRequest.email(), signinRequest.password(), request, response); // response 전달
         SigninResponse result = new SigninResponse(user.getId().toString());
         return ResponseEntity.ok(result);
     }
@@ -41,11 +43,5 @@ public class AuthController {
         User user = userService.registerUser(signupRequest);
         SigninResponse response = new SigninResponse(user.getId().toString());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    @PostMapping("/signout")
-    public ResponseEntity<String> signout(HttpServletRequest request, HttpServletResponse response) {
-        authService.logout(request);
-        return ResponseEntity.ok("Logout Successful");
     }
 }

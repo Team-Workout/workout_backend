@@ -1,5 +1,6 @@
 package com.workout.global.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -9,6 +10,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -20,27 +23,36 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityContextRepository securityContextRepository() {
+        return new HttpSessionSecurityContextRepository();
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityContextRepository securityContextRepository) throws Exception { // 파라미터 추가
         http
-                // 1. CSRF 보호 비활성화 (API 서버이므로)
-                .csrf(csrf -> csrf.disable())
-                // .2 로그인 로그아웃 비활성화
-                .formLogin(form -> form.disable())
-                .logout(logout -> logout.disable())
+            .csrf(csrf -> csrf.disable())
+            .formLogin(form -> form.disable())
+            //로그아웃 설정
+            .logout(logout -> logout
+                .logoutUrl("/api/auth/signout") // 로그아웃을 처리할 URL 지정
+                .logoutSuccessHandler((request, response, authentication) -> {
+                    // 로그아웃 성공 시, 200 OK 상태와 성공 메시지를 응답
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.getWriter().write("Logout Successful");
+                })
+                .deleteCookies("SESSION")    // 응답에 SESSION 쿠키를 삭제하라고 명시
+                .invalidateHttpSession(true) // 세션을 무효화하여 Redis 데이터 삭제
+            )
+            // SecurityContext를 명시적으로 저장하고 로드할 때 사용할 Repository를 지정
+            .securityContext(context -> context.securityContextRepository(securityContextRepository))
 
-                // 3. 요청별 접근 권한 설정
-                .authorizeHttpRequests(auth -> auth
-                        // AuthController의 모든 경로는 인증 없이 접근 가능해야 함
-                        .requestMatchers("/api/auth/**").permitAll()
-                        // 그 외 나머지 모든 요청은 반드시 인증(로그인)을 거쳐야 함
-                        .anyRequest().authenticated()
-                )
-
-                // 4. 인증되지 않은 사용자의 접근 처리
-                // API 서버이므로 로그인 페이지로 리다이렉트하는 대신 401 Unauthorized 에러를 응답
-                .exceptionHandling(e -> e
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
-                );
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .exceptionHandling(e -> e
+                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+            );
 
         return http.build();
     }
