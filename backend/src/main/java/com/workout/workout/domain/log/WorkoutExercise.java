@@ -30,10 +30,10 @@ public class WorkoutExercise {
   private Exercise exercise;
 
   @Column(name = "log_order", nullable = false)
-  private int logOrder;
+  private int order;
 
   @OneToMany(mappedBy = "workoutExercise", cascade = CascadeType.ALL, orphanRemoval = true)
-  @OrderBy("setNumber ASC")
+  @OrderBy("order ASC")
   private List<WorkoutSet> workoutSets = new ArrayList<>();
 
   // [수정] mappedBy 속성 오류 수정 ("workoutLog" -> "workoutExercise")
@@ -42,9 +42,9 @@ public class WorkoutExercise {
 
   // [수정] 생성자에서 workoutLog 주입 제거 (연관관계 편의 메소드로 위임)
   @Builder
-  public WorkoutExercise(Exercise exercise, int logOrder) {
+  public WorkoutExercise(Exercise exercise, int order) {
     this.exercise = exercise;
-    this.logOrder = logOrder;
+    this.order = order;
   }
 
   //== 연관관계 편의 메소드 ==//

@@ -31,13 +31,12 @@ public class WorkoutLog extends AuditableEntity {
   private LocalDate workoutDate;
 
   @OneToMany(mappedBy = "workoutLog", cascade = CascadeType.ALL, orphanRemoval = true)
-  @OrderBy("logOrder ASC")
+  @OrderBy("order ASC")
   private List<WorkoutExercise> workoutExercises = new ArrayList<>();
 
   @OneToMany(mappedBy = "workoutLog", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<Feedback> feedbacks = new HashSet<>();
 
-  // [수정] 불필요한 userMemo 파라미터 제거
   @Builder
   public WorkoutLog(User user, LocalDate workoutDate) {
     this.user = user;

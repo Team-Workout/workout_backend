@@ -2,6 +2,7 @@ package com.workout.workout.domain.log;
 
 import com.workout.workout.domain.exercise.Exercise;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -35,7 +36,8 @@ public class WorkoutSet {
   @JoinColumn(name = "workout_exercise_id")
   private WorkoutExercise workoutExercise;
 
-  private int setNumber;
+  @Column(name = "set_order", nullable = false)
+  private int order;
 
   private BigDecimal weight;
 
@@ -47,8 +49,8 @@ public class WorkoutSet {
 
 
   @Builder
-  public WorkoutSet(int setNumber, BigDecimal weight, int reps) {
-    this.setNumber = setNumber;
+  public WorkoutSet(int order, BigDecimal weight, int reps) {
+    this.order = order;
     this.weight = weight;
     this.reps = reps;
   }

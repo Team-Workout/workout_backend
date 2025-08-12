@@ -1,4 +1,4 @@
-package com.workout.workout.dto;
+package com.workout.workout.dto.workOut;
 
 import com.workout.workout.domain.log.Feedback;
 import com.workout.workout.domain.log.WorkoutExercise;
@@ -39,13 +39,13 @@ public class WorkoutLogResponse {
   public static class WorkoutExerciseResponse { // [신규] 운동 그룹을 위한 응답 DTO
     private final Long workoutExerciseId;
     private final String exerciseName;
-    private final int logOrder;
+    private final int order;
     private final List<WorkoutSetResponse> workoutSets;
 
     private WorkoutExerciseResponse(WorkoutExercise workoutExercise) {
       this.workoutExerciseId = workoutExercise.getId();
       this.exerciseName = workoutExercise.getExercise().getName();
-      this.logOrder = workoutExercise.getLogOrder();
+      this.order = workoutExercise.getOrder();
       this.workoutSets = workoutExercise.getWorkoutSets().stream()
           .map(WorkoutSetResponse::from)
           .collect(Collectors.toList());
@@ -59,14 +59,14 @@ public class WorkoutLogResponse {
   @Getter
   public static class WorkoutSetResponse {
     private final Long workoutSetId;
-    private final int setNumber;
+    private final int order;
     private final BigDecimal weight;
     private final int reps;
     private final Set<FeedbackResponse> feedbacks;
 
     private WorkoutSetResponse(WorkoutSet workoutSet) {
       this.workoutSetId = workoutSet.getId();
-      this.setNumber = workoutSet.getSetNumber();
+      this.order = workoutSet.getOrder();
       this.weight = workoutSet.getWeight();
       this.reps = workoutSet.getReps();
       this.feedbacks = workoutSet.getFeedbacks().stream()
@@ -79,7 +79,6 @@ public class WorkoutLogResponse {
     }
   }
 
-  // [보강] 피드백 정보를 담을 내부 DTO 추가
   @Getter
   public static class FeedbackResponse {
     private final Long feedbackId;

@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS workout_set
 (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     workout_exercise_id BIGINT         NOT NULL,
-    set_number          INT            NOT NULL,
+    set_order          INT            NOT NULL,
     weight              DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     reps                INT            NOT NULL,
     CONSTRAINT fk_set_wo_exercise FOREIGN KEY (workout_exercise_id) REFERENCES workout_exercise (id) ON DELETE CASCADE
@@ -108,6 +108,42 @@ CREATE TABLE IF NOT EXISTS feedback
         (CASE WHEN workout_exercise_id IS NOT NULL THEN 1 ELSE 0 END) +
         (CASE WHEN workout_set_id IS NOT NULL THEN 1 ELSE 0 END) = 1
         )
+);
+
+-- 루틴 테이블
+CREATE TABLE IF NOT EXISTS routine
+(
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id     BIGINT       NOT NULL,
+    name        VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_routine_user FOREIGN KEY (user_id) REFERENCES `user` (id) ON DELETE CASCADE
+);
+
+-- 루틴 운동 테이블
+CREATE TABLE IF NOT EXISTS routine_exercise
+(
+    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+    routine_id    BIGINT    NOT NULL,
+    exercise_id   BIGINT    NOT NULL,
+    routine_order INT       NOT NULL,
+    created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_re_routine FOREIGN KEY (routine_id) REFERENCES routine (id) ON DELETE CASCADE,
+    CONSTRAINT fk_re_exercise FOREIGN KEY (exercise_id) REFERENCES exercise (id) ON DELETE CASCADE
+);
+
+-- 루틴 세트 테이블
+CREATE TABLE IF NOT EXISTS routine_set
+(
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    routine_exercise_id BIGINT         NOT NULL,
+    weight              DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    reps                INT            NOT NULL,
+    set_order             INT            NOT NULL,
+    CONSTRAINT fk_rs_routine_exercise FOREIGN KEY (routine_exercise_id) REFERENCES routine_exercise (id) ON DELETE CASCADE
 );
 
 -- 마스터 데이터 버전 관리 테이블

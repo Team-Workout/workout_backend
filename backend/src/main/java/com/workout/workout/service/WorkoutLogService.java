@@ -7,16 +7,14 @@ import com.workout.workout.domain.log.Feedback;
 import com.workout.workout.domain.log.WorkoutExercise;
 import com.workout.workout.domain.log.WorkoutLog;
 import com.workout.workout.domain.log.WorkoutSet;
-import com.workout.workout.dto.WorkoutLogCreateRequest;
-import com.workout.workout.dto.WorkoutLogResponse;
+import com.workout.workout.dto.workOut.WorkoutLogCreateRequest;
+import com.workout.workout.dto.workOut.WorkoutLogResponse;
 import com.workout.workout.repository.ExerciseRepository;
 import com.workout.workout.repository.WorkoutLogRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,13 +56,13 @@ public class WorkoutLogService {
 
       WorkoutExercise workoutExercise = WorkoutExercise.builder()
           .exercise(exercise)
-          .logOrder(exerciseDto.getLogOrder())
+          .order(exerciseDto.getOrder())
           .build();
       workoutLog.addWorkoutExercise(workoutExercise);
 
       exerciseDto.getWorkoutSets().forEach(setDto -> {
         WorkoutSet workoutSet = WorkoutSet.builder()
-            .setNumber(setDto.getSetNumber())
+            .order(setDto.getOrder())
             .weight(setDto.getWeight())
             .reps(setDto.getReps())
             .build();

@@ -1,4 +1,4 @@
-package com.workout.workout.dto;
+package com.workout.workout.dto.workOut;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,7 +22,7 @@ public class WorkoutLogCreateRequest {
   @AllArgsConstructor
   public static class WorkoutExerciseDto {
     private Long exerciseId;
-    private int logOrder;
+    private int order;
     private List<WorkoutSetDto> workoutSets;
   }
 
@@ -31,7 +31,7 @@ public class WorkoutLogCreateRequest {
   @NoArgsConstructor
   @AllArgsConstructor
   public static class WorkoutSetDto {
-    private int setNumber;
+    private int order;
     private BigDecimal weight;
     private int reps;
     private String feedback;
