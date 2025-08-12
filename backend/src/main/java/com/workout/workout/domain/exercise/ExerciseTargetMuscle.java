@@ -1,8 +1,7 @@
 package com.workout.workout.domain.exercise;
 
-import com.workout.user.domain.User;
 import com.workout.workout.domain.muscle.MuscleRole;
-import com.workout.workout.domain.muscle.TargetMuscle;
+import com.workout.workout.domain.muscle.Muscle;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -33,7 +32,7 @@ public class ExerciseTargetMuscle {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "target_muscle_id")
-  TargetMuscle targetMuscle;
+  Muscle targetMuscle;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "exercise_id")

@@ -3,6 +3,8 @@ package com.workout.workout.service;
 import com.workout.user.domain.User;
 import com.workout.user.repository.UserRepository;
 import com.workout.workout.domain.exercise.Exercise;
+import com.workout.workout.domain.log.Feedback;
+import com.workout.workout.domain.log.WorkoutExercise;
 import com.workout.workout.domain.log.WorkoutLog;
 import com.workout.workout.domain.log.WorkoutSet;
 import com.workout.workout.dto.WorkoutLogCreateRequest;
@@ -10,13 +12,15 @@ import com.workout.workout.dto.WorkoutLogResponse;
 import com.workout.workout.repository.ExerciseRepository;
 import com.workout.workout.repository.WorkoutLogRepository;
 import jakarta.persistence.EntityNotFoundException;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor // final 필드에 대한 생성자를 자동으로 만들어줍니다.
 @Transactional(readOnly = true) // 기본적으로 읽기 전용 트랜잭션을 사용
 public class WorkoutLogService {
 
@@ -24,51 +28,98 @@ public class WorkoutLogService {
   private final UserRepository userRepository;
   private final ExerciseRepository exerciseRepository;
 
-  /**
-   * 운동일지를 저장하는 기능
-   */
-  @Transactional // 쓰기 작업이므로 별도 트랜잭션 어노테이션을 적용
+  public WorkoutLogService(WorkoutLogRepository workoutLogRepository, UserRepository userRepository, ExerciseRepository exerciseRepository) {
+    this.workoutLogRepository = workoutLogRepository;
+    this.userRepository = userRepository;
+    this.exerciseRepository = exerciseRepository;
+  }
+
+  @Transactional
   public Long createWorkoutLog(WorkoutLogCreateRequest request, Long userId) {
-    // 1. 사용자 정보를 조회합니다.
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
 
-    // 2. 운동일지(WorkoutLog) 엔티티를 생성합니다.
     WorkoutLog workoutLog = WorkoutLog.builder()
         .user(user)
         .workoutDate(request.getWorkoutDate())
-        .userMemo(request.getUserMemo())
         .build();
 
-    // 3. 요청에 포함된 각 운동 세트(WorkoutSet)를 엔티티로 변환하고 운동일지에 추가합니다.
-    AtomicInteger setCounter = new AtomicInteger(1); // 세트 번호를 매기기 위함
-    request.getWorkoutSets().forEach(setDto -> {
-      Exercise exercise = exerciseRepository.findById(setDto.getExerciseId())
-          .orElseThrow(() -> new EntityNotFoundException("운동 정보를 찾을 수 없습니다. ID: " + setDto.getExerciseId()));
+    List<Long> exerciseIds = request.getWorkoutExercises().stream()
+        .map(WorkoutLogCreateRequest.WorkoutExerciseDto::getExerciseId)
+        .distinct()
+        .toList();
 
-      WorkoutSet workoutSet = WorkoutSet.builder()
+    Map<Long, Exercise> exerciseMap = exerciseRepository.findAllByIdIn(exerciseIds).stream()
+        .collect(Collectors.toMap(Exercise::getId, e -> e));
+
+    request.getWorkoutExercises().forEach(exerciseDto -> {
+      Exercise exercise = exerciseMap.get(exerciseDto.getExerciseId());
+      if (exercise == null) throw new EntityNotFoundException("운동 정보를 찾을 수 없습니다. ID: " + exerciseDto.getExerciseId());
+
+      WorkoutExercise workoutExercise = WorkoutExercise.builder()
           .exercise(exercise)
-          .weight(setDto.getWeight())
-          .reps(setDto.getReps())
-          .setNumber(setCounter.getAndIncrement())
+          .logOrder(exerciseDto.getLogOrder())
           .build();
+      workoutLog.addWorkoutExercise(workoutExercise);
 
-      workoutLog.addWorkoutSet(workoutSet); // 연관관계 편의 메소드 사용
+      exerciseDto.getWorkoutSets().forEach(setDto -> {
+        WorkoutSet workoutSet = WorkoutSet.builder()
+            .setNumber(setDto.getSetNumber())
+            .weight(setDto.getWeight())
+            .reps(setDto.getReps())
+            .build();
+        workoutExercise.addWorkoutSet(workoutSet);
+
+        if (setDto.getFeedback() != null && !setDto.getFeedback().isBlank()) {
+          Feedback feedback = Feedback.builder()
+              .author(user) // 피드백 작성자는 현재 사용자
+              .content(setDto.getFeedback())
+              .workoutSet(workoutSet)
+              .build();
+          workoutSet.addFeedback(feedback);
+        }
+      });
     });
 
-    // 4. 운동일지를 저장합니다. Cascade 설정 덕분에 WorkoutSet도 함께 저장됩니다.
-    WorkoutLog savedLog = workoutLogRepository.save(workoutLog);
-    return savedLog.getId();
+    if (request.getLogFeedback() != null && !request.getLogFeedback().isBlank()) {
+      Feedback feedback = Feedback.builder()
+          .author(user)
+          .content(request.getLogFeedback())
+          .workoutLog(workoutLog)
+          .build();
+      workoutLog.addFeedback(feedback);
+    }
+
+    return workoutLogRepository.save(workoutLog).getId();
+  }
+
+  public WorkoutLogResponse findWorkoutLogById(Long workoutLogId) {
+    // N+1 문제 해결을 위해 Fetch Join 사용을 권장합니다. (Repository에서 구현)
+    WorkoutLog workoutLog = workoutLogRepository.findByIdWithDetails(workoutLogId)
+        .orElseThrow(() -> new EntityNotFoundException("운동일지를 찾을 수 없습니다. ID: " + workoutLogId));
+    return WorkoutLogResponse.from(workoutLog);
   }
 
   /**
-   * 운동일지를 ID로 조회하는 기능
+   * [신규] 운동일지 삭제 서비스
    */
-  public WorkoutLogResponse findWorkoutLogById(Long workoutLogId) {
-    WorkoutLog workoutLog = workoutLogRepository.findByIdWithSets(workoutLogId)
-        .orElseThrow(() -> new EntityNotFoundException("운동일지를 찾을 수 없습니다. ID: " + workoutLogId));
+  @Transactional
+  public void deleteWorkoutLog(Long workoutLogId, Long userId) {
+    WorkoutLog workoutLog = workoutLogRepository.findById(workoutLogId)
+        .orElseThrow(() -> new EntityNotFoundException("삭제할 운동일지를 찾을 수 없습니다. ID: " + workoutLogId));
 
-    // 엔티티를 DTO로 변환하여 반환
-    return new WorkoutLogResponse(workoutLog);
+    // 본인의 운동일지만 삭제 가능하도록 권한 확인
+    if (!workoutLog.getUser().getId().equals(userId)) {
+      // 실제 프로젝트에서는 Custom Exception을 사용하는 것이 좋습니다.
+      throw new SecurityException("해당 운동일지를 삭제할 권한이 없습니다.");
+    }
+
+    // CascadeType.ALL + orphanRemoval=true 옵션에 의해
+    // workoutLog만 삭제해도 하위의 WorkoutExercise, WorkoutSet, Feedback이 모두 연쇄적으로 삭제됩니다.
+    workoutLogRepository.delete(workoutLog);
   }
+
+  //todo
+  //트레이터가 운동일지id or 운동셋id를 통해 피드백 작성 가능
+  //서비스 단에서 내가 pt받고 있는 트레이너가 맞는지 확인하는 validation등 검증 코드 필수
 }

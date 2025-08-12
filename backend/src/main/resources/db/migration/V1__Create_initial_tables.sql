@@ -1,0 +1,119 @@
+-- Flyway V1: 프로젝트 전체 테이블 스키마 생성 (DDL) - 수정본
+
+-- 헬스장 정보 테이블
+CREATE TABLE IF NOT EXISTS gym
+(
+    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name         VARCHAR(255) NOT NULL,
+    address      VARCHAR(255),
+    phone_number VARCHAR(255)
+);
+
+-- 사용자 정보 테이블
+CREATE TABLE IF NOT EXISTS `user`
+(
+    id             BIGINT AUTO_INCREMENT PRIMARY KEY,
+    gym_id         BIGINT       NOT NULL,
+    name           VARCHAR(255) NOT NULL,
+    email          VARCHAR(255) NOT NULL UNIQUE,
+    password       VARCHAR(255) NOT NULL,
+    gender         VARCHAR(20)  NOT NULL,
+    account_status VARCHAR(50)  NOT NULL,
+    role           VARCHAR(50)  NOT NULL,
+    created_at     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user_gym FOREIGN KEY (gym_id) REFERENCES gym (id)
+);
+
+-- 근육 정보 마스터 테이블
+CREATE TABLE IF NOT EXISTS muscle
+(
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name        VARCHAR(255) NOT NULL UNIQUE,
+    korean_name VARCHAR(255) NOT NULL UNIQUE
+);
+
+-- 운동 정보 마스터 테이블
+CREATE TABLE IF NOT EXISTS exercise
+(
+    id   BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+-- 운동과 근육의 관계 테이블 (매핑 테이블)
+CREATE TABLE IF NOT EXISTS exercise_target_muscle
+(
+    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
+    exercise_id      BIGINT      NOT NULL,
+    target_muscle_id BIGINT      NOT NULL,
+    muscle_role      VARCHAR(50) NOT NULL,
+    CONSTRAINT fk_etm_exercise FOREIGN KEY (exercise_id) REFERENCES exercise (id) ON DELETE CASCADE,
+    CONSTRAINT fk_etm_muscle FOREIGN KEY (target_muscle_id) REFERENCES muscle (id) ON DELETE CASCADE,
+    UNIQUE (exercise_id, target_muscle_id)
+);
+
+-- 운동 일지 테이블 (계층 구조의 최상위)
+CREATE TABLE IF NOT EXISTS workout_log
+(
+    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id      BIGINT    NOT NULL,
+    workout_date DATE      NOT NULL,
+    created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_log_user FOREIGN KEY (user_id) REFERENCES `user` (id) ON DELETE CASCADE
+);
+
+-- 운동 기록 테이블 (계층 구조의 중간)
+CREATE TABLE IF NOT EXISTS workout_exercise
+(
+    id             BIGINT AUTO_INCREMENT PRIMARY KEY,
+    workout_log_id BIGINT    NOT NULL,
+    exercise_id    BIGINT    NOT NULL,
+    log_order      INT       NOT NULL,
+    created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_we_log FOREIGN KEY (workout_log_id) REFERENCES workout_log (id) ON DELETE CASCADE,
+    CONSTRAINT fk_we_exercise FOREIGN KEY (exercise_id) REFERENCES exercise (id) ON DELETE CASCADE
+);
+
+-- 운동 세트 정보 테이블 (계층 구조의 최하위)
+CREATE TABLE IF NOT EXISTS workout_set
+(
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    workout_exercise_id BIGINT         NOT NULL,
+    set_number          INT            NOT NULL,
+    weight              DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    reps                INT            NOT NULL,
+    CONSTRAINT fk_set_wo_exercise FOREIGN KEY (workout_exercise_id) REFERENCES workout_exercise (id) ON DELETE CASCADE
+);
+
+-- 피드백/메모 테이블
+CREATE TABLE IF NOT EXISTS feedback
+(
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    author_id           BIGINT    NOT NULL,
+    content             TEXT      NOT NULL,
+    workout_log_id      BIGINT,
+    workout_exercise_id BIGINT,
+    workout_set_id      BIGINT,
+    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_feedback_author FOREIGN KEY (author_id) REFERENCES `user` (id) ON DELETE CASCADE,
+    CONSTRAINT fk_feedback_log FOREIGN KEY (workout_log_id) REFERENCES workout_log (id) ON DELETE CASCADE,
+    CONSTRAINT fk_feedback_exercise FOREIGN KEY (workout_exercise_id) REFERENCES workout_exercise (id) ON DELETE CASCADE,
+    CONSTRAINT fk_feedback_set FOREIGN KEY (workout_set_id) REFERENCES workout_set (id) ON DELETE CASCADE,
+    -- 피드백은 운동일지, 운동, 세트 중 하나에만 속해야 함 (Java 로직과 동일)
+    CONSTRAINT chk_feedback_owner CHECK (
+        (CASE WHEN workout_log_id IS NOT NULL THEN 1 ELSE 0 END) +
+        (CASE WHEN workout_exercise_id IS NOT NULL THEN 1 ELSE 0 END) +
+        (CASE WHEN workout_set_id IS NOT NULL THEN 1 ELSE 0 END) = 1
+        )
+);
+
+-- 마스터 데이터 버전 관리 테이블
+CREATE TABLE IF NOT EXISTS master_data_version
+(
+    data_type  VARCHAR(255) PRIMARY KEY,
+    version    VARCHAR(255) NOT NULL,
+    updated_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);

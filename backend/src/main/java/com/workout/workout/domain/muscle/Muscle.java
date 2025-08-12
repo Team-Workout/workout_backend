@@ -1,23 +1,50 @@
 package com.workout.workout.domain.muscle;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import java.util.Objects;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor
-public enum Muscle {
-  // 데이터베이스의 target_muscle 테이블과 1:1로 매핑
-  CHEST("가슴"),
-  BACK("등"),
-  SHOULDERS("어깨"),
-  BICEPS("이두근"),
-  TRICEPS("삼두근"),
-  FOREARM("전완근"),
-  ABS("복근"),
-  GLUTES("둔근"),
-  QUADS("대퇴사두근"),
-  HAMSTRINGS("햄스트링"),
-  CALVES("종아리");
+@AllArgsConstructor // 모든 필드를 인자로 받는 생성자 (빌더가 사용)
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)// JPA가 사용하는 기본 생성자성자 (빌더가 사용)
+@Entity
+public class Muscle {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-  private final String koreanName;
+  @Column(name = "name", nullable = false, unique = true)
+  private String name; // 예: "CHEST"
+
+  @Column(name = "korean_name", nullable = false, unique = true)
+  private String koreanName; // 예: "가슴";
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null) return false;
+
+    Class<?> thisClass = org.hibernate.Hibernate.getClass(this);
+    Class<?> thatClass = org.hibernate.Hibernate.getClass(o);
+    if (thisClass != thatClass) return false;
+
+    Muscle that = (Muscle) o;
+    return Objects.equals(getId(), that.getId());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(id);
+  }
 }

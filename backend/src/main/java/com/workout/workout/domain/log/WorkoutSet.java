@@ -11,14 +11,16 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Objects;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.OrderBy;
 
 @Entity
 @Getter
@@ -29,14 +31,9 @@ public class WorkoutSet {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Setter
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "workout_log_id")
-  private WorkoutLog workoutLog;
-
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "exercise_id")
-  private Exercise exercise; // 어떤 운동을 했는지 (마스터 데이터 참조)
+  @JoinColumn(name = "workout_exercise_id")
+  private WorkoutExercise workoutExercise;
 
   private int setNumber;
 
@@ -44,20 +41,24 @@ public class WorkoutSet {
 
   private int reps;
 
-  // WorkoutSet이 삭제되면 하위 피드백들도 모두 함께 삭제됩니다.
   @OneToMany(mappedBy = "workoutSet", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<WorkoutFeedback> feedbacks = new ArrayList<>();
+  @OrderBy("createdAt ASC")
+  private Set<Feedback> feedbacks = new HashSet<>();
+
 
   @Builder
-  public WorkoutSet(Exercise exercise, int setNumber, BigDecimal weight, int reps) {
-    this.exercise = exercise;
+  public WorkoutSet(int setNumber, BigDecimal weight, int reps) {
     this.setNumber = setNumber;
     this.weight = weight;
     this.reps = reps;
   }
 
   //== 연관관계 편의 메소드 ==//
-  public void addFeedback(WorkoutFeedback feedback) {
+  protected void setWorkoutExercise(WorkoutExercise workoutExercise){
+    this.workoutExercise = workoutExercise;
+  }
+
+  public void addFeedback(Feedback feedback) {
     this.feedbacks.add(feedback);
     feedback.setWorkoutSet(this);
   }

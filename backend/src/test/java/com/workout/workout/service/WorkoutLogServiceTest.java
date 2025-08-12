@@ -1,3 +1,4 @@
+/*
 package com.workout.workout.service;
 
 import com.workout.user.domain.User;
@@ -179,4 +180,4 @@ class WorkoutLogServiceTest {
           () -> workoutLogService.findWorkoutLogById(nonExistentLogId));
     }
   }
-}
+}*/

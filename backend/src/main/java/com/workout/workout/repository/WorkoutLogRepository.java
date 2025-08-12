@@ -8,10 +8,10 @@ import org.springframework.data.repository.query.Param;
 
 public interface WorkoutLogRepository extends JpaRepository<WorkoutLog, Long> {
   @Query("SELECT wl FROM WorkoutLog wl " +
-      "JOIN FETCH wl.workoutSets ws " +
-      "JOIN FETCH ws.exercise " +
+      "LEFT JOIN FETCH wl.workoutExercises we " +
+      "LEFT JOIN FETCH we.exercise " +
       "WHERE wl.id = :id")
-  Optional<WorkoutLog> findByIdWithSets(@Param("id") Long id);
+  Optional<WorkoutLog> findByIdWithDetails(@Param("id") Long id);
 }
 
 

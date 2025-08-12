@@ -61,8 +61,7 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(signupRequest.password());
 
         User user = User.builder()
-            .gym(gym) // [개선] 이미 조회한 gym 객체 사용
-            .goal(signupRequest.goal())
+            .gym(gym)
             .gender(signupRequest.gender())
             .accountStatus(AccountStatus.ACTIVE)
             .email(signupRequest.email())

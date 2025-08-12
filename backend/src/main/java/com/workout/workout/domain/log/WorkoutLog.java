@@ -1,9 +1,11 @@
 package com.workout.workout.domain.log;
 
-import com.workout.global.Auditable;
+import com.workout.global.AuditableEntity;
 import com.workout.user.domain.User;
 import jakarta.persistence.*;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,42 +13,50 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.data.annotation.CreatedDate;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-public class WorkoutLog implements Auditable {
+public class WorkoutLog extends AuditableEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id")
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "user_id", nullable = false, updatable = false)
   private User user;
 
-  @Column(name = "workout_date", nullable = false) // DB 컬럼명도 역할에 맞게 변경
+  @Column(name = "workout_date", nullable = false)
   private LocalDate workoutDate;
 
-  private String userMemo; // 운동일지 전체에 대한 메모
-
-  // WorkoutLog의 생명주기에 WorkoutSet이 완전히 종속됩니다.
   @OneToMany(mappedBy = "workoutLog", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<WorkoutSet> workoutSets = new ArrayList<>();
+  @OrderBy("logOrder ASC")
+  private List<WorkoutExercise> workoutExercises = new ArrayList<>();
 
+  @OneToMany(mappedBy = "workoutLog", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<Feedback> feedbacks = new HashSet<>();
+
+  // [수정] 불필요한 userMemo 파라미터 제거
   @Builder
-  public WorkoutLog(User user, LocalDate workoutDate, String userMemo) {
+  public WorkoutLog(User user, LocalDate workoutDate) {
     this.user = user;
     this.workoutDate = workoutDate;
-    this.userMemo = userMemo;
   }
 
   //== 연관관계 편의 메소드 ==//
-  public void addWorkoutSet(WorkoutSet workoutSet) {
-    this.workoutSets.add(workoutSet);
-    workoutSet.setWorkoutLog(this); // [수정] 이 부분의 주석을 해제해야 합니다.
+  public void addWorkoutExercise(WorkoutExercise workoutExercise) {
+    this.workoutExercises.add(workoutExercise);
+    // 부모-자식 관계 설정
+    workoutExercise.setWorkoutLog(this);
   }
+
+  public void addFeedback(Feedback feedback) {
+    this.feedbacks.add(feedback);
+    feedback.setWorkoutLog(this);
+  }
+
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
