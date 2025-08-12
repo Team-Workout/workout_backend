@@ -53,7 +53,6 @@ public class UserService {
     }
 
     public User registerUser(SignupRequest signupRequest) {
-        // [개선] findById 호출 한 번으로 존재 여부 확인과 객체 조회를 동시에 처리
         Gym gym = gymService.findById(signupRequest.gymId());
 
         ensureUserNameAndEmailAreUnique(signupRequest.name(), signupRequest.email());

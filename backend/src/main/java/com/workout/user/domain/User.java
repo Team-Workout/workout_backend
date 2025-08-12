@@ -40,7 +40,6 @@ public class User extends AuditableEntity {
     @Column(nullable = false, length = 10)
     private Gender gender;
 
-    // Enum 타입이므로 @Enumerated를 사용하고, DB 컬럼명에 맞게 name 속성을 지정합니다.
     @Enumerated(EnumType.STRING)
     @Column(name = "account_status", nullable = false)
     private AccountStatus accountStatus;

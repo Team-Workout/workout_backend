@@ -7,8 +7,8 @@ import com.workout.workout.domain.log.Feedback;
 import com.workout.workout.domain.log.WorkoutExercise;
 import com.workout.workout.domain.log.WorkoutLog;
 import com.workout.workout.domain.log.WorkoutSet;
-import com.workout.workout.dto.workOut.WorkoutLogCreateRequest;
-import com.workout.workout.dto.workOut.WorkoutLogResponse;
+import com.workout.workout.dto.log.WorkoutLogCreateRequest;
+import com.workout.workout.dto.log.WorkoutLogResponse;
 import com.workout.workout.repository.ExerciseRepository;
 import com.workout.workout.repository.WorkoutLogRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -92,7 +92,6 @@ public class WorkoutLogService {
   }
 
   public WorkoutLogResponse findWorkoutLogById(Long workoutLogId) {
-    // N+1 문제 해결을 위해 Fetch Join 사용을 권장합니다. (Repository에서 구현)
     WorkoutLog workoutLog = workoutLogRepository.findByIdWithDetails(workoutLogId)
         .orElseThrow(() -> new EntityNotFoundException("운동일지를 찾을 수 없습니다. ID: " + workoutLogId));
     return WorkoutLogResponse.from(workoutLog);

@@ -18,13 +18,11 @@ public class WorkoutService {
   @Transactional
   @MasterDataUpdate(category = "EXERCISE", type = VersionIncrementType.PATCH)
   public void updateExerciseName(Long exerciseId, String newName) {
-    // ... 로직 ...
   }
 
   // 새로운 운동 추가 (기능 추가로 간주) -> MINOR 버전 업데이트
   @Transactional
   @MasterDataUpdate(category = "EXERCISE", type = VersionIncrementType.MINOR)
   public void createNewExercise(Exercise newExercise) {
-    // ... 로직 ...
   }
 }

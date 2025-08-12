@@ -1,6 +1,5 @@
 package com.workout.workout.domain.log;
 
-
 import com.workout.global.AuditableEntity;
 import com.workout.user.domain.User;
 import jakarta.persistence.*;
@@ -8,10 +7,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-
-import java.time.Instant;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -24,19 +19,19 @@ public class Feedback extends AuditableEntity {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "author_id")
-  private User author; // 작성자
+  private User author;
 
-  @Lob // 긴 텍스트를 위해 @Lob 어노테이션 사용
+  @Lob
   @Column(columnDefinition = "TEXT", nullable = false)
-  private String content; // 메모 내용
+  private String content;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "workout_log_id")
-  private WorkoutLog workoutLog; // 운동 일지에 대한 참조
+  private WorkoutLog workoutLog;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "workout_set_id")
-  private WorkoutSet workoutSet; // 운동 세트에 대한 참조
+  private WorkoutSet workoutSet;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "workout_exercise_id")

@@ -28,8 +28,6 @@ public record SignupRequest(
     @NotNull(message = "성별은 필수입니다.")
     Gender gender,
 
-    String goal, // 운동 목표는 선택 사항으로, 유효성 검사 제외
-
     @NotNull(message = "사용자 역할은 필수입니다.")
     Role role
 ) {

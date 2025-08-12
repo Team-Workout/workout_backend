@@ -8,6 +8,7 @@ import com.workout.user.domain.User;
 import com.workout.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +30,7 @@ public class AuthController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<SigninResponse> signin(@RequestBody SigninRequest signinRequest,
+    public ResponseEntity<SigninResponse> signin(@Valid @RequestBody SigninRequest signinRequest,
         HttpServletRequest request,
         HttpServletResponse response) { // request, response 파라미터 추가
 
@@ -39,7 +40,7 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<SigninResponse> signup(@RequestBody SignupRequest signupRequest) {
+    public ResponseEntity<SigninResponse> signup(@Valid @RequestBody SignupRequest signupRequest) {
         User user = userService.registerUser(signupRequest);
         SigninResponse response = new SigninResponse(user.getId().toString());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

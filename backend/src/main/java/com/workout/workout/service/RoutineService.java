@@ -3,13 +3,11 @@ package com.workout.workout.service;
 import com.workout.user.domain.User;
 import com.workout.user.repository.UserRepository;
 import com.workout.workout.domain.exercise.Exercise;
-import com.workout.workout.domain.log.WorkoutLog;
 import com.workout.workout.domain.routine.Routine;
 import com.workout.workout.domain.routine.RoutineExercise;
 import com.workout.workout.domain.routine.RoutineSet;
 import com.workout.workout.dto.routine.RoutineCreateRequest;
 import com.workout.workout.dto.routine.RoutineResponse;
-import com.workout.workout.dto.workOut.WorkoutLogResponse;
 import com.workout.workout.repository.ExerciseRepository;
 import com.workout.workout.repository.RoutineRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -82,7 +80,6 @@ public class RoutineService {
 
     // 본인의 운동일지만 삭제 가능하도록 권한 확인
     if (!routine.getUser().getId().equals(userId)) {
-      // 실제 프로젝트에서는 Custom Exception을 사용하는 것이 좋습니다.
       throw new SecurityException("해당 루틴을 삭제할 권한이 없습니다.");
     }
 

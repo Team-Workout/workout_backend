@@ -1,4 +1,4 @@
-package com.workout.workout.dto.workOut;
+package com.workout.workout.dto.log;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

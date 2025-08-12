@@ -20,7 +20,6 @@ public class WorkoutExercise {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  // [수정] 연관관계 편의 메소드에서 workoutLog를 설정하므로 nullable, updatable = false 추가
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "workout_log_id", nullable = false, updatable = false)
   private WorkoutLog workoutLog;
@@ -36,11 +35,9 @@ public class WorkoutExercise {
   @OrderBy("order ASC")
   private List<WorkoutSet> workoutSets = new ArrayList<>();
 
-  // [수정] mappedBy 속성 오류 수정 ("workoutLog" -> "workoutExercise")
   @OneToMany(mappedBy = "workoutExercise", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<Feedback> feedbacks = new HashSet<>();
 
-  // [수정] 생성자에서 workoutLog 주입 제거 (연관관계 편의 메소드로 위임)
   @Builder
   public WorkoutExercise(Exercise exercise, int order) {
     this.exercise = exercise;
