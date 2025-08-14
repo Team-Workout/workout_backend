@@ -8,22 +8,22 @@ ON DUPLICATE KEY UPDATE name         = VALUES(name),
                         address      = VALUES(address),
                         phone_number = VALUES(phone_number);
 
-
 -- ########## 2. 타겟 근육 마스터 데이터 (muscle) ##########
-INSERT INTO muscle (id, name, korean_name)
-VALUES (1, 'CHEST', '가슴'),
-       (2, 'BACK', '등'),
-       (3, 'SHOULDERS', '어깨'),
-       (4, 'BICEPS', '이두'),
-       (5, 'TRICEPS', '삼두'),
-       (6, 'FOREARM', '전완근'),
-       (7, 'ABS', '복근'),
-       (8, 'GLUTES', '둔근'),
-       (9, 'QUADS', '대퇴사두'),
-       (10, 'HAMSTRINGS', '햄스트링'),
-       (11, 'CALVES', '종아리')
+INSERT INTO muscle (id, name, korean_name, muscle_group)
+VALUES (1, 'CHEST', '가슴', 'CHEST'),
+       (2, 'BACK', '등', 'BACK'),
+       (3, 'SHOULDERS', '어깨', 'SHOULDER'),
+       (4, 'BICEPS', '이두', 'ARMS'),        -- ARMS 그룹으로 할당
+       (5, 'TRICEPS', '삼두', 'ARMS'),        -- ARMS 그룹으로 할당
+       (6, 'FOREARM', '전완근', 'ARMS'),      -- ARMS 그룹으로 할당
+       (7, 'ABS', '복근', 'ABS'),
+       (8, 'GLUTES', '둔근', 'LEGS'),         -- LEGS 그룹으로 할당
+       (9, 'QUADS', '대퇴사두', 'LEGS'),      -- LEGS 그룹으로 할당
+       (10, 'HAMSTRINGS', '햄스트링', 'LEGS'), -- LEGS 그룹으로 할당
+       (11, 'CALVES', '종아리', 'LEGS')       -- LEGS 그룹으로 할당
 ON DUPLICATE KEY UPDATE name        = VALUES(name),
-                        korean_name = VALUES(korean_name);
+                        korean_name = VALUES(korean_name),
+                        muscle_group = VALUES(muscle_group);
 
 
 -- ########## 3. 운동 마스터 데이터 (exercise) ##########

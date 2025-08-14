@@ -31,8 +31,11 @@ public class WorkoutExercise {
   @Column(name = "log_order", nullable = false)
   private int order;
 
-  @OneToMany(mappedBy = "workoutExercise", cascade = CascadeType.ALL, orphanRemoval = true)
-  @OrderBy("order ASC")
+  @OneToMany(
+      mappedBy = "workoutExercise",
+      cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, // 안전성을 위해 명시적 Cascade 사용
+      orphanRemoval = true
+  )  @OrderBy("order ASC")
   private List<WorkoutSet> workoutSets = new ArrayList<>();
 
   @OneToMany(mappedBy = "workoutExercise", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -99,7 +99,7 @@ class WorkoutLogServiceTest {
       given(exerciseRepository.findAllByIdIn(anyList())).willReturn(List.of(benchPress, squat));
 
       // save 시 ID가 부여된 객체를 반환하도록 설정
-      WorkoutLog savedLog = new WorkoutLog(testUser, createRequest.getWorkoutDate());
+      WorkoutLog savedLog = new WorkoutLog(testUser, createRequest.workoutDate());
       setId(savedLog, 999L);
       given(workoutLogRepository.save(any(WorkoutLog.class))).willReturn(savedLog);
 
@@ -115,7 +115,7 @@ class WorkoutLogServiceTest {
 
       // 최상위 로그 정보 검증
       assertThat(capturedLog.getUser()).isEqualTo(testUser);
-      assertThat(capturedLog.getWorkoutDate()).isEqualTo(createRequest.getWorkoutDate());
+      assertThat(capturedLog.getWorkoutDate()).isEqualTo(createRequest.workoutDate());
       assertThat(capturedLog.getFeedbacks()).hasSize(1);
       assertThat(capturedLog.getFeedbacks().iterator().next().getContent()).isEqualTo("오늘 운동 만족스러웠다.");
 
@@ -219,7 +219,7 @@ class WorkoutLogServiceTest {
 
       // then
       assertThat(response).isNotNull();
-      assertThat(response.getWorkoutLogId()).isEqualTo(1L);
+      assertThat(response.workoutLogId()).isEqualTo(1L);
     }
 
     @Test

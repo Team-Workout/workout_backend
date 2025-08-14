@@ -19,6 +19,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.OrderBy;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Getter
@@ -36,11 +37,16 @@ public class WorkoutSet {
   @Column(name = "set_order", nullable = false)
   private int order;
 
+  @Column(nullable = false)
+  @ColumnDefault("0.00")
   private BigDecimal weight;
 
+  @Column(nullable = false)
   private int reps;
 
-  @OneToMany(mappedBy = "workoutSet", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(mappedBy = "workoutSet",
+      cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE},
+      orphanRemoval = true)
   @OrderBy("createdAt ASC")
   private Set<Feedback> feedbacks = new HashSet<>();
 

@@ -25,10 +25,15 @@ public class Muscle {
   private Long id;
 
   @Column(name = "name", nullable = false, unique = true)
-  private String name; // 예: "CHEST"
+  private String name; // 예: "hamstring"세부적인 근육명
 
   @Column(name = "korean_name", nullable = false, unique = true)
-  private String koreanName; // 예: "가슴";
+  private String koreanName; // 예: "가슴"
+
+  @Column(name = "muscle_group", nullable = false, unique = true)
+  private String muscleGroup; // 예: "가슴, 하체"
+
+
 
   @Override
   public boolean equals(Object o) {

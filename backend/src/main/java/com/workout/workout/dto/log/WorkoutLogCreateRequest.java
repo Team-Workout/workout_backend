@@ -3,37 +3,27 @@ package com.workout.workout.dto.log;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-// 이 DTO는 내부에 WorkoutExerciseDto를 리스트로 가집니다.
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-public class WorkoutLogCreateRequest {
-  private LocalDate workoutDate;
-  private String logFeedback;
-  private List<WorkoutExerciseDto> workoutExercises;
+public record WorkoutLogCreateRequest(
+    LocalDate workoutDate,
+    String logFeedback,
+    List<WorkoutExerciseDto> workoutExercises
+) {
 
-  // 내부 DTO: WorkoutExerciseDto는 내부에 WorkoutSetDto를 리스트로 가집니다.
-  @Getter
-  @NoArgsConstructor
-  @AllArgsConstructor
-  public static class WorkoutExerciseDto {
-    private Long exerciseId;
-    private int order;
-    private List<WorkoutSetDto> workoutSets;
+  // 중첩 레코드(Nested Record) 사용
+  public record WorkoutExerciseDto(
+      Long exerciseId,
+      int order,
+      List<WorkoutSetDto> workoutSets
+  ) {
   }
 
-  // 내부 DTO: WorkoutSetDto
-  @Getter
-  @NoArgsConstructor
-  @AllArgsConstructor
-  public static class WorkoutSetDto {
-    private int order;
-    private BigDecimal weight;
-    private int reps;
-    private String feedback;
+  // 중첩 레코드(Nested Record) 사용
+  public record WorkoutSetDto(
+      int order,
+      BigDecimal weight,
+      int reps,
+      String feedback
+  ) {
   }
 }

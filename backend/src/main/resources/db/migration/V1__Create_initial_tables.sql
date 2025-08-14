@@ -6,7 +6,9 @@ CREATE TABLE IF NOT EXISTS gym
     id           BIGINT AUTO_INCREMENT PRIMARY KEY,
     name         VARCHAR(255) NOT NULL,
     address      VARCHAR(255),
-    phone_number VARCHAR(255)
+    phone_number VARCHAR(255),
+    created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- 사용자 정보 테이블
@@ -30,7 +32,8 @@ CREATE TABLE IF NOT EXISTS muscle
 (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     name        VARCHAR(255) NOT NULL UNIQUE,
-    korean_name VARCHAR(255) NOT NULL UNIQUE
+    korean_name VARCHAR(255) NOT NULL UNIQUE,
+    muscle_group VARCHAR(255) NOT NULL
 );
 
 -- 운동 정보 마스터 테이블

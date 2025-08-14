@@ -39,39 +39,39 @@ public class WorkoutLogService {
 
     WorkoutLog workoutLog = WorkoutLog.builder()
         .user(user)
-        .workoutDate(request.getWorkoutDate())
+        .workoutDate(request.workoutDate())
         .build();
 
-    List<Long> exerciseIds = request.getWorkoutExercises().stream()
-        .map(WorkoutLogCreateRequest.WorkoutExerciseDto::getExerciseId)
+    List<Long> exerciseIds = request.workoutExercises().stream()
+        .map(WorkoutLogCreateRequest.WorkoutExerciseDto::exerciseId)
         .distinct()
         .toList();
 
     Map<Long, Exercise> exerciseMap = exerciseRepository.findAllByIdIn(exerciseIds).stream()
         .collect(Collectors.toMap(Exercise::getId, e -> e));
 
-    request.getWorkoutExercises().forEach(exerciseDto -> {
-      Exercise exercise = exerciseMap.get(exerciseDto.getExerciseId());
-      if (exercise == null) throw new EntityNotFoundException("운동 정보를 찾을 수 없습니다. ID: " + exerciseDto.getExerciseId());
+    request.workoutExercises().forEach(exerciseDto -> {
+      Exercise exercise = exerciseMap.get(exerciseDto.exerciseId());
+      if (exercise == null) throw new EntityNotFoundException("운동 정보를 찾을 수 없습니다. ID: " + exerciseDto.exerciseId());
 
       WorkoutExercise workoutExercise = WorkoutExercise.builder()
           .exercise(exercise)
-          .order(exerciseDto.getOrder())
+          .order(exerciseDto.order())
           .build();
       workoutLog.addWorkoutExercise(workoutExercise);
 
-      exerciseDto.getWorkoutSets().forEach(setDto -> {
+      exerciseDto.workoutSets().forEach(setDto -> {
         WorkoutSet workoutSet = WorkoutSet.builder()
-            .order(setDto.getOrder())
-            .weight(setDto.getWeight())
-            .reps(setDto.getReps())
+            .order(setDto.order())
+            .weight(setDto.weight())
+            .reps(setDto.reps())
             .build();
         workoutExercise.addWorkoutSet(workoutSet);
 
-        if (setDto.getFeedback() != null && !setDto.getFeedback().isBlank()) {
+        if (setDto.feedback() != null && !setDto.feedback().isBlank()) {
           Feedback feedback = Feedback.builder()
               .author(user) // 피드백 작성자는 현재 사용자
-              .content(setDto.getFeedback())
+              .content(setDto.feedback())
               .workoutSet(workoutSet)
               .build();
           workoutSet.addFeedback(feedback);
@@ -79,10 +79,10 @@ public class WorkoutLogService {
       });
     });
 
-    if (request.getLogFeedback() != null && !request.getLogFeedback().isBlank()) {
+    if (request.logFeedback() != null && !request.logFeedback().isBlank()) {
       Feedback feedback = Feedback.builder()
           .author(user)
-          .content(request.getLogFeedback())
+          .content(request.logFeedback())
           .workoutLog(workoutLog)
           .build();
       workoutLog.addFeedback(feedback);

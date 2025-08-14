@@ -1,8 +1,11 @@
 package com.workout.workout.domain.log;
 
-import com.workout.global.AuditableEntity;
+import com.workout.global.AuditListener;
+import com.workout.global.Auditable;
 import com.workout.user.domain.User;
 import jakarta.persistence.*;
+import jakarta.websocket.server.ServerEndpoint;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -13,11 +16,14 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Setter;
 
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-public class WorkoutLog extends AuditableEntity {
+@EntityListeners(AuditListener.class)
+public class WorkoutLog implements Auditable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,8 +40,17 @@ public class WorkoutLog extends AuditableEntity {
   @OrderBy("order ASC")
   private List<WorkoutExercise> workoutExercises = new ArrayList<>();
 
-  @OneToMany(mappedBy = "workoutLog", cascade = CascadeType.ALL, orphanRemoval = true)
-  private Set<Feedback> feedbacks = new HashSet<>();
+  @OneToMany(
+      mappedBy = "workoutLog",
+      cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, // REFRESH, DETACH 제외
+      orphanRemoval = true
+  )  private Set<Feedback> feedbacks = new HashSet<>();
+
+  @Column(name = "created_at", nullable = false, updatable = false)
+  private Instant createdAt;
+
+  @Column(name = "updated_at")
+  private Instant updatedAt;
 
   @Builder
   public WorkoutLog(User user, LocalDate workoutDate) {

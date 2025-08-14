@@ -59,15 +59,7 @@ public class UserService {
 
         String encodedPassword = passwordEncoder.encode(signupRequest.password());
 
-        User user = User.builder()
-            .gym(gym)
-            .gender(signupRequest.gender())
-            .accountStatus(AccountStatus.ACTIVE)
-            .email(signupRequest.email())
-            .name(signupRequest.name())
-            .password(encodedPassword)
-            .role(signupRequest.role())
-            .build();
+        User user = signupRequest.toEntity(gym, encodedPassword);
 
         return userRepository.save(user);
     }

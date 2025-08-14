@@ -32,17 +32,16 @@ public class AuthController {
     @PostMapping("/signin")
     public ResponseEntity<SigninResponse> signin(@Valid @RequestBody SigninRequest signinRequest,
         HttpServletRequest request,
-        HttpServletResponse response) { // request, response 파라미터 추가
+        HttpServletResponse response) {
 
-        User user = authService.login(signinRequest.email(), signinRequest.password(), request, response); // response 전달
-        SigninResponse result = new SigninResponse(user.getId().toString());
-        return ResponseEntity.ok(result);
+        User user = authService.login(signinRequest.email(), signinRequest.password(), request, response);
+        SigninResponse signinResponse = new SigninResponse(user.getId(), user.getName());
+        return ResponseEntity.ok(signinResponse);
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<SigninResponse> signup(@Valid @RequestBody SignupRequest signupRequest) {
+    public ResponseEntity<Long> signup(@Valid @RequestBody SignupRequest signupRequest) {
         User user = userService.registerUser(signupRequest);
-        SigninResponse response = new SigninResponse(user.getId().toString());
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(user.getId());
     }
 }

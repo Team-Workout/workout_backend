@@ -1,23 +1,27 @@
 package com.workout.user.domain;
 
-import com.workout.global.AuditableEntity;
+import com.workout.global.AuditListener;
+import com.workout.global.Auditable;
 import com.workout.gym.domain.Gym;
 import jakarta.persistence.*;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
 
-import java.time.Instant;
 import java.util.Objects;
+import lombok.Setter;
 
 @Getter
+@Setter
 @Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)// JPA가 사용하는 기본 생성자성자 (빌더가 사용)
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-public class User extends AuditableEntity {
+@EntityListeners(AuditListener.class)
+public class User implements Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -35,7 +39,6 @@ public class User extends AuditableEntity {
     @Column(name = "password", nullable = false)
     private String password;
 
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private Gender gender;
@@ -48,6 +51,11 @@ public class User extends AuditableEntity {
     @Column(name = "role", nullable = false)
     private Role role;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 
     @Builder
     public User(Long id, Gym gym, String name, String email, String password, Gender gender, AccountStatus accountStatus, Role role) {

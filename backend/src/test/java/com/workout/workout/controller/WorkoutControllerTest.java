@@ -139,7 +139,7 @@ class WorkoutControllerTest {
       // then
       assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
       assertThat(response.getBody()).isNotNull();
-      assertThat(response.getBody().getWorkoutLogId()).isEqualTo(savedLog.getId());
+      assertThat(response.getBody().workoutLogId()).isEqualTo(savedLog.getId());
     }
 
     @Test
