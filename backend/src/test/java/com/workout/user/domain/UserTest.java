@@ -2,6 +2,8 @@ package com.workout.user.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.workout.global.Gender;
+import com.workout.global.Role;
 import com.workout.gym.domain.Gym;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

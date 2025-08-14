@@ -1,5 +1,7 @@
 package com.workout.user.domain;
 
+import com.workout.global.Gender;
+import com.workout.global.Role;
 import com.workout.gym.domain.Gym;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -59,6 +61,8 @@ public class User {
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt; // UTC 기준의 절대 시간을 저장
+
+    private String phoneNumber;
 
     @Builder
     public User(Long id, Gym gym, String name, String email, String password, Gender gender, String goal, AccountStatus accountStatus, Role role) {

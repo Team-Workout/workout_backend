@@ -1,7 +1,7 @@
 package com.workout.auth.dto;
 
-import com.workout.user.domain.Gender;
-import com.workout.user.domain.Role;
+import com.workout.global.Gender;
+import com.workout.global.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
