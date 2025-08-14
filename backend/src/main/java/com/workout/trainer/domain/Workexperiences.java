@@ -1,5 +1,6 @@
 package com.workout.trainer.domain;
 
+import com.workout.trainer.dto.ProfileCreateDto.WorkexperiencesDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -8,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -27,5 +29,26 @@ public class Workexperiences {
   private String workPlace;
   private String workPosition;
   private String workStart;
+  private String workEnd;
 
+  @Builder
+  private Workexperiences(Trainer trainer, String workName, String workPlace, String workPosition, String workStart, String workEnd) {
+    this.trainer = trainer;
+    this.workName = workName;
+    this.workPlace = workPlace;
+    this.workPosition = workPosition;
+    this.workStart = workStart;
+    this.workEnd = workEnd;
+  }
+
+  public static Workexperiences of(WorkexperiencesDto workDto, Trainer trainer) {
+    return Workexperiences.builder()
+        .trainer(trainer)
+        .workName(workDto.workName())
+        .workPlace(workDto.workPlace())
+        .workPosition(workDto.workPosition())
+        .workStart(workDto.workStartDate())
+        .workEnd(workDto.workEndDate())
+        .build();
+  }
 }

@@ -1,5 +1,6 @@
 package com.workout.trainer.domain;
 
+import com.workout.trainer.dto.ProfileCreateDto.CertificationDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -27,4 +28,7 @@ public class Certification {
   private String certificationName;
   private String issuingOrganization;
   private Date acquisitionDate;
+
+  public static Certification of(CertificationDto certDto, Trainer trainer) {
+  }
 }

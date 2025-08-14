@@ -1,59 +1,40 @@
 package com.workout.trainer.dto;
 
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-public class ProfileCreateDto {
+public record ProfileCreateDto(
+    String introduction,
+    List<AwardDto> awards,
+    List<CertificationDto> certifications,
+    List<EducationDto> educations,
+    List<WorkexperiencesDto> workExperiences
+) {
 
-  private String introduction;
-  private List<AwardDto> awards;
-  private List<CertificationDto> certifications;
-  private List<EducationDto> educations;
-  private List<WorkexperiencesDto> workExperiences;
-  
-  @Getter
-  @NoArgsConstructor
-  @AllArgsConstructor
-  public static class AwardDto {
-    private String awardName;
-    private String awardDate;
-    private String awardPlace;
-  }
-  
-  @Getter
-  @NoArgsConstructor
-  @AllArgsConstructor
-  public static class CertificationDto {
-    private String certificationName;
-    private String issuingOrganization;
-    private String acquisitionDate;
+  public record AwardDto(
+      String awardName,
+      String awardDate,
+      String awardPlace
+  ) {}
 
-  }
+  public record CertificationDto(
+      String certificationName,
+      String issuingOrganization,
+      String acquisitionDate
+  ) {}
 
-  @Getter
-  @NoArgsConstructor
-  @AllArgsConstructor
-  public static class EducationDto {
-    private String schoolName;
-    private String educationName;
-    private String degree;
-    private String startDate;
-    private String endDate;
-  }
+  public record EducationDto(
+      String schoolName,
+      String educationName,
+      String degree,
+      String startDate,
+      String endDate
+  ) {}
 
-  @Getter
-  @NoArgsConstructor
-  @AllArgsConstructor
-  public static class WorkexperiencesDto {
-    private String workName;
-    private String workDate;
-    private String workPlace;
-    private String workPosition;
-  }
-
+  public record WorkexperiencesDto(
+      String workName,
+      String workStartDate,
+      String workEndDate,
+      String workPlace,
+      String workPosition
+  ) {}
 }
