@@ -1,5 +1,7 @@
 package com.workout.trainer.dto;
 
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 
 public record ProfileCreateDto(
@@ -12,28 +14,28 @@ public record ProfileCreateDto(
 
   public record AwardDto(
       String awardName,
-      String awardDate,
+      LocalDate  awardDate,
       String awardPlace
   ) {}
 
   public record CertificationDto(
       String certificationName,
       String issuingOrganization,
-      String acquisitionDate
+      LocalDate  acquisitionDate
   ) {}
 
   public record EducationDto(
       String schoolName,
       String educationName,
       String degree,
-      String startDate,
-      String endDate
+      LocalDate  startDate,
+      LocalDate  endDate
   ) {}
 
   public record WorkexperiencesDto(
       String workName,
-      String workStartDate,
-      String workEndDate,
+      LocalDate workStartDate,
+      LocalDate  workEndDate,
       String workPlace,
       String workPosition
   ) {}

@@ -8,6 +8,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import java.time.LocalDate;
+import java.util.Date;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -30,11 +32,11 @@ public class Education {
 
   private String educationName;
   private String degree;
-  private String startDate;
-  private String endDate;
+  private LocalDate startDate;
+  private LocalDate endDate;
 
   @Builder
-  private Education(Trainer trainer, String schoolName, String educationName, String degree, String startDate, String endDate) {
+  private Education(Trainer trainer, String schoolName, String educationName, String degree, LocalDate startDate, LocalDate endDate) {
     this.trainer = trainer;
     this.schoolName = schoolName;
     this.educationName = educationName;

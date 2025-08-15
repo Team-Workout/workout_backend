@@ -8,6 +8,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import java.time.LocalDate;
+import java.util.Date;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,11 +28,11 @@ public class Award {
   private Trainer trainer;
 
   private String awardName;
-  private String awardDate;
+  private LocalDate  awardDate;
   private String awardPlace;
 
   @Builder
-  private Award(Trainer trainer, String awardName, String awardDate, String awardPlace) {
+  private Award(Trainer trainer, String awardName, LocalDate awardDate, String awardPlace) {
     this.trainer = trainer;
     this.awardName = awardName;
     this.awardDate = awardDate;

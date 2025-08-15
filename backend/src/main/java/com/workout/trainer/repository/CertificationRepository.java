@@ -15,4 +15,6 @@ public interface CertificationRepository extends JpaRepository<Certification, Lo
   void deleteAllByTrainerId(Long trainerId);
 
   List<Certification> findByTrainerId(Long trainerId);
+
+  List<Certification> findByTrainerIdIn(List<Long> trainerIds);
 }

@@ -15,4 +15,6 @@ public interface WorkexperiencesRepository extends JpaRepository<Workexperiences
   void deleteAllByTrainerId(Long trainerId);
 
   List<Workexperiences> findByTrainerId(Long trainerId);
+
+  List<Workexperiences> findByTrainerIdIn(List<Long> trainerIds);
 }

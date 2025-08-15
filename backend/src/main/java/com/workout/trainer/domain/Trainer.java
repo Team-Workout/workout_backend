@@ -3,6 +3,7 @@ package com.workout.trainer.domain;
 import com.workout.global.Gender;
 import com.workout.global.Role;
 import com.workout.gym.domain.Gym;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -14,10 +15,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -67,11 +70,26 @@ public class Trainer {
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt; // UTC 기준의 절대 시간을 저장
 
+  @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<Award> awards = new HashSet<>();
+
+  @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<Certification> certifications = new HashSet<>();
+
+  @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<Education> educations = new HashSet<>();
+
+  @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<Workexperiences> workexperiences = new HashSet<>();
-  private Set<Specialty> specialties = new HashSet<>();
+
+  @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<TrainerSpecialty> specialties = new HashSet<>();
+
+  public Set<Specialty> getSpecialties() {
+    return specialties.stream()
+        .map(TrainerSpecialty::getSpecialty)
+        .collect(Collectors.toSet());
+  }
 
   @Override
   public boolean equals(Object o) {

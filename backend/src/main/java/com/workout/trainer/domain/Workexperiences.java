@@ -8,6 +8,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import java.time.LocalDate;
+import java.util.Date;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,11 +30,11 @@ public class Workexperiences {
   private String workName;
   private String workPlace;
   private String workPosition;
-  private String workStart;
-  private String workEnd;
+  private LocalDate workStart;
+  private LocalDate  workEnd;
 
   @Builder
-  private Workexperiences(Trainer trainer, String workName, String workPlace, String workPosition, String workStart, String workEnd) {
+  private Workexperiences(Trainer trainer, String workName, String workPlace, String workPosition, LocalDate  workStart, LocalDate  workEnd) {
     this.trainer = trainer;
     this.workName = workName;
     this.workPlace = workPlace;

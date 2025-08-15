@@ -6,6 +6,7 @@ import com.workout.trainer.dto.ProfileResponseDto;
 import com.workout.trainer.service.TrainerService;
 import jakarta.validation.Valid;
 import java.nio.file.attribute.UserPrincipal;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,5 +48,10 @@ public class TrainerController {
 
     ProfileResponseDto profile = trainerService.getProfile(trainerId);
     return ResponseEntity.ok(profile);
+  }
+  @GetMapping("/gyms/{gymId}/trainers")
+  public ResponseEntity<List<ProfileResponseDto>> getTrainerProfilesByGym(@PathVariable Long gymId) {
+    List<ProfileResponseDto> trainerProfiles = trainerService.getTrainerProfilesByGym(gymId);
+    return ResponseEntity.ok(trainerProfiles);
   }
 }

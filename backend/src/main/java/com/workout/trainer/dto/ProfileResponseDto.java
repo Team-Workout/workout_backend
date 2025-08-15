@@ -2,6 +2,7 @@ package com.workout.trainer.dto;
 
 import com.workout.trainer.domain.*; // Award, Certification 등 모든 도메인 import
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,29 +35,31 @@ public record ProfileResponseDto(
         certifications.stream().map(CertificationDto::from).collect(Collectors.toList()),
         educations.stream().map(EducationDto::from).collect(Collectors.toList()),
         workExperiences.stream().map(WorkExperienceDto::from).collect(Collectors.toList()),
-        specialties.stream().map(Enum::name).collect(Collectors.toSet())
+        trainer.getSpecialties().stream()
+            .map(Specialty::getName)
+            .collect(Collectors.toSet())
     );
   }
 
-  public record AwardDto(String awardName, String awardDate, String awardPlace) {
+  public record AwardDto(String awardName, LocalDate awardDate, String awardPlace) {
     public static AwardDto from(Award award) {
       return new AwardDto(award.getAwardName(), award.getAwardDate(), award.getAwardPlace());
     }
   }
 
-  public record CertificationDto(String certificationName, String issuingOrganization, String acquisitionDate) {
+  public record CertificationDto(String certificationName, String issuingOrganization, LocalDate acquisitionDate) {
     public static CertificationDto from(Certification certification) {
-      return new CertificationDto(certification.getCertificationName(), certification.getIssuingOrganization(), certification.getAcquisitionDate().toString());
+      return new CertificationDto(certification.getCertificationName(), certification.getIssuingOrganization(), certification.getAcquisitionDate());
     }
   }
 
-  public record EducationDto(String schoolName, String educationName, String degree, String startDate, String endDate) {
+  public record EducationDto(String schoolName, String educationName, String degree, LocalDate startDate, LocalDate endDate) {
     public static EducationDto from(Education education) {
       return new EducationDto(education.getSchoolName(), education.getEducationName(), education.getDegree(), education.getStartDate(), education.getEndDate());
     }
   }
 
-  public record WorkExperienceDto(String workName, String workPlace, String workPosition, String workStart, String workEnd) {
+  public record WorkExperienceDto(String workName, String workPlace, String workPosition, LocalDate workStart, LocalDate workEnd) {
     public static WorkExperienceDto from(Workexperiences workExperience) {
       return new WorkExperienceDto(workExperience.getWorkName(), workExperience.getWorkPlace(), workExperience.getWorkPosition(), workExperience.getWorkStart(), workExperience.getWorkEnd());
     }

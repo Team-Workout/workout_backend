@@ -2,9 +2,14 @@ package com.workout.trainer.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -13,17 +18,23 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@AllArgsConstructor // 모든 필드를 인자로 받는 생성자 (빌더가 사용)
+@AllArgsConstructor
 @Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)// JPA가 사용하는 기본 생성자성자 (빌더가 사용)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-public class Specialty {
+public class TrainerSpecialty {
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  Long id;
 
-  @Column(name = "name", nullable = false, unique = true)
-  private String name; // 예: 전문분야 키워드 등록
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "specialty_id")
+  private Specialty specialty;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "trainer_id")
+  private Trainer trainer;
 
   @Override
   public boolean equals(Object o) {
@@ -34,7 +45,7 @@ public class Specialty {
     Class<?> thatClass = org.hibernate.Hibernate.getClass(o);
     if (thisClass != thatClass) return false;
 
-    Specialty that = (Specialty) o;
+    TrainerSpecialty that = (TrainerSpecialty) o;
     return Objects.equals(getId(), that.getId());
   }
 
@@ -42,5 +53,4 @@ public class Specialty {
   public int hashCode() {
     return Objects.hashCode(id);
   }
-
 }

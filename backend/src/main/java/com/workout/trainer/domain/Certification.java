@@ -8,8 +8,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import java.time.LocalDate;
 import java.util.Date;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -27,8 +29,21 @@ public class Certification {
 
   private String certificationName;
   private String issuingOrganization;
-  private Date acquisitionDate;
+  private LocalDate  acquisitionDate;
 
+  @Builder
+  private Certification(Trainer trainer, String certificationName, String issuingOrganization, LocalDate acquisitionDate) {
+    this.trainer = trainer;
+    this.certificationName = certificationName;
+    this.issuingOrganization = issuingOrganization;
+    this.acquisitionDate = acquisitionDate;
+  }
   public static Certification of(CertificationDto certDto, Trainer trainer) {
+    return Certification.builder()
+        .trainer(trainer)
+        .acquisitionDate(certDto.acquisitionDate())
+        .certificationName(certDto.certificationName())
+        .issuingOrganization(certDto.issuingOrganization())
+        .build();
   }
 }

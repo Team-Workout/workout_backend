@@ -15,4 +15,6 @@ public interface AwardRepository  extends JpaRepository<Award, Long> {
   void deleteAllByTrainerId(Long trainerId);
 
   List<Award> findByTrainerId(Long trainerId);
+
+  List<Award> findByTrainerIdIn(List<Long> trainerIds);
 }

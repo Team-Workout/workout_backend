@@ -15,4 +15,6 @@ public interface EducationRepository extends JpaRepository<Education, Long> {
   void deleteAllByTrainerId(Long trainerId);
 
   List<Education> findByTrainerId(Long trainerId);
+
+  List<Education> findByTrainerIdIn(List<Long> trainerIds);
 }
