@@ -10,7 +10,10 @@ import com.workout.workout.domain.log.WorkoutSet;
 import com.workout.workout.dto.log.WorkoutLogCreateRequest;
 import com.workout.workout.dto.log.WorkoutLogResponse;
 import com.workout.workout.repository.ExerciseRepository;
+import com.workout.workout.repository.FeedbackRepository;
+import com.workout.workout.repository.WorkoutExerciseRepository;
 import com.workout.workout.repository.WorkoutLogRepository;
+import com.workout.workout.repository.WorkoutSetRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Map;
@@ -25,11 +28,20 @@ public class WorkoutLogService {
   private final WorkoutLogRepository workoutLogRepository;
   private final UserRepository userRepository;
   private final ExerciseRepository exerciseRepository;
+  private final FeedbackRepository feedbackRepository;
+  private final WorkoutLogRepository workoutSetRepository;
+  private final WorkoutExerciseRepository workoutExerciseRepository;
 
-  public WorkoutLogService(WorkoutLogRepository workoutLogRepository, UserRepository userRepository, ExerciseRepository exerciseRepository) {
+
+  public WorkoutLogService(WorkoutLogRepository workoutLogRepository, UserRepository userRepository,
+      ExerciseRepository exerciseRepository, FeedbackRepository feedbackRepository,
+      WorkoutLogRepository workoutSetRepository, WorkoutExerciseRepository workoutExerciseRepository) {
     this.workoutLogRepository = workoutLogRepository;
     this.userRepository = userRepository;
     this.exerciseRepository = exerciseRepository;
+    this.feedbackRepository = feedbackRepository;
+    this.workoutSetRepository = workoutSetRepository;
+    this.workoutExerciseRepository = workoutExerciseRepository;
   }
 
   @Transactional
@@ -52,7 +64,9 @@ public class WorkoutLogService {
 
     request.workoutExercises().forEach(exerciseDto -> {
       Exercise exercise = exerciseMap.get(exerciseDto.exerciseId());
-      if (exercise == null) throw new EntityNotFoundException("운동 정보를 찾을 수 없습니다. ID: " + exerciseDto.exerciseId());
+      if (exercise == null) {
+        throw new EntityNotFoundException("운동 정보를 찾을 수 없습니다. ID: " + exerciseDto.exerciseId());
+      }
 
       WorkoutExercise workoutExercise = WorkoutExercise.builder()
           .exercise(exercise)
@@ -102,17 +116,48 @@ public class WorkoutLogService {
    */
   @Transactional
   public void deleteWorkoutLog(Long workoutLogId, Long userId) {
+    // 1. 삭제할 WorkoutLog 조회 및 소유권 확인
     WorkoutLog workoutLog = workoutLogRepository.findById(workoutLogId)
-        .orElseThrow(() -> new EntityNotFoundException("삭제할 운동일지를 찾을 수 없습니다. ID: " + workoutLogId));
+        .orElseThrow(() -> new EntityNotFoundException("운동일지를 찾을 수 없습니다."));
 
-    // 본인의 운동일지만 삭제 가능하도록 권한 확인
     if (!workoutLog.getUser().getId().equals(userId)) {
-      // 실제 프로젝트에서는 Custom Exception을 사용하는 것이 좋습니다.
-      throw new SecurityException("해당 운동일지를 삭제할 권한이 없습니다.");
+      throw new SecurityException("운동일지를 삭제할 권한이 없습니다.");
     }
 
-    // CascadeType.ALL + orphanRemoval=true 옵션에 의해
-    // workoutLog만 삭제해도 하위의 WorkoutExercise, WorkoutSet, Feedback이 모두 연쇄적으로 삭제됩니다.
+    // 2. 삭제할 대상들의 ID 목록을 미리 추출
+    List<WorkoutExercise> exercises = workoutLog.getWorkoutExercises();
+    List<Long> exerciseIds = exercises.stream()
+        .map(WorkoutExercise::getId)
+        .collect(Collectors.toList());
+
+    List<WorkoutSet> sets = exercises.stream()
+        .flatMap(exercise -> exercise.getWorkoutSets().stream())
+        .collect(Collectors.toList());
+    List<Long> setIds = sets.stream()
+        .map(WorkoutSet::getId)
+        .collect(Collectors.toList());
+
+    // 3. [Bottom-up Deletion] 최하위 자식부터 순차적으로 삭제
+    // 3-1. WorkoutSet에 달린 Feedback들 삭제
+    if (!setIds.isEmpty()) {
+      feedbackRepository.deleteAllByWorkoutSetIdIn(setIds);
+    }
+    // 3-2. WorkoutExercise에 달린 Feedback들 삭제
+    if (!exerciseIds.isEmpty()) {
+      feedbackRepository.deleteAllByWorkoutExerciseIdIn(exerciseIds);
+    }
+    // 3-3. WorkoutLog에 직접 달린 Feedback들 삭제
+    feedbackRepository.deleteAllByWorkoutLogId(workoutLogId);
+
+    // 3-4. WorkoutSet들 삭제
+    if (!exerciseIds.isEmpty()) {
+      workoutSetRepository.deleteAllByWorkoutExerciseIdIn(exerciseIds);
+    }
+
+    // 3-5. WorkoutExercise들 삭제
+    workoutExerciseRepository.deleteAll(exercises);
+
+    // 4. 모든 자식들이 삭제된 후, 최종적으로 WorkoutLog 삭제
     workoutLogRepository.delete(workoutLog);
   }
 
