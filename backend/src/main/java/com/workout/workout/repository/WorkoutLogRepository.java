@@ -14,7 +14,18 @@ public interface WorkoutLogRepository extends JpaRepository<WorkoutLog, Long> {
       "WHERE wl.id = :id")
   Optional<WorkoutLog> findByIdWithDetails(@Param("id") Long id);
 
-  void deleteAllByWorkoutExerciseIdIn(List<Long> exerciseIds);
+
+  @Query("SELECT DISTINCT wl FROM WorkoutLog wl " +
+      "LEFT JOIN FETCH wl.user u " + // 사용자 정보도 함께 가져옴
+      "LEFT JOIN FETCH wl.feedbacks f_wl " +
+      "LEFT JOIN FETCH wl.workoutExercises we " +
+      "LEFT JOIN FETCH we.exercise e " +
+      "LEFT JOIN FETCH we.workoutSets ws " +
+      "LEFT JOIN FETCH ws.feedbacks f_ws " +
+      "WHERE wl.id = :id")
+  Optional<WorkoutLog> findWorkoutLogGraph(@Param("id") Long id);
+
+  boolean existsByIdAndUserId(Long id, Long userId);
 }
 
 

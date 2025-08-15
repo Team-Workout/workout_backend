@@ -6,6 +6,7 @@ import com.workout.gym.service.GymService;
 import com.workout.user.domain.AccountStatus;
 import com.workout.user.domain.User;
 import com.workout.user.repository.UserRepository;
+import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -53,8 +54,9 @@ public class UserService {
     }
 
     public User registerUser(SignupRequest signupRequest) {
+        log.info("1");
         Gym gym = gymService.findById(signupRequest.gymId());
-
+        log.info("2");
         ensureUserNameAndEmailAreUnique(signupRequest.name(), signupRequest.email());
 
         String encodedPassword = passwordEncoder.encode(signupRequest.password());

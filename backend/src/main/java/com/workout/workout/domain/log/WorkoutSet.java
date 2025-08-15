@@ -44,9 +44,7 @@ public class WorkoutSet {
   @Column(nullable = false)
   private int reps;
 
-  @OneToMany(mappedBy = "workoutSet",
-      cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE},
-      orphanRemoval = true)
+  @OneToMany(mappedBy = "workoutSet")
   @OrderBy("createdAt ASC")
   private Set<Feedback> feedbacks = new HashSet<>();
 
