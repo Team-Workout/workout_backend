@@ -29,7 +29,7 @@ public class TrainerController {
   /**
    * 본인 프로필 생성 및 수정
    */
-  @PutMapping("/trainers/profile")
+  @PutMapping("/profile")
   public ResponseEntity<Void> createOrUpdateProfile(
       @AuthenticationPrincipal UserPrincipal userPrincipal,
       @Valid @RequestBody ProfileCreateDto profileCreateDto) {
@@ -43,7 +43,7 @@ public class TrainerController {
   /**
    * 특정 트레이너 프로필 조회
    */
-  @GetMapping("/trainers/{trainerId}/profile")
+  @GetMapping("/{trainerId}/profile")
   public ResponseEntity<ProfileResponseDto> getTrainerProfile(
       @PathVariable Long trainerId) {
 

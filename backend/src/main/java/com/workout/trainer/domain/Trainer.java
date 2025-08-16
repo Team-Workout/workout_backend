@@ -59,11 +59,12 @@ public class Trainer {
   private String phoneNumber;
   private String introduction;
 
+  @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private Gender gender;
 
   @Enumerated(EnumType.STRING)
-  @Column(name = "role", nullable = false)
+  @Column(nullable = false)
   private Role role;
 
   @CreatedDate

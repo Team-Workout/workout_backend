@@ -16,6 +16,7 @@ import com.workout.trainer.repository.SpecialtyRepository;
 import com.workout.trainer.repository.TrainerRepository;
 import com.workout.trainer.repository.TrainerSpecialtyRepository;
 import com.workout.trainer.repository.WorkexperiencesRepository;
+import com.workout.user.domain.User;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -71,7 +72,10 @@ public class TrainerService {
 
   @Transactional
   public void updateProfile(Long trainerId, ProfileCreateDto requestDto) {
-    Trainer trainer = trainerRepository.findById(trainerId)
+    /*Trainer trainer = trainerRepository.findById(trainerId)
+        .orElseThrow(() -> new EntityNotFoundException("트레이너를 찾을 수 없습니다. ID: " + trainerId));*/
+    //todo 임시값 -> 트레이너와 유저의 db통합 전 논리 오류
+    Trainer trainer = trainerRepository.findById(2L)
         .orElseThrow(() -> new EntityNotFoundException("트레이너를 찾을 수 없습니다. ID: " + trainerId));
     deleteProfileDetails(trainerId);
     saveProfileDetails(trainer, requestDto);
