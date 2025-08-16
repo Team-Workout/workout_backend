@@ -32,10 +32,9 @@ public class TrainerController {
       @AuthenticationPrincipal UserPrincipal userPrincipal,
       @Valid @RequestBody ProfileCreateDto profileCreateDto) {
 
-    //Long currentTrainerId = userPrincipal.getUserId();
+    Long currentTrainerId = userPrincipal.getUserId();
     //todo
     //스프링 시큐리티 적용된 버전과 호한해야됨
-    Long currentTrainerId = 1L;
 
     trainerService.createProfile(currentTrainerId, profileCreateDto);
 

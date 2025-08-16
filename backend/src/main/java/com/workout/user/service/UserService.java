@@ -6,6 +6,7 @@ import com.workout.gym.service.GymService;
 import com.workout.user.domain.AccountStatus;
 import com.workout.user.domain.User;
 import com.workout.user.repository.UserRepository;
+import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -53,23 +54,14 @@ public class UserService {
     }
 
     public User registerUser(SignupRequest signupRequest) {
-        // [개선] findById 호출 한 번으로 존재 여부 확인과 객체 조회를 동시에 처리
+        log.info("1");
         Gym gym = gymService.findById(signupRequest.gymId());
-
+        log.info("2");
         ensureUserNameAndEmailAreUnique(signupRequest.name(), signupRequest.email());
 
         String encodedPassword = passwordEncoder.encode(signupRequest.password());
 
-        User user = User.builder()
-            .gym(gym) // [개선] 이미 조회한 gym 객체 사용
-            .goal(signupRequest.goal())
-            .gender(signupRequest.gender())
-            .accountStatus(AccountStatus.ACTIVE)
-            .email(signupRequest.email())
-            .name(signupRequest.name())
-            .password(encodedPassword)
-            .role(signupRequest.role())
-            .build();
+        User user = signupRequest.toEntity(gym, encodedPassword);
 
         return userRepository.save(user);
     }

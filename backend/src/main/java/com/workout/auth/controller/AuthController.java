@@ -8,6 +8,7 @@ import com.workout.user.domain.User;
 import com.workout.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,23 +30,18 @@ public class AuthController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<SigninResponse> signin(@RequestBody SigninRequest signinRequest, HttpServletRequest request) {
+    public ResponseEntity<SigninResponse> signin(@Valid @RequestBody SigninRequest signinRequest,
+        HttpServletRequest request,
+        HttpServletResponse response) {
 
-        User user = authService.login(signinRequest.email(), signinRequest.password(), request);
-        SigninResponse result = new SigninResponse(user.getId().toString());
-        return ResponseEntity.ok(result);
+        User user = authService.login(signinRequest.email(), signinRequest.password(), request, response);
+        SigninResponse signinResponse = new SigninResponse(user.getId(), user.getName());
+        return ResponseEntity.ok(signinResponse);
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<SigninResponse> signup(@RequestBody SignupRequest signupRequest) {
+    public ResponseEntity<Long> signup(@Valid @RequestBody SignupRequest signupRequest) {
         User user = userService.registerUser(signupRequest);
-        SigninResponse response = new SigninResponse(user.getId().toString());
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    @PostMapping("/signout")
-    public ResponseEntity<String> signout(HttpServletRequest request, HttpServletResponse response) {
-        authService.logout(request);
-        return ResponseEntity.ok("Logout Successful");
+        return ResponseEntity.status(HttpStatus.CREATED).body(user.getId());
     }
 }

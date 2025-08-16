@@ -1,4 +1,4 @@
-package com.workout.global;
+package com.workout.user.domain;
 
 public enum Role {
     ADMIN,
