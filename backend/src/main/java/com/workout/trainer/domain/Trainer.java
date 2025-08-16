@@ -1,8 +1,8 @@
 package com.workout.trainer.domain;
 
-import com.workout.global.Gender;
-import com.workout.global.Role;
 import com.workout.gym.domain.Gym;
+import com.workout.user.domain.Gender;
+import com.workout.user.domain.Role;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -68,27 +68,18 @@ public class Trainer {
 
   @CreatedDate
   @Column(name = "created_at", nullable = false, updatable = false)
-  private Instant createdAt; // UTC 기준의 절대 시간을 저장
+  private Instant createdAt;
 
-  @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL, orphanRemoval = true)
-  private Set<Award> awards = new HashSet<>();
-
-  @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL, orphanRemoval = true)
-  private Set<Certification> certifications = new HashSet<>();
-
-  @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL, orphanRemoval = true)
-  private Set<Education> educations = new HashSet<>();
-
-  @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL, orphanRemoval = true)
-  private Set<Workexperiences> workexperiences = new HashSet<>();
-
-  @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL, orphanRemoval = true)
-  private Set<TrainerSpecialty> specialties = new HashSet<>();
-
-  public Set<Specialty> getSpecialties() {
-    return specialties.stream()
-        .map(TrainerSpecialty::getSpecialty)
-        .collect(Collectors.toSet());
+  @Builder
+  public Trainer(Gym gym, String name, String email, String password, String phoneNumber, String introduction, Gender gender, Role role) {
+    this.gym = gym;
+    this.name = name;
+    this.email = email;
+    this.password = password;
+    this.phoneNumber = phoneNumber;
+    this.introduction = introduction;
+    this.gender = gender;
+    this.role = role;
   }
 
   @Override

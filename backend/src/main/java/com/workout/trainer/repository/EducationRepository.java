@@ -9,12 +9,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface EducationRepository extends JpaRepository<Education, Long> {
+  List<Education> findAllByTrainerId(Long trainerId);
 
-  @Modifying(clearAutomatically = true)
-  @Query("DELETE FROM Education e WHERE e.trainer.id = :trainerId")
   void deleteAllByTrainerId(Long trainerId);
-
-  List<Education> findByTrainerId(Long trainerId);
-
-  List<Education> findByTrainerIdIn(List<Long> trainerIds);
 }

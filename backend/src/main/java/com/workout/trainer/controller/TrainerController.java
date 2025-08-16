@@ -1,11 +1,11 @@
 package com.workout.trainer.controller;
 
 
+import com.workout.auth.domain.UserPrincipal;
 import com.workout.trainer.dto.ProfileCreateDto;
 import com.workout.trainer.dto.ProfileResponseDto;
 import com.workout.trainer.service.TrainerService;
 import jakarta.validation.Valid;
-import java.nio.file.attribute.UserPrincipal;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,28 +26,34 @@ public class TrainerController {
     this.trainerService = trainerService;
   }
 
-  //프로필 저장
-  @PutMapping("/profile")
+  /**
+   * 본인 프로필 생성 및 수정
+   */
+  @PutMapping("/trainers/profile")
   public ResponseEntity<Void> createOrUpdateProfile(
       @AuthenticationPrincipal UserPrincipal userPrincipal,
       @Valid @RequestBody ProfileCreateDto profileCreateDto) {
 
     Long currentTrainerId = userPrincipal.getUserId();
-    //todo
-    //스프링 시큐리티 적용된 버전과 호한해야됨
-
-    trainerService.createProfile(currentTrainerId, profileCreateDto);
+    trainerService.updateProfile(currentTrainerId, profileCreateDto);
 
     return ResponseEntity.ok().build();
   }
-  //프로필 조회
-  @GetMapping("/{trainerId}/profile")
+
+  /**
+   * 특정 트레이너 프로필 조회
+   */
+  @GetMapping("/trainers/{trainerId}/profile")
   public ResponseEntity<ProfileResponseDto> getTrainerProfile(
       @PathVariable Long trainerId) {
 
     ProfileResponseDto profile = trainerService.getProfile(trainerId);
     return ResponseEntity.ok(profile);
   }
+
+  /**
+   * 특정 체육관의 모든 트레이너 프로필 목록 조회
+   */
   @GetMapping("/gyms/{gymId}/trainers")
   public ResponseEntity<List<ProfileResponseDto>> getTrainerProfilesByGym(@PathVariable Long gymId) {
     List<ProfileResponseDto> trainerProfiles = trainerService.getTrainerProfilesByGym(gymId);

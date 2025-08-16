@@ -36,6 +36,12 @@ public class TrainerSpecialty {
   @JoinColumn(name = "trainer_id")
   private Trainer trainer;
 
+  @Builder
+  public TrainerSpecialty(Specialty specialty, Trainer trainer) {
+    this.specialty = specialty;
+    this.trainer = trainer;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

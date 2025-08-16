@@ -1,6 +1,7 @@
 package com.workout.trainer.domain;
 
 import com.workout.trainer.dto.ProfileCreateDto.WorkexperiencesDto;
+import com.workout.workout.domain.log.WorkoutLog;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -10,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -43,14 +45,27 @@ public class Workexperiences {
     this.workEnd = workEnd;
   }
 
-  public static Workexperiences of(WorkexperiencesDto workDto, Trainer trainer) {
-    return Workexperiences.builder()
-        .trainer(trainer)
-        .workName(workDto.workName())
-        .workPlace(workDto.workPlace())
-        .workPosition(workDto.workPosition())
-        .workStart(workDto.workStartDate())
-        .workEnd(workDto.workEndDate())
-        .build();
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null) {
+      return false;
+    }
+
+    Class<?> thisClass = org.hibernate.Hibernate.getClass(this);
+    Class<?> thatClass = org.hibernate.Hibernate.getClass(o);
+    if (thisClass != thatClass) {
+      return false;
+    }
+
+    Workexperiences that = (Workexperiences) o;
+    return Objects.equals(getId(), that.getId());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(id);
   }
 }

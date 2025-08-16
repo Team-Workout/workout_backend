@@ -9,12 +9,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface WorkexperiencesRepository extends JpaRepository<Workexperiences, Long> {
+  List<Workexperiences> findAllByTrainerId(Long trainerId);
 
-  @Modifying(clearAutomatically = true)
-  @Query("DELETE FROM Workexperiences w WHERE w.trainer.id = :trainerId")
   void deleteAllByTrainerId(Long trainerId);
-
-  List<Workexperiences> findByTrainerId(Long trainerId);
-
-  List<Workexperiences> findByTrainerIdIn(List<Long> trainerIds);
 }

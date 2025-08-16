@@ -24,7 +24,7 @@ public record ProfileResponseDto(
       List<Certification> certifications,
       List<Education> educations,
       List<Workexperiences> workExperiences,
-      Set<Specialty> specialties
+      Set<Specialty> specialties // 파라미터 타입을 Set<Specialty>로 유지
   ) {
     return new ProfileResponseDto(
         trainer.getId(),
@@ -35,7 +35,8 @@ public record ProfileResponseDto(
         certifications.stream().map(CertificationDto::from).collect(Collectors.toList()),
         educations.stream().map(EducationDto::from).collect(Collectors.toList()),
         workExperiences.stream().map(WorkExperienceDto::from).collect(Collectors.toList()),
-        trainer.getSpecialties().stream()
+        // trainer.getSpecialties()가 아닌, 파라미터로 받은 specialties를 사용하도록 수정
+        specialties.stream()
             .map(Specialty::getName)
             .collect(Collectors.toSet())
     );
@@ -46,19 +47,16 @@ public record ProfileResponseDto(
       return new AwardDto(award.getAwardName(), award.getAwardDate(), award.getAwardPlace());
     }
   }
-
   public record CertificationDto(String certificationName, String issuingOrganization, LocalDate acquisitionDate) {
     public static CertificationDto from(Certification certification) {
       return new CertificationDto(certification.getCertificationName(), certification.getIssuingOrganization(), certification.getAcquisitionDate());
     }
   }
-
   public record EducationDto(String schoolName, String educationName, String degree, LocalDate startDate, LocalDate endDate) {
     public static EducationDto from(Education education) {
       return new EducationDto(education.getSchoolName(), education.getEducationName(), education.getDegree(), education.getStartDate(), education.getEndDate());
     }
   }
-
   public record WorkExperienceDto(String workName, String workPlace, String workPosition, LocalDate workStart, LocalDate workEnd) {
     public static WorkExperienceDto from(Workexperiences workExperience) {
       return new WorkExperienceDto(workExperience.getWorkName(), workExperience.getWorkPlace(), workExperience.getWorkPosition(), workExperience.getWorkStart(), workExperience.getWorkEnd());

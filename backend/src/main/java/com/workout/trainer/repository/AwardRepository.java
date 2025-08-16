@@ -9,12 +9,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AwardRepository  extends JpaRepository<Award, Long> {
+  // 프로필 조회 시 사용
+  List<Award> findAllByTrainerId(Long trainerId);
 
-  @Modifying(clearAutomatically = true)
-  @Query("DELETE FROM Award a WHERE a.trainer.id = :trainerId")
+  // 프로필 수정 및 삭제 시 사용
   void deleteAllByTrainerId(Long trainerId);
-
-  List<Award> findByTrainerId(Long trainerId);
-
-  List<Award> findByTrainerIdIn(List<Long> trainerIds);
 }

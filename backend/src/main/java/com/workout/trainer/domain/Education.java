@@ -1,6 +1,7 @@
 package com.workout.trainer.domain;
 
 import com.workout.trainer.dto.ProfileCreateDto.EducationDto;
+import com.workout.workout.domain.log.WorkoutLog;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -10,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -45,14 +47,27 @@ public class Education {
     this.endDate = endDate;
   }
 
-  public static Education of(EducationDto eduDto, Trainer trainer) {
-    return Education.builder()
-        .trainer(trainer)
-        .schoolName(eduDto.schoolName())
-        .educationName(eduDto.educationName())
-        .degree(eduDto.degree())
-        .startDate(eduDto.startDate())
-        .endDate(eduDto.endDate())
-        .build();
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null) {
+      return false;
+    }
+
+    Class<?> thisClass = org.hibernate.Hibernate.getClass(this);
+    Class<?> thatClass = org.hibernate.Hibernate.getClass(o);
+    if (thisClass != thatClass) {
+      return false;
+    }
+
+    Education that = (Education) o;
+    return Objects.equals(getId(), that.getId());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(id);
   }
 }
