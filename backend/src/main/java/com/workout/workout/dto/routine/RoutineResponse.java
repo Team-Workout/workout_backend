@@ -1,101 +1,69 @@
 package com.workout.workout.dto.routine;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.workout.workout.domain.routine.Routine;
 import com.workout.workout.domain.routine.RoutineExercise;
 import com.workout.workout.domain.routine.RoutineSet;
-import lombok.Getter;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-@Getter
-public class RoutineResponse {
-  private final Long routineId;
-  private final List<RoutineExerciseResponse> routineExercises;
 
-  private RoutineResponse(Routine routine) {
-    this.routineId = routine.getId();
-    this.routineExercises = routine.getRoutineExercises().stream()
-        .map(RoutineExerciseResponse::from)
+public record RoutineResponse(
+    Long routineId,
+    String routineName,
+    String description,
+    List<RoutineExerciseResponse> routineExercises
+) {
+  public static RoutineResponse from(Routine routine,
+      List<RoutineExercise> exercises,
+      Map<Long, List<RoutineSet>> setsMap) {
+
+    List<RoutineExerciseResponse> exerciseResponses = exercises.stream()
+        .map(exercise -> {
+          // exercise ID에 해당하는 set 목록을 map에서 조회. 없으면 빈 리스트 반환.
+          List<RoutineSet> sets = setsMap.getOrDefault(exercise.getId(), Collections.emptyList());
+          return RoutineExerciseResponse.from(exercise, sets);
+        })
         .collect(Collectors.toList());
+
+    return new RoutineResponse(routine.getId(), routine.getName(), routine.getDescription(), exerciseResponses);
   }
 
-  @JsonCreator
-  public RoutineResponse(
-      @JsonProperty("routineId") Long routineId,
-      @JsonProperty("routineExercises") List<RoutineExerciseResponse> routineExercises) {
-    this.routineId = routineId;
-    this.routineExercises = routineExercises;
-  }
-
-  public static RoutineResponse from(Routine routine) {
-    return new RoutineResponse(routine);
-  }
-
-  @Getter
-  public static class RoutineExerciseResponse {
-    private final Long routineExerciseId;
-    private final String exerciseName;
-    private final int order;
-    private final List<RoutineSetResponse> routineSets;
-
-    private RoutineExerciseResponse(RoutineExercise routineExercise) {
-      this.routineExerciseId = routineExercise.getId();
-      this.exerciseName = routineExercise.getExercise().getName();
-      this.order = routineExercise.getOrder();
-      this.routineSets = routineExercise.getRoutineSets().stream()
+  public record RoutineExerciseResponse(
+      Long routineExerciseId,
+      String exerciseName,
+      int order,
+      List<RoutineSetResponse> routineSets
+  ) {
+    public static RoutineExerciseResponse from(RoutineExercise routineExercise, List<RoutineSet> sets) {
+      List<RoutineSetResponse> setResponses = sets.stream()
           .map(RoutineSetResponse::from)
           .collect(Collectors.toList());
-    }
-
-    @JsonCreator
-    public RoutineExerciseResponse(
-        @JsonProperty("routineExerciseId") Long routineExerciseId,
-        @JsonProperty("exerciseName") String exerciseName,
-        @JsonProperty("order") int order,
-        @JsonProperty("routineSets") List<RoutineSetResponse> routineSets) {
-      this.routineExerciseId = routineExerciseId;
-      this.exerciseName = exerciseName;
-      this.order = order;
-      this.routineSets = routineSets;
-    }
-
-    public static RoutineExerciseResponse from(RoutineExercise routineExercise) {
-      return new RoutineExerciseResponse(routineExercise);
+      return new RoutineExerciseResponse(
+          routineExercise.getId(),
+          routineExercise.getExercise().getName(), // Exercise 엔티티는 LAZY 로딩이 아님을 가정
+          routineExercise.getOrder(),
+          setResponses
+      );
     }
   }
 
-  @Getter
-  public static class RoutineSetResponse {
-    private final Long workoutSetId;
-    private final int order;
-    private final BigDecimal weight;
-    private final int reps;
-
-    private RoutineSetResponse(RoutineSet routineSet) {
-      this.workoutSetId = routineSet.getId();
-      this.order = routineSet.getOrder();
-      this.weight = routineSet.getWeight();
-      this.reps = routineSet.getReps();
-    }
-
-    @JsonCreator
-    public RoutineSetResponse(
-        @JsonProperty("workoutSetId") Long workoutSetId,
-        @JsonProperty("order") int order,
-        @JsonProperty("weight") BigDecimal weight,
-        @JsonProperty("reps") int reps) {
-      this.workoutSetId = workoutSetId;
-      this.order = order;
-      this.weight = weight;
-      this.reps = reps;
-    }
-
+  public record RoutineSetResponse(
+      Long workoutSetId,
+      int order,
+      BigDecimal weight,
+      int reps
+  ) {
     public static RoutineSetResponse from(RoutineSet routineSet) {
-      return new RoutineSetResponse(routineSet);
+      return new RoutineSetResponse(
+          routineSet.getId(),
+          routineSet.getOrder(),
+          routineSet.getWeight(),
+          routineSet.getReps()
+      );
     }
   }
 }

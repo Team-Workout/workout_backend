@@ -3,6 +3,7 @@ package com.workout.workout.domain.log;
 import com.workout.workout.domain.exercise.Exercise;
 import jakarta.persistence.*;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -31,30 +32,34 @@ public class WorkoutExercise {
   @Column(name = "log_order", nullable = false)
   private int order;
 
-  @OneToMany(mappedBy = "workoutExercise")  @OrderBy("order ASC")
-  private List<WorkoutSet> workoutSets = new ArrayList<>();
-
-  @OneToMany(mappedBy = "workoutExercise")
-  private Set<Feedback> feedbacks = new HashSet<>();
-
   @Builder
-  public WorkoutExercise(Exercise exercise, int order) {
+  public WorkoutExercise(Exercise exercise, int order, WorkoutLog workoutLog) {
+    this.workoutLog = workoutLog;
     this.exercise = exercise;
     this.order = order;
   }
 
-  //== 연관관계 편의 메소드 ==//
-  protected void setWorkoutLog(WorkoutLog workoutLog) {
-    this.workoutLog = workoutLog;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null) {
+      return false;
+    }
+
+    Class<?> thisClass = org.hibernate.Hibernate.getClass(this);
+    Class<?> thatClass = org.hibernate.Hibernate.getClass(o);
+    if (thisClass != thatClass) {
+      return false;
+    }
+
+    WorkoutExercise that = (WorkoutExercise) o;
+    return Objects.equals(getId(), that.getId());
   }
 
-  public void addWorkoutSet(WorkoutSet workoutSet) {
-    this.workoutSets.add(workoutSet);
-    workoutSet.setWorkoutExercise(this);
-  }
-
-  public void addFeedback(Feedback feedback) {
-    this.feedbacks.add(feedback);
-    feedback.setWorkoutExercise(this);
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(id);
   }
 }

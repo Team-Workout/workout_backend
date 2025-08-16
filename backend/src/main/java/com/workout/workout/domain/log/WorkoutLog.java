@@ -45,13 +45,6 @@ public class WorkoutLog implements Auditable {
   @Column(name = "workout_date", nullable = false)
   private LocalDate workoutDate;
 
-  @OneToMany(mappedBy = "workoutLog")
-  @OrderBy("order ASC")
-  private List<WorkoutExercise> workoutExercises = new ArrayList<>();
-
-  @OneToMany(mappedBy = "workoutLog")
-  private Set<Feedback> feedbacks = new HashSet<>();
-
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
 
@@ -63,19 +56,6 @@ public class WorkoutLog implements Auditable {
     this.user = user;
     this.workoutDate = workoutDate;
   }
-
-  //== 연관관계 편의 메소드 ==//
-  public void addWorkoutExercise(WorkoutExercise workoutExercise) {
-    this.workoutExercises.add(workoutExercise);
-    // 부모-자식 관계 설정
-    workoutExercise.setWorkoutLog(this);
-  }
-
-  public void addFeedback(Feedback feedback) {
-    this.feedbacks.add(feedback);
-    feedback.setWorkoutLog(this);
-  }
-
 
   @Override
   public boolean equals(Object o) {

@@ -44,26 +44,13 @@ public class WorkoutSet {
   @Column(nullable = false)
   private int reps;
 
-  @OneToMany(mappedBy = "workoutSet")
-  @OrderBy("createdAt ASC")
-  private Set<Feedback> feedbacks = new HashSet<>();
-
 
   @Builder
-  public WorkoutSet(int order, BigDecimal weight, int reps) {
+  public WorkoutSet(int order, BigDecimal weight, int reps, WorkoutExercise workoutExercise) {
     this.order = order;
     this.weight = weight;
     this.reps = reps;
-  }
-
-  //== 연관관계 편의 메소드 ==//
-  protected void setWorkoutExercise(WorkoutExercise workoutExercise){
     this.workoutExercise = workoutExercise;
-  }
-
-  public void addFeedback(Feedback feedback) {
-    this.feedbacks.add(feedback);
-    feedback.setWorkoutSet(this);
   }
 
   @Override

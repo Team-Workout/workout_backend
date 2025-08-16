@@ -37,21 +37,11 @@ public class Routine {
 
   String description;
 
-  @OneToMany(mappedBy = "routine", cascade = CascadeType.ALL, orphanRemoval = true)
-  @OrderBy("order ASC")
-  List<RoutineExercise> routineExercises = new ArrayList<>();
-
   @Builder
   public Routine(User user, String name, String description) {
     this.user = user;
     this.name = name;
     this.description = description;
-  }
-
-  //== 연관관계 편의 메소드 ==//
-  public void addRoutineExercise(RoutineExercise routineExercise) {
-    this.routineExercises.add(routineExercise);
-    routineExercise.setRoutine(this);
   }
 
   @Override

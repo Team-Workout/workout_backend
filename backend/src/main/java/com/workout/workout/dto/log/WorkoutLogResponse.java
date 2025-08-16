@@ -4,10 +4,11 @@ import com.workout.workout.domain.log.Feedback;
 import com.workout.workout.domain.log.WorkoutExercise;
 import com.workout.workout.domain.log.WorkoutLog;
 import com.workout.workout.domain.log.WorkoutSet;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -18,41 +19,56 @@ public record WorkoutLogResponse(
     List<WorkoutExerciseResponse> workoutExercises
 ) {
 
-  public static WorkoutLogResponse from(WorkoutLog workoutLog) {
-    // 엔티티의 컬렉션을 각각의 DTO 컬렉션으로 변환
-    Set<FeedbackResponse> feedbackResponses = workoutLog.getFeedbacks().stream()
+  public static WorkoutLogResponse from(WorkoutLog log, List<WorkoutExercise> exercises, List<WorkoutSet> sets, List<Feedback> feedbacks) {
+    Map<Long, List<Feedback>> feedbackBySetId = feedbacks.stream()
+        .filter(f -> f.getWorkoutSet() != null)
+        .collect(Collectors.groupingBy(f -> f.getWorkoutSet().getId()));
+
+    Map<Long, List<Feedback>> feedbackByExerciseId = feedbacks.stream()
+        .filter(f -> f.getWorkoutExercise() != null)
+        .collect(Collectors.groupingBy(f -> f.getWorkoutExercise().getId()));
+
+    Set<FeedbackResponse> logFeedbacks = feedbacks.stream()
+        .filter(f -> f.getWorkoutLog() != null)
         .map(FeedbackResponse::from)
         .collect(Collectors.toSet());
 
-    List<WorkoutExerciseResponse> workoutExerciseResponses = workoutLog.getWorkoutExercises().stream()
-        .map(WorkoutExerciseResponse::from)
-        .collect(Collectors.toList());
+    Map<Long, List<WorkoutSetResponse>> setsByExerciseId = sets.stream()
+        .collect(Collectors.groupingBy(
+            set -> set.getWorkoutExercise().getId(),
+            Collectors.mapping(set -> WorkoutSetResponse.from(set, feedbackBySetId.getOrDefault(set.getId(), Collections.emptyList())), Collectors.toList())
+        ));
 
-    // 변환된 데이터로 record 생성자를 호출하여 반환
-    return new WorkoutLogResponse(
-        workoutLog.getId(),
-        workoutLog.getWorkoutDate(),
-        feedbackResponses,
-        workoutExerciseResponses
-    );
+    List<WorkoutExerciseResponse> exerciseResponses = exercises.stream()
+        .map(ex -> WorkoutExerciseResponse.from(
+            ex,
+            setsByExerciseId.getOrDefault(ex.getId(), Collections.emptyList()),
+            feedbackByExerciseId.getOrDefault(ex.getId(), Collections.emptyList())
+        ))
+        .toList();
+
+    return new WorkoutLogResponse(log.getId(), log.getWorkoutDate(), logFeedbacks, exerciseResponses);
   }
 
   public record WorkoutExerciseResponse(
       Long workoutExerciseId,
       String exerciseName,
       int order,
-      List<WorkoutSetResponse> workoutSets
+      List<WorkoutSetResponse> workoutSets,
+      Set<FeedbackResponse> feedbacks // 피드백 필드 추가
   ) {
-    public static WorkoutExerciseResponse from(WorkoutExercise workoutExercise) {
-      List<WorkoutSetResponse> workoutSetResponses = workoutExercise.getWorkoutSets().stream()
-          .map(WorkoutSetResponse::from)
-          .collect(Collectors.toList());
+
+    public static WorkoutExerciseResponse from(WorkoutExercise exercise, List<WorkoutSetResponse> sets, List<Feedback> feedbacks) {
+      Set<FeedbackResponse> feedbackResponses = feedbacks.stream()
+          .map(FeedbackResponse::from)
+          .collect(Collectors.toSet());
 
       return new WorkoutExerciseResponse(
-          workoutExercise.getId(),
-          workoutExercise.getExercise().getName(), // 연관된 exercise의 이름 사용
-          workoutExercise.getOrder(),
-          workoutSetResponses
+          exercise.getId(),
+          exercise.getExercise().getName(),
+          exercise.getOrder(),
+          sets,
+          feedbackResponses
       );
     }
   }
@@ -64,8 +80,9 @@ public record WorkoutLogResponse(
       int reps,
       Set<FeedbackResponse> feedbacks
   ) {
-    public static WorkoutSetResponse from(WorkoutSet workoutSet) {
-      Set<FeedbackResponse> feedbackResponses = workoutSet.getFeedbacks().stream()
+
+    public static WorkoutSetResponse from(WorkoutSet workoutSet, List<Feedback> feedbacks) {
+      Set<FeedbackResponse> feedbackResponses = feedbacks.stream()
           .map(FeedbackResponse::from)
           .collect(Collectors.toSet());
 
@@ -87,7 +104,7 @@ public record WorkoutLogResponse(
     public static FeedbackResponse from(Feedback feedback) {
       return new FeedbackResponse(
           feedback.getId(),
-          feedback.getAuthor().getName(), // 연관된 author의 이름 사용
+          feedback.getAuthor().getName(),
           feedback.getContent()
       );
     }

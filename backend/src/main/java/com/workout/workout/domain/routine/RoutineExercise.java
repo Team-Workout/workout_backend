@@ -38,23 +38,15 @@ public class RoutineExercise {
   @Column(name = "routine_order", nullable = false)
   private Integer order;
 
-  @OneToMany(mappedBy = "routineExercise", cascade = CascadeType.ALL, orphanRemoval = true)
-  @OrderBy("order ASC")
-  private List<RoutineSet> routineSets = new ArrayList<>();
 
   protected void setRoutine(Routine routine) {
     this.routine = routine;
   }
 
   @Builder
-  public RoutineExercise(Exercise exercise, Integer order) {
+  public RoutineExercise(Exercise exercise, Integer order, Routine routine) {
     this.exercise = exercise;
     this.order = order;
-  }
-
-
-  public void addRoutineSet(RoutineSet routineSet) {
-    this.routineSets.add(routineSet);
-    routineSet.setRoutineExercise(this);
+    this.routine = routine;
   }
 }

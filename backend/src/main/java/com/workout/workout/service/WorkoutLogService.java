@@ -10,11 +10,13 @@ import com.workout.workout.domain.log.WorkoutSet;
 import com.workout.workout.dto.log.WorkoutLogCreateRequest;
 import com.workout.workout.dto.log.WorkoutLogResponse;
 import com.workout.workout.repository.ExerciseRepository;
-import com.workout.workout.repository.FeedbackRepository;
-import com.workout.workout.repository.WorkoutExerciseRepository;
-import com.workout.workout.repository.WorkoutLogRepository;
-import com.workout.workout.repository.WorkoutSetRepository;
+import com.workout.workout.repository.log.FeedbackRepository;
+import com.workout.workout.repository.log.WorkoutExerciseRepository;
+import com.workout.workout.repository.log.WorkoutLogRepository;
+import com.workout.workout.repository.log.WorkoutSetRepository;
 import jakarta.persistence.EntityNotFoundException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -51,60 +53,69 @@ public class WorkoutLogService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
 
-    // 1. 부모 객체 생성 및 '먼저' 저장하여 영속화하고 ID를 확보합니다.
-    WorkoutLog workoutLog = WorkoutLog.builder()
-        .user(user)
-        .workoutDate(request.workoutDate())
-        .build();
+    WorkoutLog workoutLog = request.toEntity(user);
     workoutLogRepository.save(workoutLog);
 
     Map<Long, Exercise> exerciseMap = exerciseRepository.findAllByIdIn(
-            request.workoutExercises().stream()
-                .map(WorkoutLogCreateRequest.WorkoutExerciseDto::exerciseId)
-                .distinct().toList())
-        .stream().collect(Collectors.toMap(Exercise::getId, e -> e));
+        request.workoutExercises().stream()
+            .map(WorkoutLogCreateRequest.WorkoutExerciseDto::exerciseId)
+            .distinct().toList()
+    ).stream().collect(Collectors.toMap(Exercise::getId, e -> e));
 
-    // 2. 자식 객체들을 순회하며 생성하고, 부모와 연관관계를 맺은 후 '명시적으로' 저장합니다.
+    List<WorkoutExercise> exercisesToSave = new ArrayList<>();
+    List<WorkoutSet> setsToSave = new ArrayList<>();
+    List<Feedback> feedbacksToSave = new ArrayList<>();
+
     request.workoutExercises().forEach(exerciseDto -> {
       Exercise exercise = exerciseMap.get(exerciseDto.exerciseId());
       if (exercise == null) {
         throw new EntityNotFoundException("운동 정보를 찾을 수 없습니다. ID: " + exerciseDto.exerciseId());
       }
-
-      WorkoutExercise workoutExercise = WorkoutExercise.builder()
-          .exercise(exercise).order(exerciseDto.order()).build();
-      workoutLog.addWorkoutExercise(workoutExercise);
-      workoutExerciseRepository.save(workoutExercise); // [명시적 저장]
+      WorkoutExercise workoutExercise = exerciseDto.toEntity(workoutLog, exercise);
+      exercisesToSave.add(workoutExercise);
 
       exerciseDto.workoutSets().forEach(setDto -> {
-        WorkoutSet workoutSet = WorkoutSet.builder()
-            .order(setDto.order()).weight(setDto.weight()).reps(setDto.reps()).build();
-        workoutExercise.addWorkoutSet(workoutSet);
-        workoutSetRepository.save(workoutSet); // [명시적 저장]
+        WorkoutSet workoutSet = setDto.toEntity(workoutExercise);
+        setsToSave.add(workoutSet);
 
-        if (setDto.feedback() != null && !setDto.feedback().isBlank()) {
-          Feedback feedback = Feedback.builder()
-              .author(user).content(setDto.feedback()).workoutSet(workoutSet).build();
-          workoutSet.addFeedback(feedback);
-          feedbackRepository.save(feedback); // [명시적 저장]
+        if (isFeedbackPresent(setDto.feedback())) {
+          feedbacksToSave.add(Feedback.builder()
+              .author(user).content(setDto.feedback()).workoutSet(workoutSet).build());
         }
       });
     });
 
-    if (request.logFeedback() != null && !request.logFeedback().isBlank()) {
-      Feedback feedback = Feedback.builder()
-          .author(user).content(request.logFeedback()).workoutLog(workoutLog).build();
-      workoutLog.addFeedback(feedback);
-      feedbackRepository.save(feedback); // [명시적 저장]
+    if (isFeedbackPresent(request.logFeedback())) {
+      feedbacksToSave.add(Feedback.builder()
+          .author(user).content(request.logFeedback()).workoutLog(workoutLog).build());
     }
+
+    workoutExerciseRepository.saveAll(exercisesToSave);
+    workoutSetRepository.saveAll(setsToSave);
+    feedbackRepository.saveAll(feedbacksToSave);
 
     return workoutLog.getId();
   }
 
   public WorkoutLogResponse findWorkoutLogById(Long workoutLogId) {
-    WorkoutLog workoutLog = workoutLogRepository.findByIdWithDetails(workoutLogId)
+    // 최상위 엔티티 조회
+    WorkoutLog workoutLog = workoutLogRepository.findById(workoutLogId)
         .orElseThrow(() -> new EntityNotFoundException("운동일지를 찾을 수 없습니다. ID: " + workoutLogId));
-    return WorkoutLogResponse.from(workoutLog);
+
+    // 자식 엔티티 목록 조회 (WorkoutExercise)
+    List<WorkoutExercise> exercises = workoutExerciseRepository.findAllByWorkoutLogIdOrderByOrderAsc(workoutLogId);
+    List<Long> exerciseIds = exercises.stream().map(WorkoutExercise::getId).toList();
+
+    // 손자 엔티티 목록 조회 (WorkoutSet)
+    List<WorkoutSet> sets = exerciseIds.isEmpty() ? Collections.emptyList()
+        : workoutSetRepository.findAllByWorkoutExerciseIdInOrderByOrderAsc(exerciseIds);
+    List<Long> setIds = sets.stream().map(WorkoutSet::getId).toList();
+
+    // 모든 피드백 한 번에 조회
+    List<Feedback> feedbacks = feedbackRepository.findByWorkoutElements(workoutLogId, exerciseIds, setIds);
+
+    // 조회된 엔티티들을 DTO로 조립
+    return WorkoutLogResponse.from(workoutLog, exercises, sets, feedbacks);
   }
 
   @Transactional
@@ -114,16 +125,16 @@ public class WorkoutLogService {
       throw new SecurityException("운동일지가 존재하지 않거나 삭제할 권한이 없습니다.");
     }
 
-    // [ID 조회] 삭제할 자식 및 손자 엔티티들의 ID를 미리 조회합니다.
-    // 이 과정에서 영속성 컨텍스트는 전혀 사용되지 않습니다.
+    // 삭제할 대상 ID 목록 조회 (자식 -> 손자 순)
     List<Long> exerciseIds = workoutExerciseRepository.findIdsByWorkoutLogId(workoutLogId);
 
-    List<Long> setIds = List.of();
-    if (!exerciseIds.isEmpty()) {
-      setIds = workoutSetRepository.findIdsByWorkoutExerciseIdIn(exerciseIds);
-    }
+    List<Long> setIds = exerciseIds.isEmpty() ? Collections.emptyList()
+        : workoutSetRepository.findIdsByWorkoutExerciseIdIn(exerciseIds);
 
-    // 가장 최하위 자손인 Feedback 삭제
+    // 삭제는 반드시 하위 엔티티부터 순서대로 진행 (손자 -> 자식 -> 부모 순)
+    // 외래 키 제약 조건(Foreign Key Constraint) 위반을 방지합니다.
+
+    // 피드백 삭제 (가장 하위)
     if (!setIds.isEmpty()) {
       feedbackRepository.deleteAllByWorkoutSetIdIn(setIds);
     }
@@ -132,18 +143,22 @@ public class WorkoutLogService {
     }
     feedbackRepository.deleteAllByWorkoutLogId(workoutLogId);
 
-    // 그 다음 자식인 WorkoutSet 삭제
+    // 손자(WorkoutSet) 삭제
     if (!exerciseIds.isEmpty()) {
       workoutSetRepository.deleteAllByWorkoutExerciseIdIn(exerciseIds);
     }
 
-    // 그 다음 자식인 WorkoutExercise 삭제
-    if (!exerciseIds.isEmpty()) { // workoutLog에 exercise가 없는 경우도 고려
+    // 자식(WorkoutExercise) 삭제
+    if (!exerciseIds.isEmpty()) {
       workoutExerciseRepository.deleteAllByWorkoutLogId(workoutLogId);
     }
 
-    // 모든 자식들이 삭제된 후, 부모인 WorkoutLog를 삭제
+    // 최상위 부모(WorkoutLog) 삭제
     workoutLogRepository.deleteById(workoutLogId);
+  }
+
+  private boolean isFeedbackPresent(String feedback) {
+    return feedback != null && !feedback.isBlank();
   }
 
   //todo

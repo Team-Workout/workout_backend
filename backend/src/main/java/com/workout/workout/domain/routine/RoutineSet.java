@@ -32,14 +32,14 @@ public class RoutineSet {
   int reps;
 
   @Column(name = "set_order", nullable = false)
-
   int order;
 
   @Builder
-  public RoutineSet(BigDecimal weight, int reps, int order) {
+  public RoutineSet(BigDecimal weight, int reps, int order, RoutineExercise routineExercise) {
     this.weight = weight;
     this.reps = reps;
     this.order = order;
+    this.routineExercise = routineExercise;
   }
 
   @Override
@@ -60,8 +60,5 @@ public class RoutineSet {
     return Objects.hashCode(id);
   }
 
-  //== 연관관계 편의 메소드 ==//
-  protected void setRoutineExercise(RoutineExercise routineExercise) {
-    this.routineExercise = routineExercise;
-  }
+
 }
