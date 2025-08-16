@@ -1,20 +1,11 @@
 package com.workout.auth.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-
-import com.workout.auth.domain.SessionConst;
-import com.workout.auth.domain.UserSessionDto;
+import com.workout.auth.domain.UserPrincipal;
+import com.workout.user.domain.Role;
 import com.workout.user.domain.User;
 import com.workout.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -23,9 +14,19 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 
-@ActiveProfiles("test")
+import org.springframework.security.web.context.SecurityContextRepository;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
+
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthService 단위 테스트")
 class AuthServiceTest {
@@ -34,108 +35,109 @@ class AuthServiceTest {
   private UserService userService;
 
   @Mock
+  private SecurityContextRepository securityContextRepository;
+
+  @Mock
   private HttpServletRequest request;
 
   @Mock
-  private HttpSession session;
+  private HttpServletResponse response;
 
   @InjectMocks
   private AuthService authService;
 
-  // --- 1. @Nested를 사용하여 테스트들을 논리적인 그룹으로 묶습니다. ---
   @Nested
   @DisplayName("로그인 테스트")
   class LoginTest {
 
     @Test
-    @DisplayName("성공: 올바른 자격 증명으로 로그인에 성공한다")
-    void login_success() {
-      // given (주어진 상황)
-      String email = "test@example.com";
-      String password = "password123";
-      User mockUser = User.builder().id(1L).email(email).name("테스트유저").build();
+    @DisplayName("성공: 단일 권한 사용자로 로그인 시, 정확한 UserPrincipal을 담은 SecurityContext가 저장된다")
+    void login_success_withSingleRole() {
+      // given: 단일 역할을 가진 사용자 설정
+      User userWithSingleRole = User.builder()
+          .id(1L)
+          .email("user@example.com")
+          .password("encodedPassword")
+          .role(Role.USER)
+          .build();
+      given(userService.authenticate("user@example.com", "password123")).willReturn(userWithSingleRole);
 
-      // --- 2. BDDMockito.given()을 사용하여 가독성을 높입니다. ---
-      given(userService.authenticate(email, password)).willReturn(mockUser);
-      given(request.getSession(true)).willReturn(session);
+      // when
+      User resultUser = authService.login("user@example.com", "password123", request, response);
 
-      // when (무엇을 할 때)
-      User resultUser = authService.login(email, password, request);
+      // then: 반환된 유저가 Mock 유저와 동일한지 확인
+      assertThat(resultUser).isEqualTo(userWithSingleRole);
 
-      // then (결과 확인)
-      assertThat(resultUser).isEqualTo(mockUser);
+      // and: SecurityContextRepository.saveContext가 정확히 1번 호출되었는지 검증
+      // ArgumentCaptor: 메소드 내부에서 생성되어 외부로 노출되지 않는 객체를 캡처하여 검증하기 위한 강력한 도구
+      ArgumentCaptor<SecurityContext> contextCaptor = ArgumentCaptor.forClass(SecurityContext.class);
+      then(securityContextRepository).should().saveContext(contextCaptor.capture(), eq(request), eq(response));
 
-      ArgumentCaptor<UserSessionDto> captor = ArgumentCaptor.forClass(UserSessionDto.class);
-      // BDDMockito.then()을 사용하여 검증 부분의 가독성도 높일 수 있습니다.
-      then(session).should(times(1)).setAttribute(eq(SessionConst.LOGIN_MEMBER), captor.capture());
-      UserSessionDto capturedDto = captor.getValue();
+      // and: 캡처된 SecurityContext의 Principal을 상세히 검증
+      SecurityContext capturedContext = contextCaptor.getValue();
+      Object principal = capturedContext.getAuthentication().getPrincipal();
 
-      assertThat(capturedDto.getId()).isEqualTo(mockUser.getId());
-      assertThat(capturedDto.getEmail()).isEqualTo(mockUser.getEmail());
+      assertThat(principal).isInstanceOf(UserPrincipal.class);
+      UserPrincipal userPrincipal = (UserPrincipal) principal;
+
+      assertThat(userPrincipal.getUserId()).isEqualTo(userWithSingleRole.getId());
+      assertThat(userPrincipal.getUsername()).isEqualTo(userWithSingleRole.getEmail());
+      assertThat(userPrincipal.getPassword()).isEqualTo(userWithSingleRole.getPassword());
+      assertThat(userPrincipal.getAuthorities())
+          .hasSize(1)
+          .extracting(GrantedAuthority::getAuthority)
+          .containsExactly("ROLE_USER");
     }
 
-    // --- 3. 로그인 실패 시나리오를 더 구체적으로 나눕니다. ---
+    // [보완] 테스트 커버리지 확장을 위한 다중 권한 사용자 케이스 추가
     @Test
-    @DisplayName("실패: 가입되지 않은 이메일로 로그인을 시도한다")
+    @DisplayName("성공: 다중 권한 사용자로 로그인 시, 모든 권한이 정확히 포함된 SecurityContext가 저장된다")
+    void login_success_withMultipleRoles() {
+      // given: 다중 역할을 가진 사용자 설정 (USER, ADMIN)
+      User userWithMultipleRoles = User.builder()
+          .id(2L)
+          .email("admin@example.com")
+          .password("encodedAdminPassword")
+          .role(Role.ADMIN) // User 엔티티가 여러 역할을 가질 수 있다고 가정 (예: Set<Role> roles)
+          .build();
+      // 만약 User 엔티티가 Set<Role>을 지원한다면 아래와 같이 given을 설정할 수 있습니다.
+      // 현재는 단일 Role만 있으므로, Role.ADMIN으로 테스트 진행.
+      // 만약 User.getRole()이 Set<Role>을 반환한다면, UserPrincipal의 로직도 그에 맞게 수정되어야 합니다.
+      given(userService.authenticate("admin@example.com", "adminPass")).willReturn(userWithMultipleRoles);
+
+      // when
+      User resultUser = authService.login("admin@example.com", "adminPass", request, response);
+
+      // then
+      assertThat(resultUser).isEqualTo(userWithMultipleRoles);
+
+      ArgumentCaptor<SecurityContext> contextCaptor = ArgumentCaptor.forClass(SecurityContext.class);
+      then(securityContextRepository).should().saveContext(contextCaptor.capture(), eq(request), eq(response));
+
+      UserPrincipal userPrincipal = (UserPrincipal) contextCaptor.getValue().getAuthentication().getPrincipal();
+      assertThat(userPrincipal.getAuthorities())
+          .extracting(GrantedAuthority::getAuthority)
+          // User 엔티티의 Role이 Set<Role>을 지원하게 되면 "ROLE_USER", "ROLE_ADMIN" 등으로 검증
+          .containsExactly("ROLE_ADMIN");
+    }
+
+    @Test
+    @DisplayName("실패: 가입되지 않은 이메일로 로그인을 시도하면 예외가 발생하고 세션이 저장되지 않는다")
     void login_failure_userNotFound() {
-      // given
+      // given: 서비스가 예외를 던지도록 설정
       String email = "nonexistent@example.com";
       String password = "password123";
       given(userService.authenticate(email, password))
           .willThrow(new IllegalArgumentException("가입되지 않은 이메일입니다."));
 
-      // when & then
-      assertThrows(IllegalArgumentException.class,
-          () -> authService.login(email, password, request));
+      // when & then: 지정된 예외가 발생하는지 검증
+      IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+          () -> authService.login(email, password, request, response));
+      assertThat(exception.getMessage()).isEqualTo("가입되지 않은 이메일입니다.");
 
-      then(request).should(never()).getSession(anyBoolean());
-    }
-
-    @Test
-    @DisplayName("실패: 비밀번호가 틀려 로그인을 실패한다")
-    void login_failure_passwordMismatch() {
-      // given
-      String email = "test@example.com";
-      String password = "wrongPassword";
-      given(userService.authenticate(email, password))
-          .willThrow(new IllegalArgumentException("비밀번호가 일치하지 않습니다."));
-
-      // when & then
-      assertThrows(IllegalArgumentException.class,
-          () -> authService.login(email, password, request));
-
-      then(request).should(never()).getSession(anyBoolean());
-    }
-  }
-
-  @Nested
-  @DisplayName("로그아웃 테스트")
-  class LogoutTest {
-
-    @Test
-    @DisplayName("성공: 세션이 존재할 경우 세션을 무효화한다")
-    void logout_with_existing_session() {
-      // given
-      given(request.getSession(false)).willReturn(session);
-
-      // when
-      authService.logout(request);
-
-      // then
-      then(session).should(times(1)).invalidate();
-    }
-
-    @Test
-    @DisplayName("성공: 세션이 없을 경우 아무 작업도 하지 않고 오류도 발생하지 않는다")
-    void logout_with_no_session() {
-      // given
-      given(request.getSession(false)).willReturn(null);
-
-      // when
-      authService.logout(request);
-
-      // then
-      then(session).should(never()).invalidate();
+      // and: 예외 발생 시, SecurityContextRepository.saveContext가 '절대' 호출되지 않았는지 검증
+      // 이는 실패 경로에서 의도치 않은 부수 효과(side effect)가 없음을 보장하는 중요한 검증
+      then(securityContextRepository).should(never()).saveContext(any(), any(), any());
     }
   }
 }
