@@ -1,27 +1,26 @@
 package com.workout.user.domain;
 
-import com.workout.global.AuditListener;
-import com.workout.global.Auditable;
+import com.workout.global.BaseEntity;
 import com.workout.gym.domain.Gym;
 import jakarta.persistence.*;
-import java.time.Instant;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Objects;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
+@Entity
+@Table(name = "member")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "role", discriminatorType = DiscriminatorType.STRING)
+@DiscriminatorValue("MEMBER")
 @Getter
 @Setter
-@Builder
-@AllArgsConstructor
+@SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Entity
-@EntityListeners(AuditListener.class)
-public class User implements Auditable {
+public class Member extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -48,26 +47,8 @@ public class User implements Auditable {
     private AccountStatus accountStatus;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
+    @Column(name = "role", insertable = false, updatable = false)
     private Role role;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at")
-    private Instant updatedAt;
-
-    @Builder
-    public User(Long id, Gym gym, String name, String email, String password, Gender gender, AccountStatus accountStatus, Role role) {
-        this.id = id;
-        this.gym = gym;
-        this.name = name;
-        this.email = email;
-        this.password = password;
-        this.gender = gender;
-        this.accountStatus = accountStatus;
-        this.role = role;
-    }
 
     @Override
     public boolean equals(Object o) {
@@ -78,7 +59,7 @@ public class User implements Auditable {
         Class<?> thatClass = org.hibernate.Hibernate.getClass(o);
         if (thisClass != thatClass) return false;
 
-        User that = (User) o;
+        Member that = (Member) o;
         return Objects.equals(getId(), that.getId());
     }
 

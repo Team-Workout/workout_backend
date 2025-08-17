@@ -2,15 +2,11 @@ package com.workout.workout.domain.log;
 
 import com.workout.workout.domain.exercise.Exercise;
 import jakarta.persistence.*;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter

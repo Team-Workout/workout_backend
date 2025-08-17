@@ -1,6 +1,6 @@
 package com.workout.workout.dto.routine;
 
-import com.workout.user.domain.User;
+import com.workout.user.domain.Member;
 import com.workout.workout.domain.exercise.Exercise;
 import com.workout.workout.domain.routine.Routine;
 import com.workout.workout.domain.routine.RoutineExercise;
@@ -19,11 +19,11 @@ public record RoutineCreateRequest(
     @Valid
     List<RoutineExerciseDto> routineExercises
 ) {
-  public Routine toEntity(User user) {
+  public Routine toEntity(Member member) {
     return Routine.builder()
         .name(this.name)
         .description(this.description)
-        .user(user)
+        .member(member)
         .build();
   }
 

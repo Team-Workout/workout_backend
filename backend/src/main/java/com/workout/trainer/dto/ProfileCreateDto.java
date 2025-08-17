@@ -6,7 +6,6 @@ import com.workout.trainer.domain.Education;
 import com.workout.trainer.domain.Trainer;
 import com.workout.trainer.domain.Workexperiences;
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 

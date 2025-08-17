@@ -1,6 +1,5 @@
 package com.workout.workout.domain.routine;
 
-import com.workout.workout.domain.log.WorkoutSet;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

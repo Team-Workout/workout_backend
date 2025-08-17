@@ -1,5 +1,8 @@
 package com.workout.trainer.service;
 
+import com.workout.auth.dto.SignupRequest;
+import com.workout.gym.domain.Gym;
+import com.workout.gym.service.GymService;
 import com.workout.trainer.domain.Award;
 import com.workout.trainer.domain.Certification;
 import com.workout.trainer.domain.Education;
@@ -16,29 +19,34 @@ import com.workout.trainer.repository.SpecialtyRepository;
 import com.workout.trainer.repository.TrainerRepository;
 import com.workout.trainer.repository.TrainerSpecialtyRepository;
 import com.workout.trainer.repository.WorkexperiencesRepository;
-import com.workout.user.domain.User;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class TrainerService {
+
 
   private final TrainerRepository trainerRepository;
   private final AwardRepository awardRepository;
   private final CertificationRepository certificationRepository;
   private final EducationRepository educationRepository;
   private final WorkexperiencesRepository workexperiencesRepository;
-  private final SpecialtyRepository specialtyRepository; // 의존성 추가
-  private final TrainerSpecialtyRepository trainerSpecialtyRepository; // 의존성 추가
+  private final SpecialtyRepository specialtyRepository;
+  private final TrainerSpecialtyRepository trainerSpecialtyRepository;
+  private final GymService gymService;
+  private final PasswordEncoder passwordEncoder;
 
   public TrainerService(TrainerRepository trainerRepository, AwardRepository awardRepository,
       CertificationRepository certificationRepository, EducationRepository educationRepository,
       WorkexperiencesRepository workexperiencesRepository, SpecialtyRepository specialtyRepository,
-      TrainerSpecialtyRepository trainerSpecialtyRepository) {
+      TrainerSpecialtyRepository trainerSpecialtyRepository, GymService gymService,
+      PasswordEncoder passwordEncoder) {
     this.trainerRepository = trainerRepository;
     this.awardRepository = awardRepository;
     this.certificationRepository = certificationRepository;
@@ -46,6 +54,8 @@ public class TrainerService {
     this.workexperiencesRepository = workexperiencesRepository;
     this.specialtyRepository = specialtyRepository;
     this.trainerSpecialtyRepository = trainerSpecialtyRepository;
+    this.gymService = gymService;
+    this.passwordEncoder = passwordEncoder;
   }
 
 
@@ -72,11 +82,9 @@ public class TrainerService {
 
   @Transactional
   public void updateProfile(Long trainerId, ProfileCreateDto requestDto) {
-    /*Trainer trainer = trainerRepository.findById(trainerId)
-        .orElseThrow(() -> new EntityNotFoundException("트레이너를 찾을 수 없습니다. ID: " + trainerId));*/
-    //todo 임시값 -> 트레이너와 유저의 db통합 전 논리 오류
-    Trainer trainer = trainerRepository.findById(2L)
+    Trainer trainer = trainerRepository.findById(trainerId)
         .orElseThrow(() -> new EntityNotFoundException("트레이너를 찾을 수 없습니다. ID: " + trainerId));
+
     deleteProfileDetails(trainerId);
     saveProfileDetails(trainer, requestDto);
   }
@@ -153,5 +161,24 @@ public class TrainerService {
         .toList();
 
     trainerSpecialtyRepository.saveAll(trainerSpecialties);
+  }
+
+  private void ensureUserNameAndEmailAreUnique(String email)
+      throws IllegalArgumentException {
+    if (trainerRepository.existsByEmail(email)) {
+      throw new IllegalArgumentException("존재하는 이메일 입니다");
+    }
+  }
+
+  public Trainer registerTrainer(@Valid SignupRequest signupRequest) {
+    Gym gym = gymService.findById(signupRequest.gymId());
+
+    ensureUserNameAndEmailAreUnique(signupRequest.email());
+
+    String encodedPassword = passwordEncoder.encode(signupRequest.password());
+
+    Trainer trainer = signupRequest.toTrainerEntity(gym, encodedPassword);
+
+    return trainerRepository.save(trainer);
   }
 }

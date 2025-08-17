@@ -1,6 +1,6 @@
 package com.workout.workout.service;
 
-import com.workout.user.domain.User;
+import com.workout.user.domain.Member;
 import com.workout.user.repository.UserRepository;
 import com.workout.workout.domain.exercise.Exercise;
 import com.workout.workout.domain.routine.Routine;
@@ -45,11 +45,11 @@ public class RoutineService {
 
   @Transactional
   public Long createRoutine(@Valid RoutineCreateRequest request, Long userId) {
-    User user = userRepository.findById(userId)
+    Member member = userRepository.findById(userId)
         .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
 
     // 부모 엔티티 생성 및 저장
-    Routine routine = request.toEntity(user);
+    Routine routine = request.toEntity(member);
     routineRepository.save(routine);
 
     List<Long> exerciseIds = request.routineExercises().stream()
@@ -91,7 +91,7 @@ public class RoutineService {
     Routine routine = routineRepository.findById(id)
         .orElseThrow(() -> new EntityNotFoundException("삭제할 루틴을 찾을 수 없습니다. ID: " + id));
 
-    if (!routine.getUser().getId().equals(userId)) {
+    if (!routine.getMember().getId().equals(userId)) {
       throw new SecurityException("해당 루틴을 삭제할 권한이 없습니다.");
     }
 

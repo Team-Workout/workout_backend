@@ -1,23 +1,22 @@
 package com.workout.workout.domain.log;
 
-import com.workout.global.AuditListener;
-import com.workout.global.Auditable;
-import com.workout.user.domain.User;
+import com.workout.global.BaseEntity;
+import com.workout.user.domain.Member;
 import jakarta.persistence.*;
-import java.time.Instant;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 @Setter
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SuperBuilder
 @Entity
-@EntityListeners(AuditListener.class)
-public class Feedback implements Auditable {
+public class Feedback extends BaseEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,7 +24,7 @@ public class Feedback implements Auditable {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "author_id")
-  private User author;
+  private Member author;
 
   @Lob
   @Column(columnDefinition = "TEXT", nullable = false)
@@ -43,14 +42,8 @@ public class Feedback implements Auditable {
   @JoinColumn(name = "workout_exercise_id")
   private WorkoutExercise workoutExercise;
 
-  @Column(name = "created_at", nullable = false, updatable = false)
-  private Instant createdAt;
-
-  @Column(name = "updated_at")
-  private Instant updatedAt;
-
   @Builder
-  public Feedback(User author, String content, WorkoutLog workoutLog, WorkoutExercise workoutExercise, WorkoutSet workoutSet) {
+  public Feedback(Member author, String content, WorkoutLog workoutLog, WorkoutExercise workoutExercise, WorkoutSet workoutSet) {
     // 피드백은 반드시 하나의 대상(Log, Exercise, Set)에만 속해야 함을 검증
     long count = Stream.of(workoutLog, workoutExercise, workoutSet)
         .filter(java.util.Objects::nonNull)

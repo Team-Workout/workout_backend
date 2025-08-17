@@ -1,7 +1,6 @@
 package com.workout.gym.domain;
 
-import com.workout.global.AuditListener;
-import com.workout.global.Auditable;
+import com.workout.global.BaseEntity;
 import jakarta.persistence.*;
 import java.time.Instant;
 import lombok.AccessLevel;
@@ -12,16 +11,16 @@ import lombok.NoArgsConstructor;
 
 import java.util.Objects;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 @Getter
 @Setter
+@SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "gym")
-@EntityListeners(AuditListener.class)
-public class Gym implements Auditable {
+public class Gym extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -34,11 +33,6 @@ public class Gym implements Auditable {
     @Column(name = "phone_number")
     private String phoneNumber;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at")
-    private Instant updatedAt;
 
     @Override
     public boolean equals(Object o) {

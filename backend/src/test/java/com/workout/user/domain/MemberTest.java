@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 @DisplayName("User 엔티티 단위 테스트")
-class UserTest {
+class MemberTest {
 
   private Gym testGym;
 
@@ -29,25 +29,25 @@ class UserTest {
     @DisplayName("모든 분기문을 포함하여 equals와 hashCode 계약을 검증한다")
     void equalsAndHashCode_Contract() {
       // given
-      User user1 = User.builder().id(1L).name("사용자A").gym(testGym).build();
-      User user2 = User.builder().id(1L).name("사용자B").gym(testGym).build(); // ID는 같고 내용은 다름
-      User user3 = User.builder().id(2L).name("사용자A").gym(testGym).build(); // ID가 다름
+      Member member1 = Member.builder().id(1L).name("사용자A").gym(testGym).build();
+      Member member2 = Member.builder().id(1L).name("사용자B").gym(testGym).build(); // ID는 같고 내용은 다름
+      Member member3 = Member.builder().id(2L).name("사용자A").gym(testGym).build(); // ID가 다름
       Object notUser = new Object();
 
       // 1. 자기 자신과의 비교
-      assertThat(user1.equals(user1)).isTrue();
+      assertThat(member1.equals(member1)).isTrue();
 
       // 2. ID가 같으면 내용은 달라도 true여야 한다.
-      assertThat(user1.equals(user2)).isTrue();
+      assertThat(member1.equals(member2)).isTrue();
       // ID가 같으므로 hashCode도 같아야 한다.
-      assertThat(user1.hashCode()).isEqualTo(user2.hashCode());
+      assertThat(member1.hashCode()).isEqualTo(member2.hashCode());
 
       // 3. ID가 다르면 false여야 한다.
-      assertThat(user1.equals(user3)).isFalse();
+      assertThat(member1.equals(member3)).isFalse();
 
       // 4. null 또는 다른 타입과 비교
-      assertThat(user1.equals(null)).isFalse();
-      assertThat(user1.equals(notUser)).isFalse();
+      assertThat(member1.equals(null)).isFalse();
+      assertThat(member1.equals(notUser)).isFalse();
     }
   }
 
@@ -63,7 +63,7 @@ class UserTest {
       String email = "test@example.com";
 
       // when
-      User user = User.builder()
+      Member member = Member.builder()
           .id(1L)
           .name(name)
           .email(email)
@@ -74,14 +74,14 @@ class UserTest {
           .build();
 
       // then
-      assertThat(user.getId()).isEqualTo(1L);
+      assertThat(member.getId()).isEqualTo(1L);
 
-      assertThat(user.getName()).isEqualTo(name);
-      assertThat(user.getEmail()).isEqualTo(email);
-      assertThat(user.getGym()).isEqualTo(testGym);
-      assertThat(user.getAccountStatus()).isEqualTo(AccountStatus.ACTIVE);
-      assertThat(user.getGender()).isEqualTo(Gender.MALE);
-      assertThat(user.getRole()).isEqualTo(Role.USER);
+      assertThat(member.getName()).isEqualTo(name);
+      assertThat(member.getEmail()).isEqualTo(email);
+      assertThat(member.getGym()).isEqualTo(testGym);
+      assertThat(member.getAccountStatus()).isEqualTo(AccountStatus.ACTIVE);
+      assertThat(member.getGender()).isEqualTo(Gender.MALE);
+      assertThat(member.getRole()).isEqualTo(Role.USER);
     }
   }
 }

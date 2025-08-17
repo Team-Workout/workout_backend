@@ -4,7 +4,9 @@ import com.workout.auth.dto.SigninRequest;
 import com.workout.auth.dto.SigninResponse;
 import com.workout.auth.dto.SignupRequest;
 import com.workout.auth.service.AuthService;
-import com.workout.user.domain.User;
+import com.workout.trainer.domain.Trainer;
+import com.workout.trainer.service.TrainerService;
+import com.workout.user.domain.Member;
 import com.workout.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,10 +25,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private final AuthService authService;
     private final UserService userService;
+    private final TrainerService trainerService;
 
-    public AuthController(AuthService authService, UserService userService) {
+    public AuthController(AuthService authService, UserService userService, TrainerService trainerService) {
         this.authService = authService;
         this.userService = userService;
+        this.trainerService = trainerService;
     }
 
     @PostMapping("/signin")
@@ -34,14 +38,23 @@ public class AuthController {
         HttpServletRequest request,
         HttpServletResponse response) {
 
-        User user = authService.login(signinRequest.email(), signinRequest.password(), request, response);
-        SigninResponse signinResponse = new SigninResponse(user.getId(), user.getName());
+        Member member = authService.login(signinRequest.email(), signinRequest.password(), request, response);
+        SigninResponse signinResponse = new SigninResponse(member.getId(), member.getName());
         return ResponseEntity.ok(signinResponse);
     }
 
-    @PostMapping("/signup")
-    public ResponseEntity<Long> signup(@Valid @RequestBody SignupRequest signupRequest) {
-        User user = userService.registerUser(signupRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user.getId());
+    // --- 회원가입 엔드포인트 분리 ---
+    @PostMapping("/signup/user")
+    public ResponseEntity<Long> signupUser(@Valid @RequestBody SignupRequest signupRequest) {
+        // 일반 유저 생성은 UserService가 담당
+        Member member = userService.registerUser(signupRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(member.getId());
+    }
+
+    @PostMapping("/signup/trainer")
+    public ResponseEntity<Long> signupTrainer(@Valid @RequestBody SignupRequest signupRequest) {
+        // 트레이너 생성은 TrainerService가 담당
+        Trainer trainer = trainerService.registerTrainer(signupRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(trainer.getId());
     }
 }

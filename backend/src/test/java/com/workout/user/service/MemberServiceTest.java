@@ -16,7 +16,7 @@ import com.workout.gym.domain.Gym;
 import com.workout.gym.service.GymService;
 import com.workout.global.Gender;
 import com.workout.global.Role;
-import com.workout.user.domain.User;
+import com.workout.user.domain.Member;
 import com.workout.user.repository.UserRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +33,7 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService 단위 테스트")
-class UserServiceTest {
+class MemberServiceTest {
 
   @Mock
   private UserRepository userRepository;
@@ -60,16 +60,16 @@ class UserServiceTest {
       String email = "test@example.com";
       String rawPassword = "password123";
       String encodedPassword = "encodedPassword";
-      User mockUser = User.builder().password(encodedPassword).build();
+      Member mockMember = Member.builder().password(encodedPassword).build();
 
-      when(userRepository.findByEmail(email)).thenReturn(Optional.of(mockUser));
+      when(userRepository.findByEmail(email)).thenReturn(Optional.of(mockMember));
       when(passwordEncoder.matches(rawPassword, encodedPassword)).thenReturn(true);
 
       // when
-      User authenticatedUser = userService.authenticate(email, rawPassword);
+      Member authenticatedMember = userService.authenticate(email, rawPassword);
 
       // then
-      assertThat(authenticatedUser).isEqualTo(mockUser);
+      assertThat(authenticatedMember).isEqualTo(mockMember);
       verify(userRepository, times(1)).findByEmail(email);
       verify(passwordEncoder, times(1)).matches(rawPassword, encodedPassword);
     }
@@ -93,9 +93,9 @@ class UserServiceTest {
       String email = "test@example.com";
       String rawPassword = "wrongPassword";
       String encodedPassword = "encodedPassword";
-      User mockUser = User.builder().password(encodedPassword).build();
+      Member mockMember = Member.builder().password(encodedPassword).build();
 
-      when(userRepository.findByEmail(email)).thenReturn(Optional.of(mockUser));
+      when(userRepository.findByEmail(email)).thenReturn(Optional.of(mockMember));
       when(passwordEncoder.matches(rawPassword, encodedPassword)).thenReturn(false);
 
       // when & then
@@ -107,7 +107,7 @@ class UserServiceTest {
   // 'registerUser' 메소드 관련 테스트 그룹
   @Nested
   @DisplayName("사용자 등록 (registerUser) 테스트")
-  class RegisterUserTests {
+  class RegisterMemberTests {
 
     @Test
     @DisplayName("성공: 새로운 사용자를 성공적으로 등록한다")
@@ -123,19 +123,19 @@ class UserServiceTest {
       when(userRepository.existsByName(request.name())).thenReturn(false);
       when(userRepository.existsByEmail(request.email())).thenReturn(false);
       when(passwordEncoder.encode(request.password())).thenReturn(encodedPassword);
-      when(userRepository.save(any(User.class))).thenAnswer(
+      when(userRepository.save(any(Member.class))).thenAnswer(
           invocation -> invocation.getArgument(0));
 
       // when
       userService.registerUser(request);
 
       // then
-      ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+      ArgumentCaptor<Member> userCaptor = ArgumentCaptor.forClass(Member.class);
       verify(userRepository).save(userCaptor.capture());
-      User savedUser = userCaptor.getValue();
+      Member savedMember = userCaptor.getValue();
 
-      assertThat(savedUser.getEmail()).isEqualTo(request.email());
-      assertThat(savedUser.getGym()).isEqualTo(mockGym);
+      assertThat(savedMember.getEmail()).isEqualTo(request.email());
+      assertThat(savedMember.getGym()).isEqualTo(mockGym);
     }
 
 
@@ -153,7 +153,7 @@ class UserServiceTest {
 
       // when & then
       assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
-      verify(userRepository, never()).save(any(User.class));
+      verify(userRepository, never()).save(any(Member.class));
     }
 
     @Test
@@ -171,7 +171,7 @@ class UserServiceTest {
       assertThrows(IllegalArgumentException.class, () -> userService.registerUser(request));
 
       verify(userRepository, never()).existsByEmail(anyString());
-      verify(userRepository, never()).save(any(User.class));
+      verify(userRepository, never()).save(any(Member.class));
     }
 
     @Test
@@ -191,7 +191,7 @@ class UserServiceTest {
       verify(gymService, times(1)).findById(request.gymId());
       // findById에서 실패했으므로, 그 이후 로직은 호출되면 안 됨을 검증
       verify(userRepository, never()).existsByName(anyString());
-      verify(userRepository, never()).save(any(User.class));
+      verify(userRepository, never()).save(any(Member.class));
     }
   }
 }

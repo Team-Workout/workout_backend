@@ -1,7 +1,6 @@
 package com.workout.workout.domain.routine;
 
-import com.workout.user.domain.User;
-import jakarta.persistence.CascadeType;
+import com.workout.user.domain.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -10,10 +9,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderBy;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -29,8 +24,8 @@ public class Routine {
   Long id;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "user_id", nullable = false, updatable = false)
-  User user;
+  @JoinColumn(name = "member_id", nullable = false, updatable = false)
+  Member member;
 
   @Column(nullable = false)
   String name;
@@ -38,8 +33,8 @@ public class Routine {
   String description;
 
   @Builder
-  public Routine(User user, String name, String description) {
-    this.user = user;
+  public Routine(Member member, String name, String description) {
+    this.member = member;
     this.name = name;
     this.description = description;
   }

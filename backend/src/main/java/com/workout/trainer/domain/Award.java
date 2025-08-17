@@ -1,7 +1,5 @@
 package com.workout.trainer.domain;
 
-import com.workout.trainer.dto.ProfileCreateDto.AwardDto;
-import com.workout.workout.domain.log.WorkoutExercise;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -10,7 +8,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -26,7 +23,7 @@ public class Award {
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "trainer_id", nullable = false)
+  @JoinColumn(name = "member_id", nullable = false)
   private Trainer trainer;
 
   private String awardName;

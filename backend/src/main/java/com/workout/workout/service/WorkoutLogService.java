@@ -1,6 +1,6 @@
 package com.workout.workout.service;
 
-import com.workout.user.domain.User;
+import com.workout.user.domain.Member;
 import com.workout.user.repository.UserRepository;
 import com.workout.workout.domain.exercise.Exercise;
 import com.workout.workout.domain.log.Feedback;
@@ -50,10 +50,10 @@ public class WorkoutLogService {
 
   @Transactional
   public Long createWorkoutLog(WorkoutLogCreateRequest request, Long userId) {
-    User user = userRepository.findById(userId)
+    Member member = userRepository.findById(userId)
         .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
 
-    WorkoutLog workoutLog = request.toEntity(user);
+    WorkoutLog workoutLog = request.toEntity(member);
     workoutLogRepository.save(workoutLog);
 
     Map<Long, Exercise> exerciseMap = exerciseRepository.findAllByIdIn(
@@ -80,14 +80,14 @@ public class WorkoutLogService {
 
         if (isFeedbackPresent(setDto.feedback())) {
           feedbacksToSave.add(Feedback.builder()
-              .author(user).content(setDto.feedback()).workoutSet(workoutSet).build());
+              .author(member).content(setDto.feedback()).workoutSet(workoutSet).build());
         }
       });
     });
 
     if (isFeedbackPresent(request.logFeedback())) {
       feedbacksToSave.add(Feedback.builder()
-          .author(user).content(request.logFeedback()).workoutLog(workoutLog).build());
+          .author(member).content(request.logFeedback()).workoutLog(workoutLog).build());
     }
 
     workoutExerciseRepository.saveAll(exercisesToSave);
@@ -120,7 +120,7 @@ public class WorkoutLogService {
 
   @Transactional
   public void deleteWorkoutLog(Long workoutLogId, Long userId) {
-    boolean hasAuthority = workoutLogRepository.existsByIdAndUserId(workoutLogId, userId);
+    boolean hasAuthority = workoutLogRepository.existsByIdAndMemberId(workoutLogId, userId);
     if (!hasAuthority) {
       throw new SecurityException("운동일지가 존재하지 않거나 삭제할 권한이 없습니다.");
     }

@@ -2,11 +2,11 @@ package com.workout.trainer.domain;
 
 import com.workout.gym.domain.Gym;
 import com.workout.user.domain.Gender;
+import com.workout.user.domain.Member;
 import com.workout.user.domain.Role;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
@@ -15,29 +15,20 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import java.time.Instant;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.experimental.SuperBuilder;
 
+@Entity
+@DiscriminatorValue("TRAINER")
 @Getter
 @Setter
-@AllArgsConstructor // 모든 필드를 인자로 받는 생성자 (빌더가 사용)
-@Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)// JPA가 사용하는 기본 생성자성자 (빌더가 사용)
-@Entity
-@EntityListeners(AuditingEntityListener.class)
-public class Trainer {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SuperBuilder
+public class Trainer extends Member {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -67,12 +58,9 @@ public class Trainer {
   @Column(nullable = false)
   private Role role;
 
-  @CreatedDate
-  @Column(name = "created_at", nullable = false, updatable = false)
-  private Instant createdAt;
-
-  @Builder
-  public Trainer(Gym gym, String name, String email, String password, String phoneNumber, String introduction, Gender gender, Role role) {
+  /*@Builder
+  public Trainer(Gym gym, String name, String email, String password, String phoneNumber, String introduction, Gender gender, Role role,
+      AccountStatus accountStatus) {
     this.gym = gym;
     this.name = name;
     this.email = email;
@@ -81,7 +69,8 @@ public class Trainer {
     this.introduction = introduction;
     this.gender = gender;
     this.role = role;
-  }
+    this.setAccountStatus(accountStatus);
+  }*/
 
   @Override
   public boolean equals(Object o) {

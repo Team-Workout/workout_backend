@@ -1,6 +1,6 @@
 package com.workout.workout.dto.log;
 
-import com.workout.user.domain.User;
+import com.workout.user.domain.Member;
 import com.workout.workout.domain.exercise.Exercise;
 import com.workout.workout.domain.log.WorkoutExercise;
 import com.workout.workout.domain.log.WorkoutLog;
@@ -18,9 +18,9 @@ public record WorkoutLogCreateRequest(
     @Valid
     List<WorkoutExerciseDto> workoutExercises
 ) {
-  public WorkoutLog toEntity(User user) {
+  public WorkoutLog toEntity(Member member) {
     return WorkoutLog.builder()
-        .user(user)
+        .member(member)
         .workoutDate(this.workoutDate)
         .build();
   }

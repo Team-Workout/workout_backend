@@ -45,47 +45,41 @@ VALUES (1, 1, 'MAIN'), (1, 3, 'SECONDARY'), (1, 5, 'SECONDARY'),
 ON DUPLICATE KEY UPDATE muscle_role = VALUES(muscle_role);
 
 
--- ########## 5. 일반 사용자 샘플 데이터 (user) ##########
--- [수정] TRAINER 역할을 제외한 USER, ADMIN 역할의 사용자만 user 테이블에 삽입
-INSERT INTO `user` (id, gym_id, email, password, name, gender, account_status, role)
-VALUES (1, 1, 'chulsoo.kim@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '김철수', 'MALE', 'ACTIVE', 'USER'),
-       (3, 1, 'minsu.park@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '박민수', 'MALE', 'ACTIVE', 'ADMIN'),
-       (4, 2, 'jisoo.seo@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '서지수', 'FEMALE', 'ACTIVE', 'USER'),
-       (5, 2, 'jihye.choi@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '최지혜', 'FEMALE', 'SUSPENDED', 'USER')
-ON DUPLICATE KEY UPDATE email = VALUES(email), password = VALUES(password), name = VALUES(name), account_status = VALUES(account_status);
+-- ########## 5. 사용자/트레이너 통합 샘플 데이터 (member) ##########
+INSERT INTO `member` (id, gym_id, email, password, name, gender, account_status, role, introduction, phone_number)
+VALUES
+    (1, 1, 'chulsoo.kim@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '김철수', 'MALE', 'ACTIVE', 'MEMBER', NULL, NULL),
+    (3, 1, 'minsu.park@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '박민수', 'MALE', 'ACTIVE', 'ADMIN', NULL, NULL),
+    (4, 2, 'jisoo.seo@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '서지수', 'FEMALE', 'ACTIVE', 'MEMBER', NULL, NULL),
+    (5, 2, 'jihye.choi@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '최지혜', 'FEMALE', 'SUSPENDED', 'MEMBER', NULL, NULL),
+    (2, 1, 'younghee.lee@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '이영희', 'FEMALE', 'ACTIVE', 'TRAINER', '10년 경력의 베테랑 트레이너입니다. 함께 건강한 몸을 만들어봐요!', '010-1234-5678'),
+    (6, 1, 'seojun.park@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '박서준', 'MALE', 'ACTIVE', 'TRAINER', '웨이트 트레이닝 전문가 박서준입니다. 여러분의 잠재력을 끌어올려 드립니다.', '010-9876-5432'),
+    (7, 2, 'yuri.choi@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '최유리', 'FEMALE', 'ACTIVE', 'TRAINER', '여성 전문 트레이너 최유리입니다. 아름다운 바디 라인을 만들어 드립니다.', '010-5555-4444')
+ON DUPLICATE KEY UPDATE email = VALUES(email), password = VALUES(password), name = VALUES(name), account_status = VALUES(account_status), introduction = VALUES(introduction), phone_number = VALUES(phone_number);
 
 
--- ########## 6. 트레이너 샘플 데이터 (trainer) ##########
--- [수정] TRAINER 역할의 사용자는 trainer 테이블에 별도로 삽입
-INSERT INTO trainer (id, gym_id, email, password, name, gender, introduction, phone_number)
-VALUES (2, 1, 'younghee.lee@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '이영희', 'FEMALE', '10년 경력의 베테랑 트레이너입니다. 함께 건강한 몸을 만들어봐요!', '010-1234-5678')
-ON DUPLICATE KEY UPDATE email = VALUES(email), password = VALUES(password), name = VALUES(name), introduction = VALUES(introduction);
-
-
--- ########## 7. 트레이너 프로필 샘플 데이터 (신규 추가) ##########
+-- ########## 6. 트레이너 프로필 샘플 데이터 ##########
 -- 전문 분야(Specialty) 마스터 데이터
-INSERT INTO specialty (id, name)
-VALUES (1, '다이어트'), (2, '재활운동'), (3, '근력증가'), (4, '바디프로필')
-ON DUPLICATE KEY UPDATE name = VALUES(name);
+INSERT INTO specialty (id, name) VALUES (1, '다이어트'), (2, '재활운동'), (3, '근력증가'), (4, '바디프로필') ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 -- 트레이너 '이영희'(id=2)의 프로필 데이터
-INSERT INTO education (trainer_id, school_name, education_name, degree, start_date, end_date)
-VALUES (2, '부산대학교', '체육교육과', '학사', '2010-03-01', '2014-02-20');
+INSERT INTO education (member_id, school_name, education_name, degree, start_date, end_date) VALUES (2, '부산대학교', '체육교육과', '학사', '2010-03-01', '2014-02-20');
+INSERT INTO work_experience (member_id, work_name, work_place, work_position, work_start, work_end) VALUES (2, '파워 피트니스', '파워 피트니스 해운대점', '수석 트레이너', '2018-03-01', NULL);
+INSERT INTO award (member_id, award_name, award_date, award_place) VALUES (2, '전국 생활체육 보디빌딩 대회', '2017-10-15', '3위');
+INSERT INTO certification (member_id, certification_name, issuing_organization, acquisition_date) VALUES (2, '생활스포츠지도사 2급 (보디빌딩)', '국민체육진흥공단', '2015-12-01');
+INSERT INTO trainer_specialty (member_id, specialty_id) VALUES (2, 1), (2, 2);
 
-INSERT INTO work_experience (trainer_id, work_name, work_place, work_position, work_start, work_end)
-VALUES (2, '파워 피트니스', '파워 피트니스 해운대점', '수석 트레이너', '2018-03-01', NULL);
+-- 트레이너 '박서준'(id=6)의 프로필 데이터
+INSERT INTO education (member_id, school_name, education_name, degree) VALUES (6, '한국체육대학교', '사회체육과', '학사');
+INSERT INTO work_experience (member_id, work_name, work_place, work_position, work_start, work_end) VALUES (6, '파워 피트니스', '파워 피트니스 해운대점', '선임 트레이너', '2020-01-01', NULL);
+INSERT INTO certification (member_id, certification_name, issuing_organization) VALUES (6, 'NSCA-CPT', 'NSCA');
+INSERT INTO trainer_specialty (member_id, specialty_id) VALUES (6, 3), (6, 4);
 
-INSERT INTO award (trainer_id, award_name, award_date, award_place)
-VALUES (2, '전국 생활체육 보디빌딩 대회', '2017-10-15', '3위');
-
-INSERT INTO certification (trainer_id, certification_name, issuing_organization, acquisition_date)
-VALUES (2, '생활스포츠지도사 2급 (보디빌딩)', '국민체육진흥공단', '2015-12-01');
-
--- 트레이너 '이영희'의 전문분야 매핑
-INSERT INTO trainer_specialty (trainer_id, specialty_id)
-VALUES (2, 1), -- 다이어트
-       (2, 2); -- 재활운동
-
+-- 트레이너 '최유리'(id=7)의 프로필 데이터
+INSERT INTO education (member_id, school_name, education_name, degree) VALUES (7, '경성대학교', '무용학과', '학사');
+INSERT INTO work_experience (member_id, work_name, work_place, work_position, work_start, work_end) VALUES (7, '건강 제일 짐', '건강 제일 짐 서면점', '트레이너', '2021-06-01', NULL);
+INSERT INTO certification (member_id, certification_name, issuing_organization) VALUES (7, '필라테스 지도자 자격증', '국제케파필라테스협회');
+INSERT INTO trainer_specialty (member_id, specialty_id) VALUES (7, 1), (7, 4);
 
 -- ########## 8. 마스터 데이터 버전 초기화 ##########
 INSERT INTO master_data_version (data_type, version, updated_at)

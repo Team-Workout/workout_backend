@@ -1,10 +1,11 @@
 package com.workout.auth.dto;
 
 import com.workout.gym.domain.Gym;
+import com.workout.trainer.domain.Trainer;
 import com.workout.user.domain.AccountStatus;
 import com.workout.user.domain.Gender;
+import com.workout.user.domain.Member;
 import com.workout.user.domain.Role;
-import com.workout.user.domain.User;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -34,15 +35,27 @@ public record SignupRequest(
     @NotNull(message = "사용자 역할은 필수입니다.")
     Role role
 ) {
-    public User toEntity(Gym gym, String encodedPassword) {
-        return User.builder()
-            .gym(gym) // 파라미터로 받은 gym 엔티티
+    public Member toMemberEntity(Gym gym, String encodedPassword) {
+        return Member.builder()
+            .gym(gym)
             .email(this.email)
-            .password(encodedPassword) // 파라미터로 받은 암호화된 비밀번호
+            .password(encodedPassword)
             .name(this.name)
             .gender(this.gender)
-            .role(this.role)
-            .accountStatus(AccountStatus.ACTIVE) // 기본값 설정
+            .role(this.role) // DTO에 따라 USER 또는 ADMIN이 될 것임
+            .accountStatus(AccountStatus.ACTIVE)
+            .build();
+    }
+
+    public Trainer toTrainerEntity(Gym gym, String encodedPassword) {
+        return Trainer.builder()
+            .gym(gym)
+            .email(this.email)
+            .password(encodedPassword)
+            .name(this.name)
+            .gender(this.gender)
+            .role(Role.TRAINER) // 역할은 TRAINER로 고정
+            .accountStatus(AccountStatus.ACTIVE)
             .build();
     }
 }

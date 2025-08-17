@@ -1,6 +1,5 @@
 package com.workout.workout.domain.exercise;
 
-import com.workout.user.domain.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

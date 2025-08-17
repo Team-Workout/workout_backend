@@ -11,7 +11,7 @@ import static org.mockito.Mockito.times;
 
 import com.workout.auth.domain.SessionConst;
 import com.workout.auth.domain.UserSessionDto;
-import com.workout.user.domain.User;
+import com.workout.user.domain.Member;
 import com.workout.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -53,25 +53,25 @@ class AuthServiceTest {
       // given (주어진 상황)
       String email = "test@example.com";
       String password = "password123";
-      User mockUser = User.builder().id(1L).email(email).name("테스트유저").build();
+      Member mockMember = Member.builder().id(1L).email(email).name("테스트유저").build();
 
       // --- 2. BDDMockito.given()을 사용하여 가독성을 높입니다. ---
-      given(userService.authenticate(email, password)).willReturn(mockUser);
+      given(userService.authenticate(email, password)).willReturn(mockMember);
       given(request.getSession(true)).willReturn(session);
 
       // when (무엇을 할 때)
-      User resultUser = authService.login(email, password, request);
+      Member resultMember = authService.login(email, password, request);
 
       // then (결과 확인)
-      assertThat(resultUser).isEqualTo(mockUser);
+      assertThat(resultMember).isEqualTo(mockMember);
 
       ArgumentCaptor<UserSessionDto> captor = ArgumentCaptor.forClass(UserSessionDto.class);
       // BDDMockito.then()을 사용하여 검증 부분의 가독성도 높일 수 있습니다.
       then(session).should(times(1)).setAttribute(eq(SessionConst.LOGIN_MEMBER), captor.capture());
       UserSessionDto capturedDto = captor.getValue();
 
-      assertThat(capturedDto.getId()).isEqualTo(mockUser.getId());
-      assertThat(capturedDto.getEmail()).isEqualTo(mockUser.getEmail());
+      assertThat(capturedDto.getId()).isEqualTo(mockMember.getId());
+      assertThat(capturedDto.getEmail()).isEqualTo(mockMember.getEmail());
     }
 
     // --- 3. 로그인 실패 시나리오를 더 구체적으로 나눕니다. ---

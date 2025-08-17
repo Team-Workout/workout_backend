@@ -1,6 +1,6 @@
 package com.workout.auth.domain;
 
-import com.workout.user.domain.User;
+import com.workout.user.domain.Member;
 import java.util.Collection;
 import java.util.Collections;
 import lombok.Getter;
@@ -16,11 +16,11 @@ public class UserPrincipal implements UserDetails {
   private final String password;
   private final Collection<? extends GrantedAuthority> authorities;
 
-  public UserPrincipal(User user) {
-    this.userId = user.getId();
-    this.email = user.getEmail();
-    this.password = user.getPassword();
-    this.authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+  public UserPrincipal(Member member) {
+    this.userId = member.getId();
+    this.email = member.getEmail();
+    this.password = member.getPassword();
+    this.authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + member.getRole().name()));
   }
 
   @Override

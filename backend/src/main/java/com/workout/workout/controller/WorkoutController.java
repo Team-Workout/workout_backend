@@ -33,7 +33,6 @@ public class WorkoutController {
     this.routineService = routineService;
   }
 
-
   /**
    * 운동일지 생성
    */

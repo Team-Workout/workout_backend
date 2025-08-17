@@ -13,7 +13,8 @@ import com.workout.gym.repository.GymRepository;
 import com.workout.user.domain.AccountStatus;
 import com.workout.global.Gender;
 import com.workout.global.Role;
-import com.workout.user.domain.User;
+import com.workout.user.domain.Member;
+import com.workout.user.domain.Role;
 import com.workout.user.repository.UserRepository;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,7 +55,7 @@ class AuthControllerIntegrationTest {
   private PasswordEncoder passwordEncoder;
 
   private Gym testGym;
-  private User existingUser;
+  private Member existingMember;
 
   @BeforeEach
   void setUp() {
@@ -67,16 +68,16 @@ class AuthControllerIntegrationTest {
         .phoneNumber("010-1234-5678")
         .build());
 
-    existingUser = User.builder()
+    existingMember = Member.builder()
         .email("existing@example.com")
         .name("기존사용자")
         .password(passwordEncoder.encode("password123"))
         .gym(testGym)
         .gender(Gender.MALE)
-        .role(Role.USER)
+        .role(Role.MEMBER)
         .accountStatus(AccountStatus.ACTIVE)
         .build();
-    userRepository.save(existingUser);
+    userRepository.save(existingMember);
   }
 
   @Nested
@@ -99,8 +100,8 @@ class AuthControllerIntegrationTest {
       assertThat(response.getBody()).isNotNull();
       assertThat(response.getBody().userId()).isNotNull();
 
-      User foundUser = userRepository.findByEmail("new@example.com").orElseThrow();
-      assertThat(foundUser.getName()).isEqualTo("새사용자");
+      Member foundMember = userRepository.findByEmail("new@example.com").orElseThrow();
+      assertThat(foundMember.getName()).isEqualTo("새사용자");
     }
 
     @Test
@@ -169,7 +170,7 @@ class AuthControllerIntegrationTest {
       // then
       assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
       assertThat(response.getBody()).isNotNull();
-      assertThat(response.getBody().userId()).isEqualTo(existingUser.getId().toString());
+      assertThat(response.getBody().userId()).isEqualTo(existingMember.getId().toString());
 
       String setCookieHeader = response.getHeaders().getFirst("Set-Cookie");
       assertThat(setCookieHeader).isNotNull().contains("SESSION");

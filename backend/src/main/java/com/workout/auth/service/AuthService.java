@@ -3,7 +3,7 @@
 package com.workout.auth.service;
 
 import com.workout.auth.domain.UserPrincipal;
-import com.workout.user.domain.User;
+import com.workout.user.domain.Member;
 import com.workout.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse; // HttpServletResponse import 추가
@@ -28,11 +28,11 @@ public class AuthService {
     }
 
     // 로그인
-    public User login(String email, String password, HttpServletRequest request, HttpServletResponse response) {
-        User user = userService.authenticate(email, password);
-        log.info("아이디 비번 확인 완료: {}", user.getEmail());
+    public Member login(String email, String password, HttpServletRequest request, HttpServletResponse response) {
+        Member member = userService.authenticate(email, password);
+        log.info("아이디 비번 확인 완료: {}", member.getEmail());
 
-        UserPrincipal userPrincipal = new UserPrincipal(user);
+        UserPrincipal userPrincipal = new UserPrincipal(member);
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
             userPrincipal, null, userPrincipal.getAuthorities());
 
@@ -43,6 +43,6 @@ public class AuthService {
         // [핵심] SecurityContext를 세션에 저장하고 쿠키를 발급하도록 명시적으로 호출
         securityContextRepository.saveContext(context, request, response);
 
-        return user;
+        return member;
     }
 }
