@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CertificationRepository extends JpaRepository<Certification, Long> {
+
   List<Certification> findAllByTrainerId(Long trainerId);
 
   void deleteAllByTrainerId(Long trainerId);

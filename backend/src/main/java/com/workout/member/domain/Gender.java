@@ -1,4 +1,4 @@
-package com.workout.user.domain;
+package com.workout.member.domain;
 
 public enum Gender {
     MALE,

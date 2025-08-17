@@ -1,20 +1,20 @@
 package com.workout.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 
-import com.workout.auth.domain.SessionConst;
-import com.workout.auth.domain.UserSessionDto;
-import com.workout.user.domain.Member;
-import com.workout.user.service.UserService;
+import com.workout.auth.domain.UserPrincipal;
+import com.workout.member.domain.Member;
+import com.workout.member.domain.Role;
+import com.workout.member.repository.MemberRepository; // Import MemberRepository
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.Optional; // Import Optional
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -23,119 +23,142 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.crypto.password.PasswordEncoder; // Import PasswordEncoder
+import org.springframework.security.web.context.SecurityContextRepository;
 
-@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthService 단위 테스트")
 class AuthServiceTest {
 
+  @InjectMocks
+  private AuthService authService;
+
+  // --- Start of Changes ---
+
   @Mock
-  private UserService userService;
+  private MemberRepository memberRepository; // Mock MemberRepository instead of MemberService
+
+  @Mock
+  private PasswordEncoder passwordEncoder; // Mock PasswordEncoder
+
+  // --- End of Changes ---
+
+  @Mock
+  private SecurityContextRepository securityContextRepository;
 
   @Mock
   private HttpServletRequest request;
 
   @Mock
-  private HttpSession session;
+  private HttpServletResponse response;
 
-  @InjectMocks
-  private AuthService authService;
+  private Member testMember;
 
-  // --- 1. @Nested를 사용하여 테스트들을 논리적인 그룹으로 묶습니다. ---
+  @BeforeEach
+  void setUp() {
+    testMember = Member.builder()
+        .id(1L)
+        .email("test@example.com")
+        .name("테스트유저")
+        .password("encoded_password") // Set a dummy encoded password
+        .role(Role.MEMBER)
+        .build();
+  }
+
   @Nested
-  @DisplayName("로그인 테스트")
-  class LoginTest {
+  @DisplayName("로그인 성공 테스트")
+  class LoginSuccessTest {
 
     @Test
-    @DisplayName("성공: 올바른 자격 증명으로 로그인에 성공한다")
+    @DisplayName("성공: 올바른 아이디와 비밀번호 입력 시, 인증된 SecurityContext를 생성하고 세션에 저장한다")
     void login_success() {
-      // given (주어진 상황)
+      // given (준비)
       String email = "test@example.com";
-      String password = "password123";
-      Member mockMember = Member.builder().id(1L).email(email).name("테스트유저").build();
+      String rawPassword = "password123";
 
-      // --- 2. BDDMockito.given()을 사용하여 가독성을 높입니다. ---
-      given(userService.authenticate(email, password)).willReturn(mockMember);
-      given(request.getSession(true)).willReturn(session);
+      // --- Start of Changes: Updated Mocking Logic ---
+      // 1. Mock memberRepository to return the test member
+      given(memberRepository.findByEmail(email)).willReturn(Optional.of(testMember));
 
-      // when (무엇을 할 때)
-      Member resultMember = authService.login(email, password, request);
+      // 2. Mock passwordEncoder to return true for password matching
+      given(passwordEncoder.matches(rawPassword, testMember.getPassword())).willReturn(true);
+      // --- End of Changes ---
 
-      // then (결과 확인)
-      assertThat(resultMember).isEqualTo(mockMember);
+      // when (실행)
+      Member result = authService.login(email, rawPassword, request, response);
 
-      ArgumentCaptor<UserSessionDto> captor = ArgumentCaptor.forClass(UserSessionDto.class);
-      // BDDMockito.then()을 사용하여 검증 부분의 가독성도 높일 수 있습니다.
-      then(session).should(times(1)).setAttribute(eq(SessionConst.LOGIN_MEMBER), captor.capture());
-      UserSessionDto capturedDto = captor.getValue();
+      // then (검증)
+      assertThat(result).isEqualTo(testMember);
 
-      assertThat(capturedDto.getId()).isEqualTo(mockMember.getId());
-      assertThat(capturedDto.getEmail()).isEqualTo(mockMember.getEmail());
-    }
+      // Verify that repository and password encoder were called
+      then(memberRepository).should().findByEmail(email);
+      then(passwordEncoder).should().matches(rawPassword, testMember.getPassword());
 
-    // --- 3. 로그인 실패 시나리오를 더 구체적으로 나눕니다. ---
-    @Test
-    @DisplayName("실패: 가입되지 않은 이메일로 로그인을 시도한다")
-    void login_failure_userNotFound() {
-      // given
-      String email = "nonexistent@example.com";
-      String password = "password123";
-      given(userService.authenticate(email, password))
-          .willThrow(new IllegalArgumentException("가입되지 않은 이메일입니다."));
+      // Capture and verify the SecurityContext
+      ArgumentCaptor<SecurityContext> contextCaptor = ArgumentCaptor.forClass(SecurityContext.class);
+      then(securityContextRepository).should().saveContext(contextCaptor.capture(), any(HttpServletRequest.class), any(HttpServletResponse.class));
 
-      // when & then
-      assertThrows(IllegalArgumentException.class,
-          () -> authService.login(email, password, request));
+      SecurityContext capturedContext = contextCaptor.getValue();
+      Authentication authentication = capturedContext.getAuthentication();
 
-      then(request).should(never()).getSession(anyBoolean());
-    }
-
-    @Test
-    @DisplayName("실패: 비밀번호가 틀려 로그인을 실패한다")
-    void login_failure_passwordMismatch() {
-      // given
-      String email = "test@example.com";
-      String password = "wrongPassword";
-      given(userService.authenticate(email, password))
-          .willThrow(new IllegalArgumentException("비밀번호가 일치하지 않습니다."));
-
-      // when & then
-      assertThrows(IllegalArgumentException.class,
-          () -> authService.login(email, password, request));
-
-      then(request).should(never()).getSession(anyBoolean());
+      assertThat(authentication.isAuthenticated()).isTrue();
+      assertThat(authentication.getPrincipal()).isInstanceOf(UserPrincipal.class);
+      UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+      assertThat(principal.getUserId()).isEqualTo(testMember.getId());
+      assertThat(principal.getAuthorities().stream().map(Object::toString).findFirst().orElseThrow())
+          .isEqualTo("ROLE_MEMBER");
     }
   }
 
   @Nested
-  @DisplayName("로그아웃 테스트")
-  class LogoutTest {
+  @DisplayName("로그인 실패 테스트")
+  class LoginFailureTest {
 
     @Test
-    @DisplayName("성공: 세션이 존재할 경우 세션을 무효화한다")
-    void logout_with_existing_session() {
-      // given
-      given(request.getSession(false)).willReturn(session);
+    @DisplayName("실패: 비밀번호가 틀리면 IllegalArgumentException이 발생한다")
+    void login_fail_withInvalidCredentials() {
+      // given (준비)
+      String email = "test@example.com";
+      String wrongPassword = "wrong_password";
 
-      // when
-      authService.logout(request);
+      // --- Start of Changes: Updated Mocking Logic ---
+      // 1. Mock memberRepository to return the test member
+      given(memberRepository.findByEmail(email)).willReturn(Optional.of(testMember));
 
-      // then
-      then(session).should(times(1)).invalidate();
+      // 2. Mock passwordEncoder to return false for password mismatch
+      given(passwordEncoder.matches(wrongPassword, testMember.getPassword())).willReturn(false);
+      // --- End of Changes ---
+
+
+      // when & then (실행 및 검증)
+      assertThatThrownBy(() -> authService.login(email, wrongPassword, request, response))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("이메일 또는 비밀번호가 일치하지 않습니다."); // Message updated for consistency
+
+      // Verify that session saving was never called on failure
+      then(securityContextRepository).should(never()).saveContext(any(), any(), any());
     }
 
     @Test
-    @DisplayName("성공: 세션이 없을 경우 아무 작업도 하지 않고 오류도 발생하지 않는다")
-    void logout_with_no_session() {
+    @DisplayName("실패: 존재하지 않는 이메일이면 IllegalArgumentException이 발생한다")
+    void login_fail_withNonExistentEmail() {
       // given
-      given(request.getSession(false)).willReturn(null);
+      String nonExistentEmail = "none@example.com";
+      String password = "password123";
 
-      // when
-      authService.logout(request);
+      // Mock memberRepository to return an empty Optional
+      given(memberRepository.findByEmail(nonExistentEmail)).willReturn(Optional.empty());
 
-      // then
-      then(session).should(never()).invalidate();
+      // when & then
+      assertThatThrownBy(() -> authService.login(nonExistentEmail, password, request, response))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("이메일 또는 비밀번호가 일치하지 않습니다.");
+
+      // Verify password encoder and session repository were never called
+      then(passwordEncoder).should(never()).matches(any(), any());
+      then(securityContextRepository).should(never()).saveContext(any(), any(), any());
     }
   }
 }

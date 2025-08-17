@@ -55,7 +55,8 @@ public class TrainerController {
    * 특정 체육관의 모든 트레이너 프로필 목록 조회
    */
   @GetMapping("/gyms/{gymId}/trainers")
-  public ResponseEntity<List<ProfileResponseDto>> getTrainerProfilesByGym(@PathVariable Long gymId) {
+  public ResponseEntity<List<ProfileResponseDto>> getTrainerProfilesByGym(
+      @PathVariable Long gymId) {
     List<ProfileResponseDto> trainerProfiles = trainerService.getTrainerProfilesByGym(gymId);
     return ResponseEntity.ok(trainerProfiles);
   }

@@ -35,12 +35,18 @@ public class Exercise {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null) {
+      return false;
+    }
 
     Class<?> thisClass = org.hibernate.Hibernate.getClass(this);
     Class<?> thatClass = org.hibernate.Hibernate.getClass(o);
-    if (thisClass != thatClass) return false;
+    if (thisClass != thatClass) {
+      return false;
+    }
 
     Exercise that = (Exercise) o;
     return Objects.equals(getId(), that.getId());

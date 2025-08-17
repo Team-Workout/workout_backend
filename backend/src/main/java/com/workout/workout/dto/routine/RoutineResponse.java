@@ -3,7 +3,6 @@ package com.workout.workout.dto.routine;
 import com.workout.workout.domain.routine.Routine;
 import com.workout.workout.domain.routine.RoutineExercise;
 import com.workout.workout.domain.routine.RoutineSet;
-
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
@@ -17,6 +16,7 @@ public record RoutineResponse(
     String description,
     List<RoutineExerciseResponse> routineExercises
 ) {
+
   public static RoutineResponse from(Routine routine,
       List<RoutineExercise> exercises,
       Map<Long, List<RoutineSet>> setsMap) {
@@ -29,7 +29,8 @@ public record RoutineResponse(
         })
         .collect(Collectors.toList());
 
-    return new RoutineResponse(routine.getId(), routine.getName(), routine.getDescription(), exerciseResponses);
+    return new RoutineResponse(routine.getId(), routine.getName(), routine.getDescription(),
+        exerciseResponses);
   }
 
   public record RoutineExerciseResponse(
@@ -38,7 +39,9 @@ public record RoutineResponse(
       int order,
       List<RoutineSetResponse> routineSets
   ) {
-    public static RoutineExerciseResponse from(RoutineExercise routineExercise, List<RoutineSet> sets) {
+
+    public static RoutineExerciseResponse from(RoutineExercise routineExercise,
+        List<RoutineSet> sets) {
       List<RoutineSetResponse> setResponses = sets.stream()
           .map(RoutineSetResponse::from)
           .collect(Collectors.toList());
@@ -57,6 +60,7 @@ public record RoutineResponse(
       BigDecimal weight,
       int reps
   ) {
+
     public static RoutineSetResponse from(RoutineSet routineSet) {
       return new RoutineSetResponse(
           routineSet.getId(),

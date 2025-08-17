@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)// JPA가 사용하는 기본 생성자성자 (빌더가 사용)
 @Entity
 public class Specialty {
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -33,12 +34,18 @@ public class Specialty {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null) {
+      return false;
+    }
 
     Class<?> thisClass = org.hibernate.Hibernate.getClass(this);
     Class<?> thatClass = org.hibernate.Hibernate.getClass(o);
-    if (thisClass != thatClass) return false;
+    if (thisClass != thatClass) {
+      return false;
+    }
 
     Specialty that = (Specialty) o;
     return Objects.equals(getId(), that.getId());

@@ -1,6 +1,6 @@
 package com.workout.workout.dto.routine;
 
-import com.workout.user.domain.Member;
+import com.workout.member.domain.Member;
 import com.workout.workout.domain.exercise.Exercise;
 import com.workout.workout.domain.routine.Routine;
 import com.workout.workout.domain.routine.RoutineExercise;
@@ -19,6 +19,7 @@ public record RoutineCreateRequest(
     @Valid
     List<RoutineExerciseDto> routineExercises
 ) {
+
   public Routine toEntity(Member member) {
     return Routine.builder()
         .name(this.name)
@@ -33,6 +34,7 @@ public record RoutineCreateRequest(
       @Valid
       List<RoutineSetDto> routineSets
   ) {
+
     public RoutineExercise toEntity(Routine routine, Exercise exercise) {
       return RoutineExercise.builder()
           .routine(routine)
@@ -47,6 +49,7 @@ public record RoutineCreateRequest(
       BigDecimal weight,
       int reps
   ) {
+
     public RoutineSet toEntity(RoutineExercise routineExercise) {
       return RoutineSet.builder()
           .routineExercise(routineExercise)

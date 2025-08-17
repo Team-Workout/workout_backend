@@ -19,7 +19,8 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "work_experience")
-public class Workexperiences {
+public class Workexperience {
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -32,10 +33,11 @@ public class Workexperiences {
   private String workPlace;
   private String workPosition;
   private LocalDate workStart;
-  private LocalDate  workEnd;
+  private LocalDate workEnd;
 
   @Builder
-  private Workexperiences(Trainer trainer, String workName, String workPlace, String workPosition, LocalDate  workStart, LocalDate  workEnd) {
+  private Workexperience(Trainer trainer, String workName, String workPlace, String workPosition,
+      LocalDate workStart, LocalDate workEnd) {
     this.trainer = trainer;
     this.workName = workName;
     this.workPlace = workPlace;
@@ -59,7 +61,7 @@ public class Workexperiences {
       return false;
     }
 
-    Workexperiences that = (Workexperiences) o;
+    Workexperience that = (Workexperience) o;
     return Objects.equals(getId(), that.getId());
   }
 

@@ -17,43 +17,44 @@ import org.springframework.security.web.context.SecurityContextRepository;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 
-    @Bean
-    public SecurityContextRepository securityContextRepository() {
-        return new HttpSessionSecurityContextRepository();
-    }
+  @Bean
+  public SecurityContextRepository securityContextRepository() {
+    return new HttpSessionSecurityContextRepository();
+  }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityContextRepository securityContextRepository) throws Exception { // 파라미터 추가
-        http
-            .csrf(csrf -> csrf.disable())
-            .formLogin(form -> form.disable())
-            //로그아웃 설정
-            .logout(logout -> logout
-                .logoutUrl("/api/auth/signout") // 로그아웃을 처리할 URL 지정
-                .logoutSuccessHandler((request, response, authentication) -> {
-                    // 로그아웃 성공 시, 200 OK 상태와 성공 메시지를 응답
-                    response.setStatus(HttpServletResponse.SC_OK);
-                    response.getWriter().write("Logout Successful");
-                })
-                .deleteCookies("SESSION")    // 응답에 SESSION 쿠키를 삭제하라고 명시
-                .invalidateHttpSession(true) // 세션을 무효화하여 Redis 데이터 삭제
-            )
-            // SecurityContext를 명시적으로 저장하고 로드할 때 사용할 Repository를 지정
-            .securityContext(context -> context.securityContextRepository(securityContextRepository))
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http,
+      SecurityContextRepository securityContextRepository) throws Exception { // 파라미터 추가
+    http
+        .csrf(csrf -> csrf.disable())
+        .formLogin(form -> form.disable())
+        //로그아웃 설정
+        .logout(logout -> logout
+            .logoutUrl("/api/auth/signout") // 로그아웃을 처리할 URL 지정
+            .logoutSuccessHandler((request, response, authentication) -> {
+              // 로그아웃 성공 시, 200 OK 상태와 성공 메시지를 응답
+              response.setStatus(HttpServletResponse.SC_OK);
+              response.getWriter().write("Logout Successful");
+            })
+            .deleteCookies("SESSION")    // 응답에 SESSION 쿠키를 삭제하라고 명시
+            .invalidateHttpSession(true) // 세션을 무효화하여 Redis 데이터 삭제
+        )
+        // SecurityContext를 명시적으로 저장하고 로드할 때 사용할 Repository를 지정
+        .securityContext(context -> context.securityContextRepository(securityContextRepository))
 
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .anyRequest().authenticated()
-            )
-            .exceptionHandling(e -> e
-                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
-            );
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/api/auth/**").permitAll()
+            .anyRequest().authenticated()
+        )
+        .exceptionHandling(e -> e
+            .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+        );
 
-        return http.build();
-    }
+    return http.build();
+  }
 }

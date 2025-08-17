@@ -35,7 +35,8 @@ public class Education {
   private LocalDate endDate;
 
   @Builder
-  private Education(Trainer trainer, String schoolName, String educationName, String degree, LocalDate startDate, LocalDate endDate) {
+  private Education(Trainer trainer, String schoolName, String educationName, String degree,
+      LocalDate startDate, LocalDate endDate) {
     this.trainer = trainer;
     this.schoolName = schoolName;
     this.educationName = educationName;

@@ -1,7 +1,7 @@
 package com.workout.workout.domain.log;
 
 import com.workout.global.BaseEntity;
-import com.workout.user.domain.Member;
+import com.workout.member.domain.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

@@ -8,6 +8,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface MasterDataUpdate {
+
   String category(); // "EXERCISE", "MUSCLE" 등 데이터 카테고리 지정
 
   VersionIncrementType type() default VersionIncrementType.PATCH; // 버전 네이밍 규칙 지정

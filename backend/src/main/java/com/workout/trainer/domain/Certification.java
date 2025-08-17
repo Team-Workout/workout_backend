@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Certification {
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -28,15 +29,17 @@ public class Certification {
 
   private String certificationName;
   private String issuingOrganization;
-  private LocalDate  acquisitionDate;
+  private LocalDate acquisitionDate;
 
   @Builder
-  private Certification(Trainer trainer, String certificationName, String issuingOrganization, LocalDate acquisitionDate) {
+  private Certification(Trainer trainer, String certificationName, String issuingOrganization,
+      LocalDate acquisitionDate) {
     this.trainer = trainer;
     this.certificationName = certificationName;
     this.issuingOrganization = issuingOrganization;
     this.acquisitionDate = acquisitionDate;
   }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

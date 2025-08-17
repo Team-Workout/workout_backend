@@ -1,11 +1,11 @@
 package com.workout.auth.dto;
 
 import com.workout.gym.domain.Gym;
+import com.workout.member.domain.AccountStatus;
+import com.workout.member.domain.Gender;
+import com.workout.member.domain.Member;
+import com.workout.member.domain.Role;
 import com.workout.trainer.domain.Trainer;
-import com.workout.user.domain.AccountStatus;
-import com.workout.user.domain.Gender;
-import com.workout.user.domain.Member;
-import com.workout.user.domain.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -35,27 +35,28 @@ public record SignupRequest(
     @NotNull(message = "사용자 역할은 필수입니다.")
     Role role
 ) {
-    public Member toMemberEntity(Gym gym, String encodedPassword) {
-        return Member.builder()
-            .gym(gym)
-            .email(this.email)
-            .password(encodedPassword)
-            .name(this.name)
-            .gender(this.gender)
-            .role(this.role) // DTO에 따라 USER 또는 ADMIN이 될 것임
-            .accountStatus(AccountStatus.ACTIVE)
-            .build();
-    }
 
-    public Trainer toTrainerEntity(Gym gym, String encodedPassword) {
-        return Trainer.builder()
-            .gym(gym)
-            .email(this.email)
-            .password(encodedPassword)
-            .name(this.name)
-            .gender(this.gender)
-            .role(Role.TRAINER) // 역할은 TRAINER로 고정
-            .accountStatus(AccountStatus.ACTIVE)
-            .build();
-    }
+  public Member toMemberEntity(Gym gym, String encodedPassword) {
+    return Member.builder()
+        .gym(gym)
+        .email(this.email)
+        .password(encodedPassword)
+        .name(this.name)
+        .gender(this.gender)
+        .role(this.role) // DTO에 따라 USER 또는 ADMIN이 될 것임
+        .accountStatus(AccountStatus.ACTIVE)
+        .build();
+  }
+
+  public Trainer toTrainerEntity(Gym gym, String encodedPassword) {
+    return Trainer.builder()
+        .gym(gym)
+        .email(this.email)
+        .password(encodedPassword)
+        .name(this.name)
+        .gender(this.gender)
+        .role(Role.TRAINER) // 역할은 TRAINER로 고정
+        .accountStatus(AccountStatus.ACTIVE)
+        .build();
+  }
 }

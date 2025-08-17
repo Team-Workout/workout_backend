@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface WorkoutExerciseRepository extends JpaRepository<WorkoutExercise, Long> {
+
   List<WorkoutExercise> findAllByWorkoutLogIdOrderByOrderAsc(Long workoutLogId);
 
   @Query("SELECT we.id FROM WorkoutExercise we WHERE we.workoutLog.id = :workoutLogId")

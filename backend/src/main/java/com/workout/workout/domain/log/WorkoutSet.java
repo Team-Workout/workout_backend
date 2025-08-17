@@ -39,7 +39,6 @@ public class WorkoutSet {
   @Column(nullable = false)
   private int reps;
 
-
   @Builder
   public WorkoutSet(int order, BigDecimal weight, int reps, WorkoutExercise workoutExercise) {
     this.order = order;
@@ -50,12 +49,18 @@ public class WorkoutSet {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null) {
+      return false;
+    }
 
     Class<?> thisClass = org.hibernate.Hibernate.getClass(this);
     Class<?> thatClass = org.hibernate.Hibernate.getClass(o);
-    if (thisClass != thatClass) return false;
+    if (thisClass != thatClass) {
+      return false;
+    }
 
     WorkoutSet that = (WorkoutSet) o;
     return Objects.equals(getId(), that.getId());

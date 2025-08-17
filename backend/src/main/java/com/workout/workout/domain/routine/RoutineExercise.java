@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RoutineExercise {
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -34,14 +35,14 @@ public class RoutineExercise {
   private Integer order;
 
 
-  protected void setRoutine(Routine routine) {
-    this.routine = routine;
-  }
-
   @Builder
   public RoutineExercise(Exercise exercise, Integer order, Routine routine) {
     this.exercise = exercise;
     this.order = order;
+    this.routine = routine;
+  }
+
+  protected void setRoutine(Routine routine) {
     this.routine = routine;
   }
 }

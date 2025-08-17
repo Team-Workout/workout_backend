@@ -1,6 +1,6 @@
 package com.workout.workout.dto.log;
 
-import com.workout.user.domain.Member;
+import com.workout.member.domain.Member;
 import com.workout.workout.domain.exercise.Exercise;
 import com.workout.workout.domain.log.WorkoutExercise;
 import com.workout.workout.domain.log.WorkoutLog;
@@ -18,6 +18,7 @@ public record WorkoutLogCreateRequest(
     @Valid
     List<WorkoutExerciseDto> workoutExercises
 ) {
+
   public WorkoutLog toEntity(Member member) {
     return WorkoutLog.builder()
         .member(member)
@@ -30,6 +31,7 @@ public record WorkoutLogCreateRequest(
       int order,
       List<WorkoutSetDto> workoutSets
   ) {
+
     public WorkoutExercise toEntity(WorkoutLog workoutLog, Exercise exercise) {
       return WorkoutExercise.builder()
           .workoutLog(workoutLog)
@@ -45,6 +47,7 @@ public record WorkoutLogCreateRequest(
       int reps,
       String feedback
   ) {
+
     public WorkoutSet toEntity(WorkoutExercise workoutExercise) {
       return WorkoutSet.builder()
           .workoutExercise(workoutExercise)

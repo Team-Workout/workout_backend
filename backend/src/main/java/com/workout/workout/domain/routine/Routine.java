@@ -1,6 +1,6 @@
 package com.workout.workout.domain.routine;
 
-import com.workout.user.domain.Member;
+import com.workout.member.domain.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)// JPA가 사용하는 기본 생성자성자 (빌더가 사용)
 public class Routine {
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   Long id;
@@ -41,12 +42,18 @@ public class Routine {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null) {
+      return false;
+    }
 
     Class<?> thisClass = org.hibernate.Hibernate.getClass(this);
     Class<?> thatClass = org.hibernate.Hibernate.getClass(o);
-    if (thisClass != thatClass) return false;
+    if (thisClass != thatClass) {
+      return false;
+    }
 
     Routine that = (Routine) o;
     return Objects.equals(getId(), that.getId());

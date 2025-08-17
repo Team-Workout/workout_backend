@@ -19,7 +19,8 @@ public record WorkoutLogResponse(
     List<WorkoutExerciseResponse> workoutExercises
 ) {
 
-  public static WorkoutLogResponse from(WorkoutLog log, List<WorkoutExercise> exercises, List<WorkoutSet> sets, List<Feedback> feedbacks) {
+  public static WorkoutLogResponse from(WorkoutLog log, List<WorkoutExercise> exercises,
+      List<WorkoutSet> sets, List<Feedback> feedbacks) {
     Map<Long, List<Feedback>> feedbackBySetId = feedbacks.stream()
         .filter(f -> f.getWorkoutSet() != null)
         .collect(Collectors.groupingBy(f -> f.getWorkoutSet().getId()));
@@ -36,7 +37,9 @@ public record WorkoutLogResponse(
     Map<Long, List<WorkoutSetResponse>> setsByExerciseId = sets.stream()
         .collect(Collectors.groupingBy(
             set -> set.getWorkoutExercise().getId(),
-            Collectors.mapping(set -> WorkoutSetResponse.from(set, feedbackBySetId.getOrDefault(set.getId(), Collections.emptyList())), Collectors.toList())
+            Collectors.mapping(set -> WorkoutSetResponse.from(set,
+                    feedbackBySetId.getOrDefault(set.getId(), Collections.emptyList())),
+                Collectors.toList())
         ));
 
     List<WorkoutExerciseResponse> exerciseResponses = exercises.stream()
@@ -47,7 +50,8 @@ public record WorkoutLogResponse(
         ))
         .toList();
 
-    return new WorkoutLogResponse(log.getId(), log.getWorkoutDate(), logFeedbacks, exerciseResponses);
+    return new WorkoutLogResponse(log.getId(), log.getWorkoutDate(), logFeedbacks,
+        exerciseResponses);
   }
 
   public record WorkoutExerciseResponse(
@@ -58,7 +62,8 @@ public record WorkoutLogResponse(
       Set<FeedbackResponse> feedbacks // 피드백 필드 추가
   ) {
 
-    public static WorkoutExerciseResponse from(WorkoutExercise exercise, List<WorkoutSetResponse> sets, List<Feedback> feedbacks) {
+    public static WorkoutExerciseResponse from(WorkoutExercise exercise,
+        List<WorkoutSetResponse> sets, List<Feedback> feedbacks) {
       Set<FeedbackResponse> feedbackResponses = feedbacks.stream()
           .map(FeedbackResponse::from)
           .collect(Collectors.toSet());
@@ -101,6 +106,7 @@ public record WorkoutLogResponse(
       String authorName,
       String content
   ) {
+
     public static FeedbackResponse from(Feedback feedback) {
       return new FeedbackResponse(
           feedback.getId(),

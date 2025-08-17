@@ -3,13 +3,12 @@ package com.workout.global.version;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -28,7 +27,7 @@ public class MasterDataVersion {
   private LocalDateTime updatedAt;
 
   @Builder
-  public MasterDataVersion (String dataType, String version) {
+  public MasterDataVersion(String dataType, String version) {
     this.dataType = dataType;
     this.version = version;
   }

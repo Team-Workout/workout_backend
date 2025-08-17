@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Award {
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -27,7 +28,7 @@ public class Award {
   private Trainer trainer;
 
   private String awardName;
-  private LocalDate  awardDate;
+  private LocalDate awardDate;
   private String awardPlace;
 
   @Builder

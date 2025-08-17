@@ -1,8 +1,16 @@
 package com.workout.workout.domain.log;
 
 import com.workout.global.BaseEntity;
-import com.workout.user.domain.Member;
-import jakarta.persistence.*;
+import com.workout.member.domain.Member;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToOne;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -43,7 +51,8 @@ public class Feedback extends BaseEntity {
   private WorkoutExercise workoutExercise;
 
   @Builder
-  public Feedback(Member author, String content, WorkoutLog workoutLog, WorkoutExercise workoutExercise, WorkoutSet workoutSet) {
+  public Feedback(Member author, String content, WorkoutLog workoutLog,
+      WorkoutExercise workoutExercise, WorkoutSet workoutSet) {
     // 피드백은 반드시 하나의 대상(Log, Exercise, Set)에만 속해야 함을 검증
     long count = Stream.of(workoutLog, workoutExercise, workoutSet)
         .filter(java.util.Objects::nonNull)

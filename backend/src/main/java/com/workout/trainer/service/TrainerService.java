@@ -3,13 +3,14 @@ package com.workout.trainer.service;
 import com.workout.auth.dto.SignupRequest;
 import com.workout.gym.domain.Gym;
 import com.workout.gym.service.GymService;
+import com.workout.member.service.MemberService;
 import com.workout.trainer.domain.Award;
 import com.workout.trainer.domain.Certification;
 import com.workout.trainer.domain.Education;
 import com.workout.trainer.domain.Specialty;
 import com.workout.trainer.domain.Trainer;
 import com.workout.trainer.domain.TrainerSpecialty;
-import com.workout.trainer.domain.Workexperiences;
+import com.workout.trainer.domain.Workexperience;
 import com.workout.trainer.dto.ProfileCreateDto;
 import com.workout.trainer.dto.ProfileResponseDto;
 import com.workout.trainer.repository.AwardRepository;
@@ -31,7 +32,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class TrainerService {
 
-
   private final TrainerRepository trainerRepository;
   private final AwardRepository awardRepository;
   private final CertificationRepository certificationRepository;
@@ -41,12 +41,13 @@ public class TrainerService {
   private final TrainerSpecialtyRepository trainerSpecialtyRepository;
   private final GymService gymService;
   private final PasswordEncoder passwordEncoder;
+  private final MemberService memberService;
 
   public TrainerService(TrainerRepository trainerRepository, AwardRepository awardRepository,
       CertificationRepository certificationRepository, EducationRepository educationRepository,
       WorkexperiencesRepository workexperiencesRepository, SpecialtyRepository specialtyRepository,
       TrainerSpecialtyRepository trainerSpecialtyRepository, GymService gymService,
-      PasswordEncoder passwordEncoder) {
+      PasswordEncoder passwordEncoder, MemberService memberService) {
     this.trainerRepository = trainerRepository;
     this.awardRepository = awardRepository;
     this.certificationRepository = certificationRepository;
@@ -56,6 +57,7 @@ public class TrainerService {
     this.trainerSpecialtyRepository = trainerSpecialtyRepository;
     this.gymService = gymService;
     this.passwordEncoder = passwordEncoder;
+    this.memberService = memberService;
   }
 
 
@@ -66,7 +68,7 @@ public class TrainerService {
     List<Award> awards = awardRepository.findAllByTrainerId(trainerId);
     List<Certification> certifications = certificationRepository.findAllByTrainerId(trainerId);
     List<Education> educations = educationRepository.findAllByTrainerId(trainerId);
-    List<Workexperiences> workexperiences = workexperiencesRepository.findAllByTrainerId(trainerId);
+    List<Workexperience> workexperiences = workexperiencesRepository.findAllByTrainerId(trainerId);
     Set<Specialty> specialties = trainerSpecialtyRepository.findSpecialtiesByTrainerId(trainerId);
 
     return ProfileResponseDto.from(trainer, awards, certifications, educations, workexperiences,
@@ -106,7 +108,7 @@ public class TrainerService {
         .map(dto -> dto.toEntity(trainer)).toList();
     List<Education> educations = requestDto.educations().stream().map(dto -> dto.toEntity(trainer))
         .toList();
-    List<Workexperiences> workexperiences = requestDto.workExperiences().stream()
+    List<Workexperience> workexperiences = requestDto.workExperiences().stream()
         .map(dto -> dto.toEntity(trainer)).toList();
 
     awardRepository.saveAll(awards);
@@ -163,17 +165,11 @@ public class TrainerService {
     trainerSpecialtyRepository.saveAll(trainerSpecialties);
   }
 
-  private void ensureUserNameAndEmailAreUnique(String email)
-      throws IllegalArgumentException {
-    if (trainerRepository.existsByEmail(email)) {
-      throw new IllegalArgumentException("존재하는 이메일 입니다");
-    }
-  }
 
   public Trainer registerTrainer(@Valid SignupRequest signupRequest) {
     Gym gym = gymService.findById(signupRequest.gymId());
 
-    ensureUserNameAndEmailAreUnique(signupRequest.email());
+    memberService.ensureEmailIsUnique(signupRequest.email());
 
     String encodedPassword = passwordEncoder.encode(signupRequest.password());
 
