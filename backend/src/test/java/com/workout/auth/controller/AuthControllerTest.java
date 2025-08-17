@@ -52,7 +52,7 @@ class AuthControllerTest {
 
   @Autowired
   private PasswordEncoder passwordEncoder;
-  
+
   private Gym testGym;
   private Member testMember;
   private Trainer testTrainer;
