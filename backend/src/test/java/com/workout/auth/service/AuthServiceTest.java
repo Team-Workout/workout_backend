@@ -10,10 +10,10 @@ import static org.mockito.Mockito.never;
 import com.workout.auth.domain.UserPrincipal;
 import com.workout.member.domain.Member;
 import com.workout.member.domain.Role;
-import com.workout.member.repository.MemberRepository; // Import MemberRepository
+import com.workout.member.repository.MemberRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Optional; // Import Optional
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -25,7 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.crypto.password.PasswordEncoder; // Import PasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.SecurityContextRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,15 +35,11 @@ class AuthServiceTest {
   @InjectMocks
   private AuthService authService;
 
-  // --- Start of Changes ---
-
   @Mock
   private MemberRepository memberRepository; // Mock MemberRepository instead of MemberService
 
   @Mock
   private PasswordEncoder passwordEncoder; // Mock PasswordEncoder
-
-  // --- End of Changes ---
 
   @Mock
   private SecurityContextRepository securityContextRepository;
@@ -78,13 +74,9 @@ class AuthServiceTest {
       String email = "test@example.com";
       String rawPassword = "password123";
 
-      // --- Start of Changes: Updated Mocking Logic ---
-      // 1. Mock memberRepository to return the test member
       given(memberRepository.findByEmail(email)).willReturn(Optional.of(testMember));
 
-      // 2. Mock passwordEncoder to return true for password matching
       given(passwordEncoder.matches(rawPassword, testMember.getPassword())).willReturn(true);
-      // --- End of Changes ---
 
       // when (실행)
       Member result = authService.login(email, rawPassword, request, response);
@@ -92,13 +84,14 @@ class AuthServiceTest {
       // then (검증)
       assertThat(result).isEqualTo(testMember);
 
-      // Verify that repository and password encoder were called
       then(memberRepository).should().findByEmail(email);
       then(passwordEncoder).should().matches(rawPassword, testMember.getPassword());
 
-      // Capture and verify the SecurityContext
-      ArgumentCaptor<SecurityContext> contextCaptor = ArgumentCaptor.forClass(SecurityContext.class);
-      then(securityContextRepository).should().saveContext(contextCaptor.capture(), any(HttpServletRequest.class), any(HttpServletResponse.class));
+      ArgumentCaptor<SecurityContext> contextCaptor = ArgumentCaptor.forClass(
+          SecurityContext.class);
+      then(securityContextRepository).should()
+          .saveContext(contextCaptor.capture(), any(HttpServletRequest.class),
+              any(HttpServletResponse.class));
 
       SecurityContext capturedContext = contextCaptor.getValue();
       Authentication authentication = capturedContext.getAuthentication();
@@ -107,7 +100,8 @@ class AuthServiceTest {
       assertThat(authentication.getPrincipal()).isInstanceOf(UserPrincipal.class);
       UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
       assertThat(principal.getUserId()).isEqualTo(testMember.getId());
-      assertThat(principal.getAuthorities().stream().map(Object::toString).findFirst().orElseThrow())
+      assertThat(
+          principal.getAuthorities().stream().map(Object::toString).findFirst().orElseThrow())
           .isEqualTo("ROLE_MEMBER");
     }
   }
@@ -123,21 +117,15 @@ class AuthServiceTest {
       String email = "test@example.com";
       String wrongPassword = "wrong_password";
 
-      // --- Start of Changes: Updated Mocking Logic ---
-      // 1. Mock memberRepository to return the test member
       given(memberRepository.findByEmail(email)).willReturn(Optional.of(testMember));
 
-      // 2. Mock passwordEncoder to return false for password mismatch
       given(passwordEncoder.matches(wrongPassword, testMember.getPassword())).willReturn(false);
-      // --- End of Changes ---
-
 
       // when & then (실행 및 검증)
       assertThatThrownBy(() -> authService.login(email, wrongPassword, request, response))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessage("이메일 또는 비밀번호가 일치하지 않습니다."); // Message updated for consistency
 
-      // Verify that session saving was never called on failure
       then(securityContextRepository).should(never()).saveContext(any(), any(), any());
     }
 
@@ -148,7 +136,6 @@ class AuthServiceTest {
       String nonExistentEmail = "none@example.com";
       String password = "password123";
 
-      // Mock memberRepository to return an empty Optional
       given(memberRepository.findByEmail(nonExistentEmail)).willReturn(Optional.empty());
 
       // when & then
@@ -156,7 +143,6 @@ class AuthServiceTest {
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessage("이메일 또는 비밀번호가 일치하지 않습니다.");
 
-      // Verify password encoder and session repository were never called
       then(passwordEncoder).should(never()).matches(any(), any());
       then(securityContextRepository).should(never()).saveContext(any(), any(), any());
     }

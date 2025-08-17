@@ -48,12 +48,18 @@ class WorkoutControllerTest {
   @Autowired
   private TestRestTemplate restTemplate;
 
-  @Autowired private MemberRepository memberRepository;
-  @Autowired private GymRepository gymRepository;
-  @Autowired private ExerciseRepository exerciseRepository;
-  @Autowired private WorkoutLogRepository workoutLogRepository;
-  @Autowired private RoutineRepository routineRepository;
-  @Autowired private PasswordEncoder passwordEncoder;
+  @Autowired
+  private MemberRepository memberRepository;
+  @Autowired
+  private GymRepository gymRepository;
+  @Autowired
+  private ExerciseRepository exerciseRepository;
+  @Autowired
+  private WorkoutLogRepository workoutLogRepository;
+  @Autowired
+  private RoutineRepository routineRepository;
+  @Autowired
+  private PasswordEncoder passwordEncoder;
 
   private Member testUser;
   private Exercise benchPress;
@@ -94,7 +100,8 @@ class WorkoutControllerTest {
 
   private String loginAndGetSessionCookie(String email, String password) {
     SigninRequest loginDto = new SigninRequest(email, password);
-    ResponseEntity<SigninResponse> response = restTemplate.postForEntity("/api/auth/signin", loginDto, SigninResponse.class);
+    ResponseEntity<SigninResponse> response = restTemplate.postForEntity("/api/auth/signin",
+        loginDto, SigninResponse.class);
     return response.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
   }
 
@@ -113,7 +120,8 @@ class WorkoutControllerTest {
               new WorkoutLogCreateRequest.WorkoutExerciseDto(
                   benchPress.getId(),
                   1,
-                  List.of(new WorkoutLogCreateRequest.WorkoutSetDto(1, new BigDecimal("100"), 5, "첫 세트 피드백"))
+                  List.of(new WorkoutLogCreateRequest.WorkoutSetDto(1, new BigDecimal("100"), 5,
+                      "첫 세트 피드백"))
               )
           )
       );
@@ -122,7 +130,8 @@ class WorkoutControllerTest {
       HttpEntity<WorkoutLogCreateRequest> requestEntity = new HttpEntity<>(requestDto, headers);
 
       // when
-      ResponseEntity<Void> response = restTemplate.postForEntity("/api/workout/logs", requestEntity, Void.class);
+      ResponseEntity<Void> response = restTemplate.postForEntity("/api/workout/logs", requestEntity,
+          Void.class);
 
       // then
       assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -147,7 +156,8 @@ class WorkoutControllerTest {
 
       // when
       ResponseEntity<WorkoutLogResponse> response = restTemplate.exchange(
-          "/api/workout/logs/" + savedLog.getId(), HttpMethod.GET, requestEntity, WorkoutLogResponse.class
+          "/api/workout/logs/" + savedLog.getId(), HttpMethod.GET, requestEntity,
+          WorkoutLogResponse.class
       );
 
       // then

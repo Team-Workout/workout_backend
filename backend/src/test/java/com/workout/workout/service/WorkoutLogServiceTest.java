@@ -73,11 +73,24 @@ class WorkoutLogServiceTest {
         List.of(
             new WorkoutLogCreateRequest.WorkoutExerciseDto(
                 benchPress.getId(), 1,
-                List.of(new WorkoutLogCreateRequest.WorkoutSetDto(1, new BigDecimal("100"), 5, "자극이 좋았음"))
+                List.of(new WorkoutLogCreateRequest.WorkoutSetDto(1, new BigDecimal("100"), 5,
+                    "자극이 좋았음"))
             )
         )
     );
   }
+
+  private void setId(Object target, Long id) {
+    try {
+      Field idField = target.getClass().getDeclaredField("id");
+      idField.setAccessible(true);
+      idField.set(target, id);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new RuntimeException("테스트 객체 ID 설정 중 오류 발생", e);
+    }
+  }
+
+  // ... DeleteWorkoutLogTest는 변경 없음 ...
 
   @Nested
   @DisplayName("운동일지 생성 (createWorkoutLog)")
@@ -118,11 +131,10 @@ class WorkoutLogServiceTest {
     }
   }
 
-  // ... DeleteWorkoutLogTest는 변경 없음 ...
-
   @Nested
   @DisplayName("운동일지 단건 조회 (findWorkoutLogById)")
   class FindWorkoutLogByIdTest {
+
     @Test
     @DisplayName("성공: 존재하는 ID로 조회 시 각 Repository를 호출하여 DTO를 조립해 반환한다")
     void findWorkoutLogById_Success() {
@@ -136,17 +148,24 @@ class WorkoutLogServiceTest {
           .build();
 
       setId(mockLog, logId);
-      WorkoutExercise mockExercise = WorkoutExercise.builder().workoutLog(mockLog).exercise(benchPress).order(1).build();
+      WorkoutExercise mockExercise = WorkoutExercise.builder().workoutLog(mockLog)
+          .exercise(benchPress).order(1).build();
       setId(mockExercise, 10L);
-      WorkoutSet mockSet = WorkoutSet.builder().workoutExercise(mockExercise).weight(BigDecimal.TEN).reps(10).order(1).build();
+      WorkoutSet mockSet = WorkoutSet.builder().workoutExercise(mockExercise).weight(BigDecimal.TEN)
+          .reps(10).order(1).build();
       setId(mockSet, 101L);
-      Feedback mockFeedback = Feedback.builder().author(testUser).content("좋아요").workoutLog(mockLog).build();
+      Feedback mockFeedback = Feedback.builder().author(testUser).content("좋아요").workoutLog(mockLog)
+          .build();
       setId(mockFeedback, 1001L);
 
       given(workoutLogRepository.findById(logId)).willReturn(Optional.of(mockLog));
-      given(workoutExerciseRepository.findAllByWorkoutLogIdOrderByOrderAsc(logId)).willReturn(List.of(mockExercise));
-      given(workoutSetRepository.findAllByWorkoutExerciseIdInOrderByOrderAsc(List.of(10L))).willReturn(List.of(mockSet));
-      given(feedbackRepository.findByWorkoutElements(logId, List.of(10L), List.of(101L))).willReturn(List.of(mockFeedback));
+      given(workoutExerciseRepository.findAllByWorkoutLogIdOrderByOrderAsc(logId)).willReturn(
+          List.of(mockExercise));
+      given(workoutSetRepository.findAllByWorkoutExerciseIdInOrderByOrderAsc(
+          List.of(10L))).willReturn(List.of(mockSet));
+      given(
+          feedbackRepository.findByWorkoutElements(logId, List.of(10L), List.of(101L))).willReturn(
+          List.of(mockFeedback));
 
       // when
       WorkoutLogResponse response = workoutLogService.findWorkoutLogById(logId);
@@ -157,16 +176,6 @@ class WorkoutLogServiceTest {
       assertThat(response.workoutExercises().get(0).workoutSets()).hasSize(1);
       assertThat(response.feedbacks()).hasSize(1);
       assertThat(response.feedbacks().iterator().next().content()).isEqualTo("좋아요");
-    }
-  }
-
-  private void setId(Object target, Long id) {
-    try {
-      Field idField = target.getClass().getDeclaredField("id");
-      idField.setAccessible(true);
-      idField.set(target, id);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new RuntimeException("테스트 객체 ID 설정 중 오류 발생", e);
     }
   }
 }

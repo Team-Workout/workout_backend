@@ -88,6 +88,16 @@ class RoutineServiceTest {
     );
   }
 
+  private void setId(Object target, Long id) {
+    try {
+      Field field = target.getClass().getDeclaredField("id");
+      field.setAccessible(true);
+      field.set(target, id);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   @Nested
   @DisplayName("루틴 생성 (createRoutine)")
   class CreateRoutineTest {
@@ -99,7 +109,8 @@ class RoutineServiceTest {
       given(memberRepository.findById(testUser.getId())).willReturn(Optional.of(testUser));
       given(exerciseRepository.findAllByIdIn(anyList())).willReturn(List.of(benchPress, squat));
 
-      Routine savedRoutine = Routine.builder().member(testUser).name(routineCreateRequest.name()).build();
+      Routine savedRoutine = Routine.builder().member(testUser).name(routineCreateRequest.name())
+          .build();
       setId(savedRoutine, 999L);
       given(routineRepository.save(any(Routine.class))).willReturn(savedRoutine);
 
@@ -118,7 +129,8 @@ class RoutineServiceTest {
       List<RoutineExercise> capturedExercises = exercisesCaptor.getValue();
       assertThat(capturedExercises).hasSize(2);
       assertThat(capturedExercises.get(0).getExercise().getName()).isEqualTo("벤치프레스");
-      assertThat(capturedExercises.get(0).getRoutine().getId()).isEqualTo(999L); // 부모 Routine과 연결되었는지 확인
+      assertThat(capturedExercises.get(0).getRoutine().getId()).isEqualTo(
+          999L); // 부모 Routine과 연결되었는지 확인
 
       // 3. routineSetRepository.saveAll이 호출되었는지, 내용은 무엇인지 검증
       ArgumentCaptor<List<RoutineSet>> setsCaptor = ArgumentCaptor.forClass(List.class);
@@ -126,7 +138,8 @@ class RoutineServiceTest {
       List<RoutineSet> capturedSets = setsCaptor.getValue();
       assertThat(capturedSets).hasSize(3); // (2+1)
       assertThat(capturedSets.get(0).getWeight()).isEqualTo(new BigDecimal("100.5"));
-      assertThat(capturedSets.get(0).getRoutineExercise()).isEqualTo(capturedExercises.get(0)); // 부모 Exercise와 연결되었는지 확인
+      assertThat(capturedSets.get(0).getRoutineExercise()).isEqualTo(
+          capturedExercises.get(0)); // 부모 Exercise와 연결되었는지 확인
     }
   }
 
@@ -171,20 +184,26 @@ class RoutineServiceTest {
     void findRoutineById_Success() {
       // given --- Mocking 방식 변경 ---
       // 각 계층별로 데이터를 분리하여 Mocking
-      Routine mockRoutine = Routine.builder().member(testUser).name("테스트 루틴").description("상세 설명").build();
+      Routine mockRoutine = Routine.builder().member(testUser).name("테스트 루틴").description("상세 설명")
+          .build();
       setId(mockRoutine, 1L);
 
-      RoutineExercise mockRe1 = RoutineExercise.builder().routine(mockRoutine).exercise(benchPress).order(1).build();
+      RoutineExercise mockRe1 = RoutineExercise.builder().routine(mockRoutine).exercise(benchPress)
+          .order(1).build();
       setId(mockRe1, 10L);
-      RoutineExercise mockRe2 = RoutineExercise.builder().routine(mockRoutine).exercise(squat).order(2).build();
+      RoutineExercise mockRe2 = RoutineExercise.builder().routine(mockRoutine).exercise(squat)
+          .order(2).build();
       setId(mockRe2, 11L);
 
-      RoutineSet mockSet1 = RoutineSet.builder().routineExercise(mockRe1).weight(new BigDecimal("100")).reps(5).order(1).build();
+      RoutineSet mockSet1 = RoutineSet.builder().routineExercise(mockRe1)
+          .weight(new BigDecimal("100")).reps(5).order(1).build();
       setId(mockSet1, 101L);
 
       given(routineRepository.findById(1L)).willReturn(Optional.of(mockRoutine));
-      given(routineExerciseRepository.findAllByRoutineIdOrderByOrderAsc(1L)).willReturn(List.of(mockRe1, mockRe2));
-      given(routineSetRepository.findAllByRoutineExerciseIdInOrderByOrderAsc(List.of(10L, 11L))).willReturn(List.of(mockSet1));
+      given(routineExerciseRepository.findAllByRoutineIdOrderByOrderAsc(1L)).willReturn(
+          List.of(mockRe1, mockRe2));
+      given(routineSetRepository.findAllByRoutineExerciseIdInOrderByOrderAsc(
+          List.of(10L, 11L))).willReturn(List.of(mockSet1));
 
       // when
       RoutineResponse response = routineService.findRoutineById(1L);
@@ -196,7 +215,8 @@ class RoutineServiceTest {
       assertThat(response.routineExercises()).hasSize(2);
       assertThat(response.routineExercises().get(0).exerciseName()).isEqualTo("벤치프레스");
       assertThat(response.routineExercises().get(0).routineSets()).hasSize(1);
-      assertThat(response.routineExercises().get(0).routineSets().get(0).workoutSetId()).isEqualTo(101L);
+      assertThat(response.routineExercises().get(0).routineSets().get(0).workoutSetId()).isEqualTo(
+          101L);
       assertThat(response.routineExercises().get(1).routineSets()).isEmpty(); // 스쿼트에는 세트가 없음
     }
 
@@ -210,16 +230,6 @@ class RoutineServiceTest {
       assertThrows(EntityNotFoundException.class, () -> routineService.findRoutineById(999L));
       // 다른 레포지토리는 호출되지 않아야 함
       then(routineExerciseRepository).should(never()).findAllByRoutineIdOrderByOrderAsc(any());
-    }
-  }
-
-  private void setId(Object target, Long id) {
-    try {
-      Field field = target.getClass().getDeclaredField("id");
-      field.setAccessible(true);
-      field.set(target, id);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new RuntimeException(e);
     }
   }
 }

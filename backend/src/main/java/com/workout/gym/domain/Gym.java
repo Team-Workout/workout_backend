@@ -39,18 +39,18 @@ public class Gym extends BaseEntity {
 
   @Override
   public boolean equals(Object o) {
-      if (this == o) {
-          return true;
-      }
-      if (o == null) {
-          return false;
-      }
+    if (this == o) {
+      return true;
+    }
+    if (o == null) {
+      return false;
+    }
 
     Class<?> thisClass = org.hibernate.Hibernate.getClass(this);
     Class<?> thatClass = org.hibernate.Hibernate.getClass(o);
-      if (thisClass != thatClass) {
-          return false;
-      }
+    if (thisClass != thatClass) {
+      return false;
+    }
 
     Gym gym = (Gym) o;
     return id != null && Objects.equals(id, gym.id);
