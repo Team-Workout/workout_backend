@@ -45,6 +45,13 @@ public class Education {
     this.endDate = endDate;
   }
 
+  public void updateDetails(String schoolName, String educationName, String degree,
+      LocalDate startDate, LocalDate endDate) {
+    this.schoolName = schoolName;
+    this.educationName = educationName;
+    this.degree = degree;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

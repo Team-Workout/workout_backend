@@ -69,4 +69,13 @@ public class Workexperience {
   public int hashCode() {
     return Objects.hashCode(id);
   }
+
+  public void updateDetails(String workName, String workPlace, String workPosition,
+      LocalDate workStart, LocalDate workEnd) {
+    this.workName = workName;
+    this.workPlace = workPlace;
+    this.workPosition = workPosition;
+    this.workStart = workStart;
+    this.workEnd = workEnd;
+  }
 }

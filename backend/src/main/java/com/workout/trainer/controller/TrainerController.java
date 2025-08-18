@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -59,5 +60,16 @@ public class TrainerController {
       @PathVariable Long gymId) {
     List<ProfileResponseDto> trainerProfiles = trainerService.getTrainerProfilesByGym(gymId);
     return ResponseEntity.ok(trainerProfiles);
+  }
+
+  /**
+   * 프로필 삭제
+   */
+  @DeleteMapping("/profile")
+  public ResponseEntity<Void> deleteProfile(
+      @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    Long currentTrainerId = userPrincipal.getUserId();
+    trainerService.deleteProfile(currentTrainerId);
+    return ResponseEntity.noContent().build();
   }
 }

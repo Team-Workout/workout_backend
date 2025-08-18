@@ -19,6 +19,7 @@ public record ProfileCreateDto(
 ) {
 
   public record AwardDto(
+      Long id,
       String awardName,
       LocalDate awardDate,
       String awardPlace
@@ -31,6 +32,7 @@ public record ProfileCreateDto(
   }
 
   public record CertificationDto(
+      Long id,
       String certificationName,
       String issuingOrganization,
       LocalDate acquisitionDate
@@ -43,6 +45,7 @@ public record ProfileCreateDto(
   }
 
   public record EducationDto(
+      Long id,
       String schoolName,
       String educationName,
       String degree,
@@ -58,6 +61,7 @@ public record ProfileCreateDto(
   }
 
   public record WorkExperienceDto(
+      Long id,
       String workName,
       LocalDate workStartDate, // DTO 필드명
       LocalDate workEndDate,   // DTO 필드명
@@ -66,7 +70,6 @@ public record ProfileCreateDto(
   ) {
 
     public Workexperience toEntity(Trainer trainer) {
-      // DTO 필드명과 toEntity 빌더에 사용되는 변수명을 일치시켜야 합니다.
       return Workexperience.builder()
           .trainer(trainer)
           .workName(workName)

@@ -40,6 +40,13 @@ public class Certification {
     this.acquisitionDate = acquisitionDate;
   }
 
+  public void updateDetails(String certificationName, String issuingOrganization,
+      LocalDate acquisitionDate) {
+    this.certificationName = certificationName;
+    this.issuingOrganization = issuingOrganization;
+    this.acquisitionDate = acquisitionDate;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

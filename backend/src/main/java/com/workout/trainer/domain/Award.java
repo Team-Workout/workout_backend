@@ -39,6 +39,12 @@ public class Award {
     this.awardPlace = awardPlace;
   }
 
+  public void updateDetails(String s, LocalDate localDate, String s1) {
+    this.awardName = s;
+    this.awardDate = localDate;
+    this.awardPlace = s1;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -62,4 +68,6 @@ public class Award {
   public int hashCode() {
     return Objects.hashCode(id);
   }
+
+
 }
