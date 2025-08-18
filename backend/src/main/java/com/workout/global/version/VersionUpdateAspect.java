@@ -16,7 +16,8 @@ public class VersionUpdateAspect {
 
   // @MasterDataUpdate 어노테이션을 타겟으로 하고, 어노테이션 자체를 파라미터로 받는다.
   @Pointcut("@annotation(masterDataUpdate)")
-  public void masterDataUpdatePointcut(MasterDataUpdate masterDataUpdate) {}
+  public void masterDataUpdatePointcut(MasterDataUpdate masterDataUpdate) {
+  }
 
   // Pointcut에 정의된 파라미터를 Advice 메소드에서 받아서 사용한다.
   @AfterReturning(pointcut = "masterDataUpdatePointcut(masterDataUpdate)")

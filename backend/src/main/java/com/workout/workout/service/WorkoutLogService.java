@@ -1,7 +1,7 @@
 package com.workout.workout.service;
 
-import com.workout.user.domain.User;
-import com.workout.user.repository.UserRepository;
+import com.workout.member.domain.Member;
+import com.workout.member.repository.MemberRepository;
 import com.workout.workout.domain.exercise.Exercise;
 import com.workout.workout.domain.log.Feedback;
 import com.workout.workout.domain.log.WorkoutExercise;
@@ -30,16 +30,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class WorkoutLogService {
 
   private final WorkoutLogRepository workoutLogRepository;
-  private final UserRepository userRepository;
+  private final MemberRepository userRepository;
   private final ExerciseRepository exerciseRepository;
   private final FeedbackRepository feedbackRepository;
   private final WorkoutSetRepository workoutSetRepository;
   private final WorkoutExerciseRepository workoutExerciseRepository;
 
 
-  public WorkoutLogService(WorkoutLogRepository workoutLogRepository, UserRepository userRepository,
+  public WorkoutLogService(WorkoutLogRepository workoutLogRepository,
+      MemberRepository userRepository,
       ExerciseRepository exerciseRepository, FeedbackRepository feedbackRepository,
-      WorkoutSetRepository workoutSetRepository, WorkoutExerciseRepository workoutExerciseRepository) {
+      WorkoutSetRepository workoutSetRepository,
+      WorkoutExerciseRepository workoutExerciseRepository) {
     this.workoutLogRepository = workoutLogRepository;
     this.userRepository = userRepository;
     this.exerciseRepository = exerciseRepository;
@@ -50,10 +52,10 @@ public class WorkoutLogService {
 
   @Transactional
   public Long createWorkoutLog(WorkoutLogCreateRequest request, Long userId) {
-    User user = userRepository.findById(userId)
+    Member member = userRepository.findById(userId)
         .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
 
-    WorkoutLog workoutLog = request.toEntity(user);
+    WorkoutLog workoutLog = request.toEntity(member);
     workoutLogRepository.save(workoutLog);
 
     Map<Long, Exercise> exerciseMap = exerciseRepository.findAllByIdIn(
@@ -80,14 +82,14 @@ public class WorkoutLogService {
 
         if (isFeedbackPresent(setDto.feedback())) {
           feedbacksToSave.add(Feedback.builder()
-              .author(user).content(setDto.feedback()).workoutSet(workoutSet).build());
+              .author(member).content(setDto.feedback()).workoutSet(workoutSet).build());
         }
       });
     });
 
     if (isFeedbackPresent(request.logFeedback())) {
       feedbacksToSave.add(Feedback.builder()
-          .author(user).content(request.logFeedback()).workoutLog(workoutLog).build());
+          .author(member).content(request.logFeedback()).workoutLog(workoutLog).build());
     }
 
     workoutExerciseRepository.saveAll(exercisesToSave);
@@ -103,7 +105,8 @@ public class WorkoutLogService {
         .orElseThrow(() -> new EntityNotFoundException("운동일지를 찾을 수 없습니다. ID: " + workoutLogId));
 
     // 자식 엔티티 목록 조회 (WorkoutExercise)
-    List<WorkoutExercise> exercises = workoutExerciseRepository.findAllByWorkoutLogIdOrderByOrderAsc(workoutLogId);
+    List<WorkoutExercise> exercises = workoutExerciseRepository.findAllByWorkoutLogIdOrderByOrderAsc(
+        workoutLogId);
     List<Long> exerciseIds = exercises.stream().map(WorkoutExercise::getId).toList();
 
     // 손자 엔티티 목록 조회 (WorkoutSet)
@@ -112,7 +115,8 @@ public class WorkoutLogService {
     List<Long> setIds = sets.stream().map(WorkoutSet::getId).toList();
 
     // 모든 피드백 한 번에 조회
-    List<Feedback> feedbacks = feedbackRepository.findByWorkoutElements(workoutLogId, exerciseIds, setIds);
+    List<Feedback> feedbacks = feedbackRepository.findByWorkoutElements(workoutLogId, exerciseIds,
+        setIds);
 
     // 조회된 엔티티들을 DTO로 조립
     return WorkoutLogResponse.from(workoutLog, exercises, sets, feedbacks);
@@ -120,7 +124,7 @@ public class WorkoutLogService {
 
   @Transactional
   public void deleteWorkoutLog(Long workoutLogId, Long userId) {
-    boolean hasAuthority = workoutLogRepository.existsByIdAndUserId(workoutLogId, userId);
+    boolean hasAuthority = workoutLogRepository.existsByIdAndMemberId(workoutLogId, userId);
     if (!hasAuthority) {
       throw new SecurityException("운동일지가 존재하지 않거나 삭제할 권한이 없습니다.");
     }

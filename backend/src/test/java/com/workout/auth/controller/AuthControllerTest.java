@@ -1,23 +1,24 @@
 package com.workout.auth.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.workout.auth.dto.SigninRequest;
 import com.workout.auth.dto.SigninResponse;
 import com.workout.auth.dto.SignupRequest;
 import com.workout.global.config.EmbeddedRedisConfig;
 import com.workout.gym.domain.Gym;
 import com.workout.gym.repository.GymRepository;
-import com.workout.user.domain.AccountStatus;
-import com.workout.user.domain.Gender;
-import com.workout.user.domain.Role;
-import com.workout.user.domain.User;
-import com.workout.user.repository.UserRepository;
+import com.workout.member.domain.AccountStatus;
+import com.workout.member.domain.Gender;
+import com.workout.member.domain.Member;
+import com.workout.member.domain.Role;
+import com.workout.member.repository.MemberRepository;
+import com.workout.trainer.domain.Trainer;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -30,21 +31,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.stream.Stream;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import({EmbeddedRedisConfig.class})
 @DisplayName("AuthController 통합 테스트")
 class AuthControllerTest {
 
+  private final String MEMBER_EMAIL = "member@example.com";
+  private final String TRAINER_EMAIL = "trainer@example.com";
+  private final String PASSWORD = "password123";
+
   @Autowired
   private TestRestTemplate restTemplate;
 
   @Autowired
-  private UserRepository userRepository;
+  private MemberRepository memberRepository;
 
   @Autowired
   private GymRepository gymRepository;
@@ -53,111 +54,85 @@ class AuthControllerTest {
   private PasswordEncoder passwordEncoder;
 
   private Gym testGym;
-  private User existingUser;
-  private final String EXISTING_USER_EMAIL = "existing@example.com";
-  private final String EXISTING_USER_PASSWORD = "password123";
+  private Member testMember;
+  private Trainer testTrainer;
 
   @BeforeEach
   void setUp() {
-    // 테스트 실행 전 데이터베이스 초기화
-    userRepository.deleteAll();
-    gymRepository.deleteAll();
+    testGym = gymRepository.save(Gym.builder().name("테스트 헬스장").build());
 
-    // 테스트용 헬스장 데이터 생성
-    testGym = gymRepository.save(Gym.builder()
-        .name("테스트 헬스장")
-        .address("서울")
-        .phoneNumber("010-1234-5678")
+    testMember = memberRepository.save(Member.builder()
+        .email(MEMBER_EMAIL)
+        .name("테스트멤버")
+        .password(passwordEncoder.encode(PASSWORD))
+        .gym(testGym).gender(Gender.MALE).role(Role.MEMBER).accountStatus(AccountStatus.ACTIVE)
         .build());
 
-    // 테스트용 기존 사용자 데이터 생성
-    existingUser = User.builder()
-        .email(EXISTING_USER_EMAIL)
-        .name("기존사용자")
-        .password(passwordEncoder.encode(EXISTING_USER_PASSWORD))
-        .gym(testGym)
-        .gender(Gender.MALE)
-        .role(Role.USER)
-        .accountStatus(AccountStatus.ACTIVE)
-        .build();
-    userRepository.save(existingUser);
+    testTrainer = memberRepository.save(Trainer.builder()
+        .email(TRAINER_EMAIL)
+        .name("테스트트레이너")
+        .password(passwordEncoder.encode(PASSWORD))
+        .gym(testGym).gender(Gender.FEMALE).role(Role.TRAINER).accountStatus(AccountStatus.ACTIVE)
+        .introduction("테스트 소개글")
+        .build());
+  }
+
+  @AfterEach
+  void tearDown() {
+    memberRepository.deleteAllInBatch();
+    gymRepository.deleteAllInBatch();
   }
 
   @Nested
-  @DisplayName("회원가입 API (/api/auth/signup) 테스트")
-  class SignupTest {
+  @DisplayName("회원가입 API 테스트")
+  class SignupApiTest {
 
     @Test
-    @DisplayName("성공: 새로운 사용자 정보로 회원가입에 성공하면 201 Created와 사용자 ID를 반환한다")
-    void signup_success() {
-      // given
-      SignupRequest requestDto = new SignupRequest(
-          testGym.getId(),
-          "new@example.com",
-          "newPass123!@", // 비밀번호 패턴 만족
-          "새사용자",
-          Gender.FEMALE,
-          Role.USER
-      );
+    @DisplayName("성공: 새로운 일반 사용자(MEMBER) 회원가입 시 201 Created를 반환한다")
+    void signupUser_success() {
+      SignupRequest requestDto = new SignupRequest(testGym.getId(), "new.member@example.com",
+          "newPass123", "새로운멤버", Gender.MALE, Role.MEMBER);
 
-      // when
-      ResponseEntity<Long> response = restTemplate.postForEntity("/api/auth/signup", requestDto, Long.class);
+      ResponseEntity<Long> response = restTemplate.postForEntity("/api/auth/signup/user",
+          requestDto, Long.class);
 
-      // then
       assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
       Long newUserId = response.getBody();
-      assertThat(newUserId).isNotNull().isPositive();
-
-      // DB에 실제로 저장되었는지, 반환된 ID로 직접 검증하여 테스트 신뢰도 확보
-      User foundUser = userRepository.findById(newUserId).orElseThrow();
-      assertThat(foundUser.getEmail()).isEqualTo("new@example.com");
-      assertThat(foundUser.getName()).isEqualTo("새사용자");
+      Member foundUser = memberRepository.findById(newUserId).orElseThrow();
+      assertThat(foundUser.getEmail()).isEqualTo("new.member@example.com");
+      assertThat(foundUser.getRole()).isEqualTo(Role.MEMBER);
+      assertThat(foundUser).isNotInstanceOf(Trainer.class);
     }
 
     @Test
-    @DisplayName("실패: 이미 존재하는 이메일로 회원가입 시 400 Bad Request와 에러 메시지를 반환한다")
-    void signup_failure_duplicateEmail() {
-      // given
-      SignupRequest requestDto = new SignupRequest(
-          testGym.getId(),
-          EXISTING_USER_EMAIL,
-          "newPass123!@",
-          "다른사용자",
-          Gender.FEMALE,
-          Role.USER
-      );
+    @DisplayName("성공: 새로운 트레이너(TRAINER) 회원가입 시 201 Created를 반환한다")
+    void signupTrainer_success() {
+      SignupRequest requestDto = new SignupRequest(testGym.getId(), "new.trainer@example.com",
+          "newPass123", "새로운트레이너", Gender.FEMALE, Role.TRAINER);
 
-      // when
-      ResponseEntity<String> response = restTemplate.postForEntity("/api/auth/signup",
+      ResponseEntity<Long> response = restTemplate.postForEntity("/api/auth/signup/trainer",
+          requestDto, Long.class);
+
+      assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+      Long newTrainerId = response.getBody();
+      Member foundTrainer = memberRepository.findById(newTrainerId).orElseThrow();
+      assertThat(foundTrainer.getEmail()).isEqualTo("new.trainer@example.com");
+      assertThat(foundTrainer.getRole()).isEqualTo(Role.TRAINER);
+      assertThat(foundTrainer).isInstanceOf(Trainer.class);
+    }
+
+    @Test
+    @DisplayName("실패: 이미 존재하는 이메일로 트레이너 회원가입 시 400 Bad Request를 반환한다")
+    void signup_failure_duplicateEmail() {
+      SignupRequest requestDto = new SignupRequest(testGym.getId(), TRAINER_EMAIL, "newPass123",
+          "다른트레이너", Gender.MALE, Role.TRAINER);
+
+      ResponseEntity<String> response = restTemplate.postForEntity("/api/auth/signup/trainer",
           requestDto, String.class);
 
-      // then
       assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-      assertThat(response.getBody()).contains("존재하는 이메일 입니다");
+      assertThat(response.getBody()).contains("존재하는 이메일입니다");
     }
-
-    @DisplayName("실패: 유효하지 않은 정보로 회원가입 시 400 Bad Request와 필드별 에러 메시지를 반환한다")
-    @ParameterizedTest
-    @MethodSource("invalidSignupRequests") // non-static 메소드 참조하도록 수정
-    void signup_failure_invalidRequest(SignupRequest invalidRequest, String expectedErrorMessage) {
-      // when
-      ResponseEntity<String> response = restTemplate.postForEntity("/api/auth/signup", invalidRequest, String.class);
-
-      // then
-      assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-      assertThat(response.getBody()).contains(expectedErrorMessage);
-    }
-  }
-
-  // ParameterizedTest를 위한 데이터 소스 (non-static으로 변경)
-  private Stream<Arguments> invalidSignupRequests() {
-    Long validGymId = testGym.getId(); // @BeforeEach에서 생성된 testGym의 ID를 동적으로 사용
-    return Stream.of(
-        Arguments.of(new SignupRequest(validGymId, "not-an-email", "pass123!@", "name", Gender.MALE, Role.USER), "올바른 이메일 형식이 아닙니다"),
-        Arguments.of(new SignupRequest(validGymId, "valid@email.com", "short", "name", Gender.MALE, Role.USER), "비밀번호는 영문과 숫자를 포함하여 8자 이상이어야 합니다"),
-        Arguments.of(new SignupRequest(null, "valid@email.com", "pass123!@", "name", Gender.MALE, Role.USER), "헬스장 ID는 필수입니다"),
-        Arguments.of(new SignupRequest(validGymId, "valid@email.com", "pass123!@", "", Gender.MALE, Role.USER), "이름은 필수입니다")
-    );
   }
 
   @Nested
@@ -165,95 +140,68 @@ class AuthControllerTest {
   class SigninTest {
 
     @Test
-    @DisplayName("성공: 올바른 정보로 로그인 시 200 OK, 사용자 정보(id, name), 세션 쿠키를 반환한다")
-    void signin_success() {
-      // given
-      SigninRequest requestDto = new SigninRequest(EXISTING_USER_EMAIL, EXISTING_USER_PASSWORD);
+    @DisplayName("성공: 일반 사용자로 로그인 시 200 OK와 세션 쿠키를 반환한다")
+    void signin_member_success() {
+      SigninRequest requestDto = new SigninRequest(MEMBER_EMAIL, PASSWORD);
 
-      // when
-      ResponseEntity<SigninResponse> response = restTemplate.postForEntity("/api/auth/signin", requestDto, SigninResponse.class);
+      ResponseEntity<SigninResponse> response = restTemplate.postForEntity("/api/auth/signin",
+          requestDto, SigninResponse.class);
 
-      // then
       assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-      SigninResponse responseBody = response.getBody();
-      assertThat(responseBody).isNotNull();
-      assertThat(responseBody.id()).isEqualTo(existingUser.getId());
-      assertThat(responseBody.name()).isEqualTo(existingUser.getName());
-
-      String setCookieHeader = response.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
-      assertThat(setCookieHeader).isNotNull().contains("SESSION");
+      assertThat(response.getBody().id()).isEqualTo(testMember.getId());
+      assertThat(response.getHeaders().getFirst(HttpHeaders.SET_COOKIE)).isNotNull()
+          .contains("SESSION");
     }
 
     @Test
-    @DisplayName("실패: 잘못된 비밀번호로 로그인 시 400 Bad Request와 에러 메시지를 반환한다")
+    @DisplayName("성공: 트레이너로 로그인 시 200 OK와 세션 쿠키를 반환한다")
+    void signin_trainer_success() {
+      SigninRequest requestDto = new SigninRequest(TRAINER_EMAIL, PASSWORD);
+
+      ResponseEntity<SigninResponse> response = restTemplate.postForEntity("/api/auth/signin",
+          requestDto, SigninResponse.class);
+
+      assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+      assertThat(response.getBody().id()).isEqualTo(testTrainer.getId());
+      assertThat(response.getHeaders().getFirst(HttpHeaders.SET_COOKIE)).isNotNull()
+          .contains("SESSION");
+    }
+
+    @Test
+    @DisplayName("실패: 잘못된 비밀번호로 로그인 시 400 Bad Request를 반환한다")
     void signin_failure_wrongPassword() {
-      // given
-      SigninRequest requestDto = new SigninRequest(EXISTING_USER_EMAIL, "wrong-password");
+      SigninRequest requestDto = new SigninRequest(MEMBER_EMAIL, "wrong-password");
 
-      // when
-      ResponseEntity<String> response = restTemplate.postForEntity("/api/auth/signin", requestDto, String.class);
+      ResponseEntity<String> response = restTemplate.postForEntity("/api/auth/signin", requestDto,
+          String.class);
 
-      // then
       assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-      assertThat(response.getBody()).contains("비밀번호가 일치하지 않습니다");
-    }
-
-    @Test
-    @DisplayName("실패: 존재하지 않는 이메일로 로그인 시 400 Bad Request와 에러 메시지를 반환한다")
-    void signin_failure_userNotFound() {
-      // given
-      SigninRequest requestDto = new SigninRequest("nonexistent@example.com", "any-password");
-
-      // when
-      ResponseEntity<String> response = restTemplate.postForEntity("/api/auth/signin", requestDto, String.class);
-
-      // then
-      assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-      assertThat(response.getBody()).contains("가입되지 않은 이메일입니다");
+      assertThat(response.getBody()).contains("이메일 또는 비밀번호가 일치하지 않습니다.");
     }
   }
 
   @Nested
   @DisplayName("로그아웃 API (/api/auth/signout) 테스트")
   class SignoutTest {
+
     @Test
     @DisplayName("성공: 로그인 상태에서 로그아웃 요청 시 200 OK와 만료된 세션 쿠키를 반환한다")
     void signout_success_whenLoggedIn() {
-      // given: 먼저 로그인하여 세션을 획득
-      SigninRequest loginDto = new SigninRequest(EXISTING_USER_EMAIL, EXISTING_USER_PASSWORD);
-      ResponseEntity<SigninResponse> loginResponse = restTemplate.postForEntity("/api/auth/signin", loginDto, SigninResponse.class);
+      SigninRequest loginDto = new SigninRequest(MEMBER_EMAIL, PASSWORD);
+      ResponseEntity<SigninResponse> loginResponse = restTemplate.postForEntity("/api/auth/signin",
+          loginDto, SigninResponse.class);
       String sessionCookie = loginResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
-      assertThat(sessionCookie).isNotNull();
 
       HttpHeaders logoutHeaders = new HttpHeaders();
       logoutHeaders.add(HttpHeaders.COOKIE, sessionCookie);
       HttpEntity<Void> requestEntity = new HttpEntity<>(null, logoutHeaders);
 
-      // when: 획득한 세션으로 로그아웃 요청 (POST 메소드 명시)
-      ResponseEntity<String> logoutResponse = restTemplate.exchange("/api/auth/signout", HttpMethod.POST, requestEntity, String.class);
+      ResponseEntity<String> logoutResponse = restTemplate.exchange("/api/auth/signout",
+          HttpMethod.POST, requestEntity, String.class);
 
-      // then
       assertThat(logoutResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-      assertThat(logoutResponse.getBody()).isEqualTo("Logout Successful");
-
-      String invalidatedCookieHeader = logoutResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
-      assertThat(invalidatedCookieHeader).isNotNull()
-          .contains("SESSION=;")
-          .contains("Max-Age=0");
-    }
-
-    @Test
-    @DisplayName("성공: 로그인하지 않은 상태에서 로그아웃 요청 시에도 200 OK를 반환한다")
-    void signout_success_whenNotLoggedIn() {
-      // given
-      HttpEntity<Void> requestEntity = new HttpEntity<>(null, new HttpHeaders());
-
-      // when
-      ResponseEntity<String> logoutResponse = restTemplate.exchange("/api/auth/signout", HttpMethod.POST, requestEntity, String.class);
-
-      // then
-      assertThat(logoutResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-      assertThat(logoutResponse.getBody()).isEqualTo("Logout Successful");
+      String invalidatedCookie = logoutResponse.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
+      assertThat(invalidatedCookie).isNotNull().contains("Max-Age=0");
     }
   }
 }

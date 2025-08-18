@@ -7,6 +7,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface RoutineExerciseRepository extends JpaRepository<RoutineExercise, Long> {
+
   List<RoutineExercise> findAllByRoutineIdOrderByOrderAsc(Long routineId);
+
   void deleteAllByRoutineId(Long routineId);
 }

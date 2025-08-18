@@ -1,7 +1,7 @@
 package com.workout.workout.domain.exercise;
 
-import com.workout.workout.domain.muscle.MuscleRole;
 import com.workout.workout.domain.muscle.Muscle;
+import com.workout.workout.domain.muscle.MuscleRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -44,12 +44,18 @@ public class ExerciseTargetMuscle {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null) {
+      return false;
+    }
 
     Class<?> thisClass = org.hibernate.Hibernate.getClass(this);
     Class<?> thatClass = org.hibernate.Hibernate.getClass(o);
-    if (thisClass != thatClass) return false;
+    if (thisClass != thatClass) {
+      return false;
+    }
 
     ExerciseTargetMuscle that = (ExerciseTargetMuscle) o;
     return Objects.equals(getId(), that.getId());

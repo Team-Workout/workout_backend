@@ -1,6 +1,6 @@
 package com.workout.auth.domain;
 
-import com.workout.user.domain.User;
+import com.workout.member.domain.Member;
 import java.util.Collection;
 import java.util.Collections;
 import lombok.Getter;
@@ -16,11 +16,12 @@ public class UserPrincipal implements UserDetails {
   private final String password;
   private final Collection<? extends GrantedAuthority> authorities;
 
-  public UserPrincipal(User user) {
-    this.userId = user.getId();
-    this.email = user.getEmail();
-    this.password = user.getPassword();
-    this.authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+  public UserPrincipal(Member member) {
+    this.userId = member.getId();
+    this.email = member.getEmail();
+    this.password = member.getPassword();
+    this.authorities = Collections.singletonList(
+        new SimpleGrantedAuthority("ROLE_" + member.getRole().name()));
   }
 
   @Override
@@ -40,11 +41,22 @@ public class UserPrincipal implements UserDetails {
 
   // 계정 만료, 잠금, 비번 만료, 활성화 여부 등은 필요에 따라 구현
   @Override
-  public boolean isAccountNonExpired() { return true; }
+  public boolean isAccountNonExpired() {
+    return true;
+  }
+
   @Override
-  public boolean isAccountNonLocked() { return true; }
+  public boolean isAccountNonLocked() {
+    return true;
+  }
+
   @Override
-  public boolean isCredentialsNonExpired() { return true; }
+  public boolean isCredentialsNonExpired() {
+    return true;
+  }
+
   @Override
-  public boolean isEnabled() { return true; }
+  public boolean isEnabled() {
+    return true;
+  }
 }

@@ -9,17 +9,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class GymService {
 
-    private final GymRepository gymRepository;
+  private final GymRepository gymRepository;
 
-    public GymService(GymRepository gymRepository) {
-        this.gymRepository = gymRepository;
-    }
+  public GymService(GymRepository gymRepository) {
+    this.gymRepository = gymRepository;
+  }
 
-    public boolean existsById(Long id) {
-        return gymRepository.existsById(id);
-    }
+  public boolean existsById(Long id) {
+    return gymRepository.existsById(id);
+  }
 
-    public Gym findById(Long id) {
-        return gymRepository.findById(id).orElseThrow(IllegalArgumentException::new);
-    }
+  public Gym findById(Long id) {
+    return gymRepository.findById(id).orElseThrow(IllegalArgumentException::new);
+  }
 }

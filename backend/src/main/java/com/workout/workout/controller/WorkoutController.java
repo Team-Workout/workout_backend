@@ -1,10 +1,10 @@
 package com.workout.workout.controller;
 
 import com.workout.auth.domain.UserPrincipal;
-import com.workout.workout.dto.routine.RoutineCreateRequest;
-import com.workout.workout.dto.routine.RoutineResponse;
 import com.workout.workout.dto.log.WorkoutLogCreateRequest;
 import com.workout.workout.dto.log.WorkoutLogResponse;
+import com.workout.workout.dto.routine.RoutineCreateRequest;
+import com.workout.workout.dto.routine.RoutineResponse;
 import com.workout.workout.service.RoutineService;
 import com.workout.workout.service.WorkoutLogService;
 import jakarta.validation.Valid;
@@ -32,7 +32,6 @@ public class WorkoutController {
     this.workoutLogService = workoutLogService;
     this.routineService = routineService;
   }
-
 
   /**
    * 운동일지 생성

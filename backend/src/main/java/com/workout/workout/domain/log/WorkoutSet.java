@@ -1,6 +1,5 @@
 package com.workout.workout.domain.log;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -9,16 +8,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import java.math.BigDecimal;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import jakarta.persistence.OrderBy;
 import org.hibernate.annotations.ColumnDefault;
 
 @Entity
@@ -44,7 +39,6 @@ public class WorkoutSet {
   @Column(nullable = false)
   private int reps;
 
-
   @Builder
   public WorkoutSet(int order, BigDecimal weight, int reps, WorkoutExercise workoutExercise) {
     this.order = order;
@@ -55,12 +49,18 @@ public class WorkoutSet {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null) {
+      return false;
+    }
 
     Class<?> thisClass = org.hibernate.Hibernate.getClass(this);
     Class<?> thatClass = org.hibernate.Hibernate.getClass(o);
-    if (thisClass != thatClass) return false;
+    if (thisClass != thatClass) {
+      return false;
+    }
 
     WorkoutSet that = (WorkoutSet) o;
     return Objects.equals(getId(), that.getId());

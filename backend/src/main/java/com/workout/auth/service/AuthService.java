@@ -3,46 +3,54 @@
 package com.workout.auth.service;
 
 import com.workout.auth.domain.UserPrincipal;
-import com.workout.user.domain.User;
-import com.workout.user.service.UserService;
+import com.workout.member.domain.Member;
+import com.workout.member.repository.MemberRepository;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse; // HttpServletResponse import 추가
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.context.SecurityContextRepository; // SecurityContextRepository import 추가
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
 public class AuthService {
 
-    private final UserService userService;
-    private final SecurityContextRepository securityContextRepository; // SecurityContextRepository 주입
+  private final MemberRepository memberRepository;
+  private final PasswordEncoder passwordEncoder;
+  private final SecurityContextRepository securityContextRepository; // SecurityContextRepository 주입
 
 
-    public AuthService(UserService userService, SecurityContextRepository securityContextRepository) {
-        this.userService = userService;
-        this.securityContextRepository = securityContextRepository;
+  public AuthService(MemberRepository memberRepository,
+      SecurityContextRepository securityContextRepository, PasswordEncoder passwordEncoder) {
+    this.memberRepository = memberRepository;
+    this.securityContextRepository = securityContextRepository;
+    this.passwordEncoder = passwordEncoder;
+  }
+
+  // 로그인
+  public Member login(String email, String password, HttpServletRequest request,
+      HttpServletResponse response) {
+    Member member = memberRepository.findByEmail(email)
+        .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 일치하지 않습니다."));
+
+    if (!passwordEncoder.matches(password, member.getPassword())) {
+      throw new IllegalArgumentException("이메일 또는 비밀번호가 일치하지 않습니다.");
     }
 
-    // 로그인
-    public User login(String email, String password, HttpServletRequest request, HttpServletResponse response) {
-        User user = userService.authenticate(email, password);
-        log.info("아이디 비번 확인 완료: {}", user.getEmail());
+    log.info("로그인 성공: {}", member.getEmail());
 
-        UserPrincipal userPrincipal = new UserPrincipal(user);
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-            userPrincipal, null, userPrincipal.getAuthorities());
+    UserPrincipal userPrincipal = new UserPrincipal(member);
+    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+        userPrincipal, null, userPrincipal.getAuthorities());
 
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
-        SecurityContextHolder.setContext(context);
+    SecurityContext context = SecurityContextHolder.createEmptyContext();
+    context.setAuthentication(authentication);
+    securityContextRepository.saveContext(context, request, response);
 
-        // [핵심] SecurityContext를 세션에 저장하고 쿠키를 발급하도록 명시적으로 호출
-        securityContextRepository.saveContext(context, request, response);
-
-        return user;
-    }
+    return member;
+  }
 }

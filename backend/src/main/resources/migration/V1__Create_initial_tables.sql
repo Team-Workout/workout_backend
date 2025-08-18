@@ -1,5 +1,3 @@
--- Flyway V1: 프로젝트 전체 테이블 스키마 생성 (DDL) - 수정본
-
 -- 헬스장 정보 테이블
 CREATE TABLE IF NOT EXISTS gym
 (
@@ -11,21 +9,92 @@ CREATE TABLE IF NOT EXISTS gym
     updated_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- 사용자 정보 테이블
-CREATE TABLE IF NOT EXISTS `user`
+-- 사용자/트레이너 통합 테이블
+CREATE TABLE IF NOT EXISTS `member`
 (
     id             BIGINT AUTO_INCREMENT PRIMARY KEY,
-    gym_id         BIGINT       NOT NULL,
-    name           VARCHAR(255) NOT NULL,
-    email          VARCHAR(255) NOT NULL UNIQUE,
-    password       VARCHAR(255) NOT NULL,
-    gender         VARCHAR(20)  NOT NULL,
-    account_status VARCHAR(50)  NOT NULL,
-    role           VARCHAR(50)  NOT NULL,
-    created_at     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_user_gym FOREIGN KEY (gym_id) REFERENCES gym (id)
+    gym_id         BIGINT         NOT NULL,
+    name           VARCHAR(255)   NOT NULL,
+    email          VARCHAR(255)   NOT NULL UNIQUE,
+    password       VARCHAR(255)   NOT NULL,
+    gender         ENUM('MALE', 'FEMALE') NOT NULL,
+    account_status ENUM('ACTIVE', 'INACTIVE', 'SUSPENDED') NOT NULL,
+    role           VARCHAR(31)    NOT NULL,
+    created_at     TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    phone_number   VARCHAR(50),
+    introduction   TEXT,
+
+    CONSTRAINT fk_member_gym FOREIGN KEY (gym_id) REFERENCES gym (id),
+    CONSTRAINT chk_member_role CHECK (role IN ('MEMBER', 'TRAINER', 'ADMIN'))
 );
+-- 트레이너 학력
+CREATE TABLE IF NOT EXISTS education
+(
+    id             BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id      BIGINT       NOT NULL,
+    school_name    VARCHAR(255) NOT NULL,
+    education_name VARCHAR(255),
+    degree         VARCHAR(100),
+    start_date     DATE,
+    end_date       DATE,
+    CONSTRAINT fk_education_member FOREIGN KEY (member_id) REFERENCES `member` (id) ON DELETE CASCADE
+);
+
+
+-- 트레이너 경력
+CREATE TABLE IF NOT EXISTS work_experience
+(
+    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id     BIGINT       NOT NULL,
+    work_name     VARCHAR(255) NOT NULL,
+    work_place    VARCHAR(255),
+    work_position VARCHAR(255),
+    work_start    DATE,
+    work_end      DATE,
+    CONSTRAINT fk_work_experience_member FOREIGN KEY (member_id) REFERENCES `member` (id) ON DELETE CASCADE
+);
+
+-- 트레이너 수상 경력
+CREATE TABLE IF NOT EXISTS award
+(
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id   BIGINT       NOT NULL,
+    award_name  VARCHAR(255) NOT NULL,
+    award_date  DATE,
+    award_place VARCHAR(255),
+    CONSTRAINT fk_award_member FOREIGN KEY (member_id) REFERENCES `member` (id) ON DELETE CASCADE
+);
+
+-- 트레이너 자격증
+CREATE TABLE IF NOT EXISTS certification
+(
+    id                   BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id            BIGINT       NOT NULL,
+    certification_name   VARCHAR(255) NOT NULL,
+    issuing_organization VARCHAR(255),
+    acquisition_date     DATE,
+    CONSTRAINT fk_certification_member FOREIGN KEY (member_id) REFERENCES `member` (id) ON DELETE CASCADE
+);
+
+-- 전문 분야 마스터 테이블
+CREATE TABLE IF NOT EXISTS specialty
+(
+    id   BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+-- 트레이너와 전문 분야 매핑 테이블
+CREATE TABLE IF NOT EXISTS trainer_specialty
+(
+    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id    BIGINT NOT NULL,
+    specialty_id BIGINT NOT NULL,
+    CONSTRAINT fk_ts_member FOREIGN KEY (member_id) REFERENCES `member` (id) ON DELETE CASCADE,
+    CONSTRAINT fk_ts_specialty FOREIGN KEY (specialty_id) REFERENCES specialty (id) ON DELETE CASCADE,
+    UNIQUE (member_id, specialty_id)
+);
+
 
 -- 근육 정보 마스터 테이블
 CREATE TABLE IF NOT EXISTS muscle
@@ -59,11 +128,11 @@ CREATE TABLE IF NOT EXISTS exercise_target_muscle
 CREATE TABLE IF NOT EXISTS workout_log
 (
     id           BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id      BIGINT    NOT NULL,
+    member_id    BIGINT    NOT NULL,
     workout_date DATE      NOT NULL,
     created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_log_user FOREIGN KEY (user_id) REFERENCES `user` (id) ON DELETE CASCADE
+    CONSTRAINT fk_log_member FOREIGN KEY (member_id) REFERENCES `member` (id) ON DELETE CASCADE
 );
 
 -- 운동 기록 테이블 (계층 구조의 중간)
@@ -101,11 +170,11 @@ CREATE TABLE IF NOT EXISTS feedback
     workout_set_id      BIGINT,
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_feedback_author FOREIGN KEY (author_id) REFERENCES `user` (id) ON DELETE CASCADE,
+    CONSTRAINT fk_feedback_author FOREIGN KEY (author_id) REFERENCES `member` (id) ON DELETE CASCADE,
     CONSTRAINT fk_feedback_log FOREIGN KEY (workout_log_id) REFERENCES workout_log (id) ON DELETE CASCADE,
     CONSTRAINT fk_feedback_exercise FOREIGN KEY (workout_exercise_id) REFERENCES workout_exercise (id) ON DELETE CASCADE,
     CONSTRAINT fk_feedback_set FOREIGN KEY (workout_set_id) REFERENCES workout_set (id) ON DELETE CASCADE,
-    -- 피드백은 운동일지, 운동, 세트 중 하나에만 속해야 함 (Java 로직과 동일)
+    -- 피드백은 운동일지, 운동, 세트 중 하나에만 속해야 함
     CONSTRAINT chk_feedback_owner CHECK (
         (CASE WHEN workout_log_id IS NOT NULL THEN 1 ELSE 0 END) +
         (CASE WHEN workout_exercise_id IS NOT NULL THEN 1 ELSE 0 END) +
@@ -117,12 +186,12 @@ CREATE TABLE IF NOT EXISTS feedback
 CREATE TABLE IF NOT EXISTS routine
 (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id     BIGINT       NOT NULL,
+    member_id   BIGINT       NOT NULL,
     name        VARCHAR(255) NOT NULL,
     description TEXT,
     created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_routine_user FOREIGN KEY (user_id) REFERENCES `user` (id) ON DELETE CASCADE
+    CONSTRAINT fk_routine_member FOREIGN KEY (member_id) REFERENCES `member` (id) ON DELETE CASCADE
 );
 
 -- 루틴 운동 테이블
@@ -156,3 +225,8 @@ CREATE TABLE IF NOT EXISTS master_data_version
     version    VARCHAR(255) NOT NULL,
     updated_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+-- 성능 최적화를 위한 인덱스 추가
+CREATE INDEX idx_member_gym_id ON `member` (gym_id);
+CREATE INDEX idx_workout_log_member_date ON workout_log (member_id, workout_date);
+CREATE INDEX idx_routine_member_id ON routine (member_id);

@@ -1,13 +1,13 @@
-package com.workout.user.service;
+package com.workout.member.service;
 
 import com.workout.auth.dto.SignupRequest;
 import com.workout.gym.domain.Gym;
 import com.workout.gym.service.GymService;
-import com.workout.user.domain.AccountStatus;
-import com.workout.user.domain.Gender;
-import com.workout.user.domain.Role;
-import com.workout.user.domain.User;
-import com.workout.user.repository.UserRepository;
+import com.workout.member.domain.AccountStatus;
+import com.workout.member.domain.Gender;
+import com.workout.member.domain.Member;
+import com.workout.member.domain.Role;
+import com.workout.member.repository.MemberRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,13 +33,13 @@ import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService 단위 테스트")
-class UserServiceTest {
+class MemberServiceTest {
 
   @InjectMocks
-  private UserService userService;
+  private MemberService memberService;
 
   @Mock
-  private UserRepository userRepository;
+  private MemberRepository memberRepository;
 
   @Mock
   private GymService gymService;
@@ -48,7 +48,7 @@ class UserServiceTest {
   private PasswordEncoder passwordEncoder;
 
   // 테스트에서 공통적으로 사용할 객체 (Test Fixtures)
-  private User mockUser;
+  private Member mockUser;
   private Gym mockGym;
   private SignupRequest signupRequest;
   private final String rawPassword = "password123";
@@ -65,10 +65,10 @@ class UserServiceTest {
         rawPassword,                // password
         "테스트유저",                  // name
         Gender.MALE,                // gender
-        Role.USER                   // role
+        Role.MEMBER                   // role
     );
 
-    mockUser = User.builder()
+    mockUser = Member.builder()
         .id(1L)
         .email(signupRequest.email())
         .password(encodedPassword)
@@ -86,15 +86,15 @@ class UserServiceTest {
     @DisplayName("성공: 이메일과 비밀번호가 일치하면 사용자 정보를 반환한다")
     void authenticate_Success() {
       // given
-      given(userRepository.findByEmail(anyString())).willReturn(Optional.of(mockUser));
+      given(memberRepository.findByEmail(anyString())).willReturn(Optional.of(mockUser));
       given(passwordEncoder.matches(rawPassword, encodedPassword)).willReturn(true);
 
       // when
-      User authenticatedUser = userService.authenticate(signupRequest.email(), rawPassword);
+      Member authenticatedUser = memberService.authenticate(signupRequest.email(), rawPassword);
 
       // then
       assertThat(authenticatedUser).isEqualTo(mockUser);
-      then(userRepository).should(times(1)).findByEmail(signupRequest.email());
+      then(memberRepository).should(times(1)).findByEmail(signupRequest.email());
       then(passwordEncoder).should(times(1)).matches(rawPassword, encodedPassword);
     }
 
@@ -102,11 +102,11 @@ class UserServiceTest {
     @DisplayName("실패: 가입되지 않은 이메일이면 IllegalArgumentException 예외가 발생한다")
     void authenticate_Failure_UserNotFound() {
       // given
-      given(userRepository.findByEmail(anyString())).willReturn(Optional.empty());
+      given(memberRepository.findByEmail(anyString())).willReturn(Optional.empty());
 
       // when & then
       assertThrows(IllegalArgumentException.class,
-          () -> userService.authenticate(signupRequest.email(), rawPassword));
+          () -> memberService.authenticate(signupRequest.email(), rawPassword));
 
       // and
       then(passwordEncoder).should(never()).matches(anyString(), anyString());
@@ -116,12 +116,12 @@ class UserServiceTest {
     @DisplayName("실패: 비밀번호가 일치하지 않으면 IllegalArgumentException 예외가 발생한다")
     void authenticate_Failure_PasswordMismatch() {
       // given
-      given(userRepository.findByEmail(anyString())).willReturn(Optional.of(mockUser));
+      given(memberRepository.findByEmail(anyString())).willReturn(Optional.of(mockUser));
       given(passwordEncoder.matches(rawPassword, encodedPassword)).willReturn(false);
 
       // when & then
       assertThrows(IllegalArgumentException.class,
-          () -> userService.authenticate(signupRequest.email(), rawPassword));
+          () -> memberService.authenticate(signupRequest.email(), rawPassword));
     }
   }
 
@@ -134,18 +134,19 @@ class UserServiceTest {
     void registerUser_Success() {
       // given
       given(gymService.findById(signupRequest.gymId())).willReturn(mockGym);
-      given(userRepository.existsByName(signupRequest.name())).willReturn(false);
-      given(userRepository.existsByEmail(signupRequest.email())).willReturn(false);
+      // --- 변경점: 아래 라인을 삭제합니다. ---
+      // given(memberRepository.existsByName(signupRequest.name())).willReturn(false);
+      given(memberRepository.existsByEmail(signupRequest.email())).willReturn(false);
       given(passwordEncoder.encode(rawPassword)).willReturn(encodedPassword);
-      given(userRepository.save(any(User.class))).willReturn(mockUser);
+      given(memberRepository.save(any(Member.class))).willReturn(mockUser);
 
       // when
-      User newUser = userService.registerUser(signupRequest);
+      Member newUser = memberService.registerUser(signupRequest);
 
       // then
-      ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-      then(userRepository).should(times(1)).save(userCaptor.capture());
-      User savedUser = userCaptor.getValue();
+      ArgumentCaptor<Member> userCaptor = ArgumentCaptor.forClass(Member.class);
+      then(memberRepository).should(times(1)).save(userCaptor.capture());
+      Member savedUser = userCaptor.getValue();
 
       // and
       assertThat(newUser).isEqualTo(mockUser);
@@ -166,28 +167,13 @@ class UserServiceTest {
 
       // when & then
       assertThrows(EntityNotFoundException.class,
-          () -> userService.registerUser(signupRequest));
+          () -> memberService.registerUser(signupRequest));
 
       // and
-      then(userRepository).should(never()).existsByName(anyString());
-      then(userRepository).should(never()).existsByEmail(anyString());
-      then(userRepository).should(never()).save(any(User.class));
+      then(memberRepository).should(never()).existsByName(anyString());
+      then(memberRepository).should(never()).existsByEmail(anyString());
+      then(memberRepository).should(never()).save(any(Member.class));
     }
 
-    @Test
-    @DisplayName("실패: 이미 존재하는 이름이면 IllegalArgumentException 예외가 발생한다")
-    void registerUser_Failure_DuplicateName() {
-      // given
-      given(gymService.findById(signupRequest.gymId())).willReturn(mockGym);
-      given(userRepository.existsByName(signupRequest.name())).willReturn(true);
-
-      // when & then
-      assertThrows(IllegalArgumentException.class,
-          () -> userService.registerUser(signupRequest));
-
-      // and
-      then(userRepository).should(never()).existsByEmail(anyString());
-      then(userRepository).should(never()).save(any(User.class));
-    }
   }
 }
