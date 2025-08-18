@@ -81,6 +81,15 @@ INSERT INTO work_experience (member_id, work_name, work_place, work_position, wo
 INSERT INTO certification (member_id, certification_name, issuing_organization) VALUES (7, '필라테스 지도자 자격증', '국제케파필라테스협회');
 INSERT INTO trainer_specialty (member_id, specialty_id) VALUES (7, 1), (7, 4);
 
+-- 사용자 '김철수'(id=1)의 체성분 데이터
+INSERT INTO body_composition (member_id, measurement_date, weight_kg, fat_kg, muscle_mass_kg)
+VALUES (1, '2025-07-15', 85, 20, 38),
+       (1, '2025-08-15', 82, 17, 39);
+
+-- 사용자 '서지수'(id=4)의 체성분 데이터
+INSERT INTO body_composition (member_id, measurement_date, weight_kg, fat_kg, muscle_mass_kg)
+VALUES (4, '2025-08-01', 55, 15, 22);
+
 -- ########## 8. 마스터 데이터 버전 초기화 ##########
 INSERT INTO master_data_version (data_type, version, updated_at)
 VALUES ('EXERCISE', '1.0.0', NOW()),

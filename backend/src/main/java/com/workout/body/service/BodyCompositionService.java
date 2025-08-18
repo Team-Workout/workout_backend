@@ -21,21 +21,21 @@ public class BodyCompositionService {
   private final BodyCompositionRepository bodyCompositionRepository;
   private final MemberRepository memberRepository;
 
-  public List<BodyComposition> findByUserId(Long userId) {
-    List<BodyComposition> results = bodyCompositionRepository.findByUserId(userId);
+  public List<BodyComposition> findByUserId(Long memberId) {
+    List<BodyComposition> results = bodyCompositionRepository.findByMemberId(memberId);
     return (results == null || results.isEmpty()) ? Collections.emptyList() : results;
   }
 
-  public void deleteBodyInfo(Long id, Long userId) {
-    BodyComposition bodyComposition = bodyCompositionRepository.findByIdAndUserId(id, userId)
+  public void deleteBodyInfo(Long id, Long memberId) {
+    BodyComposition bodyComposition = bodyCompositionRepository.findByIdAndMemberId(id, memberId)
         .orElseThrow(() -> new EntityNotFoundException("Body composition NOT FOUND"));
     bodyCompositionRepository.delete(bodyComposition);
   }
 
-  public Long createBodyComposition(BodyCompositionDto bodyCompositionDto, Long userId) {
+  public Long createBodyComposition(BodyCompositionDto bodyCompositionDto, Long memberId) {
 
-    Member member = memberRepository.findById(userId)
-        .orElseThrow(() -> new EntityNotFoundException("User NOT FOUND....ID: " + userId));
+    Member member = memberRepository.findById(memberId)
+        .orElseThrow(() -> new EntityNotFoundException("User NOT FOUND....ID: " + memberId));
 
     BodyComposition bodyComposition = BodyComposition.builder()
         .member(member)
