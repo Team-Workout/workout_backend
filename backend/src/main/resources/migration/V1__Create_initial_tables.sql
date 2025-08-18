@@ -1,3 +1,5 @@
+-- V1__Create_initial_tables.sql
+
 -- 헬스장 정보 테이블
 CREATE TABLE IF NOT EXISTS gym
 (
@@ -13,21 +15,34 @@ CREATE TABLE IF NOT EXISTS gym
 CREATE TABLE IF NOT EXISTS `member`
 (
     id             BIGINT AUTO_INCREMENT PRIMARY KEY,
-    gym_id         BIGINT         NOT NULL,
-    name           VARCHAR(255)   NOT NULL,
-    email          VARCHAR(255)   NOT NULL UNIQUE,
-    password       VARCHAR(255)   NOT NULL,
-    gender         ENUM('MALE', 'FEMALE') NOT NULL,
-    account_status ENUM('ACTIVE', 'INACTIVE', 'SUSPENDED') NOT NULL,
-    role           VARCHAR(31)    NOT NULL,
-    created_at     TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at     TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    gym_id         BIGINT                                   NOT NULL,
+    name           VARCHAR(255)                             NOT NULL,
+    email          VARCHAR(255)                             NOT NULL UNIQUE,
+    password       VARCHAR(255)                             NOT NULL,
+    gender         ENUM ('MALE', 'FEMALE')                  NOT NULL,
+    account_status ENUM ('ACTIVE', 'INACTIVE', 'SUSPENDED') NOT NULL,
+    role           VARCHAR(31)                              NOT NULL,
+    created_at     TIMESTAMP                                NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP                                NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     phone_number   VARCHAR(50),
     introduction   TEXT,
 
     CONSTRAINT fk_member_gym FOREIGN KEY (gym_id) REFERENCES gym (id),
     CONSTRAINT chk_member_role CHECK (role IN ('MEMBER', 'TRAINER', 'ADMIN'))
 );
+
+-- 체성분 정보 테이블
+CREATE TABLE IF NOT EXISTS body_composition
+(
+    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id        BIGINT NOT NULL,
+    measurement_date DATE   NOT NULL,
+    weight_kg        BIGINT,
+    fat_kg           BIGINT,
+    muscle_mass_kg   BIGINT,
+    CONSTRAINT fk_body_composition_member FOREIGN KEY (member_id) REFERENCES `member` (id) ON DELETE CASCADE
+);
+
 -- 트레이너 학력
 CREATE TABLE IF NOT EXISTS education
 (
@@ -99,9 +114,9 @@ CREATE TABLE IF NOT EXISTS trainer_specialty
 -- 근육 정보 마스터 테이블
 CREATE TABLE IF NOT EXISTS muscle
 (
-    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name        VARCHAR(255) NOT NULL UNIQUE,
-    korean_name VARCHAR(255) NOT NULL UNIQUE,
+    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name         VARCHAR(255) NOT NULL UNIQUE,
+    korean_name  VARCHAR(255) NOT NULL UNIQUE,
     muscle_group VARCHAR(255) NOT NULL
 );
 
@@ -153,7 +168,7 @@ CREATE TABLE IF NOT EXISTS workout_set
 (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     workout_exercise_id BIGINT         NOT NULL,
-    set_order          INT            NOT NULL,
+    set_order           INT            NOT NULL,
     weight              DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     reps                INT            NOT NULL,
     CONSTRAINT fk_set_wo_exercise FOREIGN KEY (workout_exercise_id) REFERENCES workout_exercise (id) ON DELETE CASCADE
@@ -214,7 +229,7 @@ CREATE TABLE IF NOT EXISTS routine_set
     routine_exercise_id BIGINT         NOT NULL,
     weight              DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     reps                INT            NOT NULL,
-    set_order             INT            NOT NULL,
+    set_order           INT            NOT NULL,
     CONSTRAINT fk_rs_routine_exercise FOREIGN KEY (routine_exercise_id) REFERENCES routine_exercise (id) ON DELETE CASCADE
 );
 
@@ -230,3 +245,4 @@ CREATE TABLE IF NOT EXISTS master_data_version
 CREATE INDEX idx_member_gym_id ON `member` (gym_id);
 CREATE INDEX idx_workout_log_member_date ON workout_log (member_id, workout_date);
 CREATE INDEX idx_routine_member_id ON routine (member_id);
+CREATE INDEX idx_body_composition_member_date ON body_composition (member_id, measurement_date);

@@ -3,8 +3,8 @@ package com.workout.body.service;
 import com.workout.body.domain.BodyComposition;
 import com.workout.body.dto.BodyCompositionDto;
 import com.workout.body.repository.BodyCompositionRepository;
-import com.workout.user.domain.User;
-import com.workout.user.repository.UserRepository;
+import com.workout.member.domain.Member;
+import com.workout.member.repository.MemberRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.Collections;
@@ -19,28 +19,26 @@ import org.springframework.stereotype.Service;
 public class BodyCompositionService {
 
   private final BodyCompositionRepository bodyCompositionRepository;
-  private final UserRepository userRepository;
+  private final MemberRepository memberRepository;
 
-  public List<BodyComposition> findByUserId(Long userId) {
-    List<BodyComposition> results = bodyCompositionRepository.findByUserId(userId);
+  public List<BodyComposition> findByUserId(Long memberId) {
+    List<BodyComposition> results = bodyCompositionRepository.findByMemberId(memberId);
     return (results == null || results.isEmpty()) ? Collections.emptyList() : results;
   }
 
-
-  public void deleteBodyInfo(Long id, Long userId) {
-    BodyComposition bodyComposition = bodyCompositionRepository.findByIdAndUserId(id, userId)
+  public void deleteBodyInfo(Long id, Long memberId) {
+    BodyComposition bodyComposition = bodyCompositionRepository.findByIdAndMemberId(id, memberId)
         .orElseThrow(() -> new EntityNotFoundException("Body composition NOT FOUND"));
     bodyCompositionRepository.delete(bodyComposition);
   }
 
+  public Long createBodyComposition(BodyCompositionDto bodyCompositionDto, Long memberId) {
 
-  public Long createBodyComposition(BodyCompositionDto bodyCompositionDto, Long userId) {
-
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new EntityNotFoundException("User NOT FOUND....ID: " + userId));
+    Member member = memberRepository.findById(memberId)
+        .orElseThrow(() -> new EntityNotFoundException("User NOT FOUND....ID: " + memberId));
 
     BodyComposition bodyComposition = BodyComposition.builder()
-        .user(user)
+        .member(member)
         .measurementDate(bodyCompositionDto.getMeasurementDate())
         .weightKg(bodyCompositionDto.getWeightKg())
         .fatKg(bodyCompositionDto.getFatKg())

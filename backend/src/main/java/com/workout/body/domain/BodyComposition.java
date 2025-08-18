@@ -1,6 +1,6 @@
 package com.workout.body.domain;
 
-import com.workout.user.domain.User;
+import com.workout.member.domain.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -32,8 +32,8 @@ public class BodyComposition {
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
-  private User user;
+  @JoinColumn(name = "member_id", nullable = false)
+  private Member member;
 
   @Column(name = "measurement_date", nullable = false)
   private LocalDate measurementDate;

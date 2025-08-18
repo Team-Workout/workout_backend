@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface BodyCompositionRepository extends JpaRepository<BodyComposition, Long> {
 
-  List<BodyComposition> findByUserId(Long userId);
+  List<BodyComposition> findByMemberId(Long memberId);
 
-  Optional<BodyComposition> findByIdAndUserId(Long id, Long userId);
+  Optional<BodyComposition> findByIdAndMemberId(Long id, Long memberId);
 }
