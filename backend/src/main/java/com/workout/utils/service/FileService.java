@@ -12,7 +12,7 @@ public class FileService {
 
     private final FileRepository fileRepository;
 
-    public void findFiles(String fileCategory, Long userId) {
-        fileRepository.findByUserIdAndCategory(userId, fileCategory);
+    public void findFiles(String fileCategory, Long memberId) {
+        fileRepository.findByMemberIdAndCategory(memberId, fileCategory);
     }
 }

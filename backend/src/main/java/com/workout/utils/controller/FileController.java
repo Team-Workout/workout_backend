@@ -19,10 +19,10 @@ public class FileController {
     @GetMapping("/files")
     public void getFile(@RequestParam String fileCategory,
                         @AuthenticationPrincipal UserPrincipal userPrincipal){
-        Long userId = userPrincipal.getUserId();
+        Long memberId = userPrincipal.getUserId();
 
 
-        fileService.findFiles(fileCategory, userId);
+        fileService.findFiles(fileCategory, memberId);
     }
 
 }
