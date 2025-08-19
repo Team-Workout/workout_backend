@@ -1,4 +1,4 @@
-package com.workout.pt.domain;
+package com.workout.pt.domain.contract;
 
 public enum PTContractStatus {
   ACTIVE,      // PT 진행 중

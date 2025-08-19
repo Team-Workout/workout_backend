@@ -1,4 +1,4 @@
-package com.workout.pt.domain;
+package com.workout.pt.domain.contract;
 
 public enum ChangeRequestStatus {
   PENDING,  // 승인 대기 중

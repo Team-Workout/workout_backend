@@ -1,6 +1,6 @@
-package com.workout.pt.dto;
+package com.workout.pt.dto.response;
 
-import com.workout.pt.domain.PTApplication;
+import com.workout.pt.domain.contract.PTApplication;
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,6 +25,7 @@ public record PendingApplicationResponse(
       Instant appliedAt,
       Long totalSessions
   ) {
+
     public static Application from(PTApplication application) {
       return new Application(
           application.getId(),

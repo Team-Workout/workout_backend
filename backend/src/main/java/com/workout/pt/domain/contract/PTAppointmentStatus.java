@@ -1,4 +1,4 @@
-package com.workout.pt.domain;
+package com.workout.pt.domain.contract;
 
 public enum PTAppointmentStatus {
   SCHEDULED,          // 예약 확정

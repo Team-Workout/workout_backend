@@ -1,4 +1,4 @@
-package com.workout.pt.domain;
+package com.workout.pt.domain.contract;
 
 import com.workout.global.BaseEntity;
 import jakarta.persistence.Column;
@@ -26,13 +26,14 @@ import lombok.experimental.SuperBuilder;
 @Entity
 @Table(name = "pt_appointment")
 public class PTAppointment extends BaseEntity {
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "contract_id", nullable = false, updatable = false)
-  PTContract contract;
+  private PTContract contract;
 
   @Enumerated(EnumType.STRING)
   private PTAppointmentStatus status; // 예약 상태 추가
@@ -40,6 +41,6 @@ public class PTAppointment extends BaseEntity {
   @Column(length = 500)
   private String cancellationReason; // 취소 사유
 
-  LocalDateTime startTime;
-  LocalDateTime endTime;
+  private LocalDateTime startTime;
+  private LocalDateTime endTime;
 }
