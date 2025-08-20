@@ -42,4 +42,6 @@ public class PTApplication extends BaseEntity {
   @Enumerated(EnumType.STRING)
   @Column(name = "pt_application_status", nullable = false)
   private PTApplicationStatus status;
+
+  private Long totalSessions;
 }

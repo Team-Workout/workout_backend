@@ -5,6 +5,7 @@ import com.workout.member.domain.Member;
 import com.workout.member.domain.Role;
 import com.workout.member.repository.MemberRepository;
 import com.workout.pt.domain.contract.PTOffering;
+import com.workout.pt.domain.contract.PTOfferingStatus;
 import com.workout.pt.dto.request.OfferingCreateRequest;
 import com.workout.pt.dto.response.PtOfferingResponse;
 import com.workout.pt.repository.PTOfferingRepository;
@@ -39,12 +40,11 @@ public class PTOfferingService {
     // 3. DTO를 Entity로 변환하여 저장
     PTOffering offering = PTOffering.builder()
         .trainer((Trainer) user) // Member를 Trainer로 캐스팅
-        .title(request.getTitle())
-        .description(request.getDescription())
-        .price(request.getPrice())
-        .totalSessions(request.getTotalSessions())
-        .durationInMonths(request.getDurationInMonths())
-        .status(PTOfferingStatus.OPEN) // 초기 상태는 'OPEN'
+        .title(request.title())
+        .description(request.description())
+        .price(request.price())
+        .totalSessions(request.totalSessions())
+        .status(PTOfferingStatus.ACTIVE)
         .build();
 
     ptOfferingRepository.save(offering);

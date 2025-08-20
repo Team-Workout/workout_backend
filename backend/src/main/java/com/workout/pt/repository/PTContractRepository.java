@@ -9,7 +9,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PTContractRepository extends JpaRepository<PTContract, Long> {
 
-  List<PTContract> findAllByTrainerId(Long memberId);
+  List<PTContract> findAllByMemberId(Long memberId);
+
+  List<PTContract> findAllByTrainerId(Long trainerId);
 
   List<PTContract> findByTrainerIdAndStatus(Long trainerId, PTContractStatus status);
 

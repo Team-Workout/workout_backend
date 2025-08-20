@@ -43,4 +43,6 @@ public class PTAppointment extends BaseEntity {
 
   private LocalDateTime startTime;
   private LocalDateTime endTime;
+  private LocalDateTime proposedStartTime;
+  private LocalDateTime proposedEndTime;
 }

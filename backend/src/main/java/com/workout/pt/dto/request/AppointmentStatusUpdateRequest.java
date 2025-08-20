@@ -1,5 +1,9 @@
 package com.workout.pt.dto.request;
 
-public class AppointmentStatusUpdateRequest {
+import com.workout.pt.domain.contract.PTAppointmentStatus;
+
+public record AppointmentStatusUpdateRequest(
+    PTAppointmentStatus status
+) {
 
 }

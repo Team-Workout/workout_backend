@@ -14,6 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -29,31 +30,38 @@ import lombok.experimental.SuperBuilder;
 @Table(name = "pt_contract")
 public class PTContract extends BaseEntity {
 
-  //신청 시 요청 x
-  boolean allowBodyCompView = false;
-  boolean allowPhotoview = false;
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
+
+  @Version
+  private Integer version;
+
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "gym_id", nullable = false, updatable = false)
   private Gym gym;
+
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "application_id", nullable = false, updatable = false)
   private PTApplication application;
+
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "member_id", nullable = false, updatable = false)
   private Member member;
+
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "trainer_id", nullable = false, updatable = false)
   private Trainer trainer;
+
+  @Enumerated(EnumType.STRING)
+  private PTContractStatus status;
+
   private Long price;
   private LocalDate paymentDate;
   private LocalDate startDate;
   private Long totalSessions;
   private Long remainingSessions;
-  @Enumerated(EnumType.STRING)
-  private PTContractStatus status; // 계약 상태 추가
-  private LocalDate expiryDate; // 계약 만료일 추가
 
+  boolean allowBodyCompView = false;
+  boolean allowPhotoview = false;
 }
