@@ -53,11 +53,9 @@ public class PTAppointmentService {
 
     List<PTAppointment> appointments;
 
-    // 2. 역할 확인
     boolean isTrainer = user.getAuthorities().stream()
         .anyMatch(auth -> auth.getAuthority().equals("ROLE_TRAINER"));
 
-    // 3. 역할에 맞는 Repository 메소드 호출
     if (isTrainer) {
       appointments = ptAppointmentRepository.findAllByContract_Trainer_IdAndStatusAndStartTimeBetween(
           user.getUserId(), PTAppointmentStatus.SCHEDULED, startDateTime, endDateTime);
@@ -66,7 +64,6 @@ public class PTAppointmentService {
           user.getUserId(), PTAppointmentStatus.SCHEDULED, startDateTime, endDateTime);
     }
 
-    // 4. Entity List -> DTO List 변환하여 반환
     return appointments.stream()
         .map(AppointmentResponse::from)
         .collect(Collectors.toList());
@@ -74,16 +71,13 @@ public class PTAppointmentService {
 
   @Transactional
   public Long create(UserPrincipal user, AppointmentRequest request) {
-    // 엔티티 조회
     PTContract contract = ptContractRepository.findById(request.contractId())
         .orElseThrow(() -> new EntityNotFoundException("계약 정보를 찾을 수 없습니다."));
 
-    // 권한 확인 (요청자가 해당 계약의 트레이너인지 확인)
     if (!contract.getTrainer().getId().equals(user.getUserId())) {
       throw new AccessDeniedException("스케줄을 생성할 권한이 있는 트레이너가 아닙니다.");
     }
 
-    // 계약 상태 및 남은 세션 확인
     if (contract.getStatus() != PTContractStatus.ACTIVE) {
       throw new IllegalStateException("현재 활성 상태인 계약만 예약을 생성할 수 있습니다.");
     }
@@ -91,7 +85,6 @@ public class PTAppointmentService {
       throw new IllegalStateException("남은 PT 세션이 없습니다.");
     }
 
-    // 트레이너의 스케줄 중복 확인
     checkTrainerScheduleOverlap(contract.getTrainer().getId(), request.startTime(),
         request.endTime());
 
@@ -99,7 +92,7 @@ public class PTAppointmentService {
         .contract(contract)
         .startTime(request.startTime())
         .endTime(request.endTime())
-        .status(PTAppointmentStatus.SCHEDULED) // 초기 상태는 '예약됨'
+        .status(PTAppointmentStatus.SCHEDULED)
         .build();
 
     return ptAppointmentRepository.save(appointment).getId();
@@ -273,7 +266,6 @@ public class PTAppointmentService {
     appointment.setStartTime(appointment.getProposedStartTime());
     appointment.setEndTime(appointment.getProposedEndTime());
 
-    // 제안 시간 필드는 초기화
     appointment.setProposedStartTime(null);
     appointment.setProposedEndTime(null);
     appointment.setStatus(PTAppointmentStatus.SCHEDULED); // 다시 '확정' 상태로 변경

@@ -78,7 +78,8 @@ public class PTApplicationService {
 
     if (ptApplication.getStatus() != PTApplicationStatus.PENDING) {
       //throw new IllegalStateException("이미 처리되었거나 대기 중이 아닌 신청은 수락할 수 없습니다.");
-      ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "이미 처리되었거나 대기 중이 아닌 신청은 수락할 수 없습니다.");
+      ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+          "이미 처리되었거나 대기 중이 아닌 신청은 수락할 수 없습니다.");
       throw new ErrorResponseException(HttpStatus.BAD_REQUEST, pd, null);
     }
 
@@ -97,7 +98,8 @@ public class PTApplicationService {
 
     if (ptApplication.getStatus() != PTApplicationStatus.PENDING) {
       //throw new IllegalStateException("이미 처리되었거나 대기 중이 아닌 신청은 수락할 수 없습니다.");
-      ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "이미 처리되었거나 대기 중이 아닌 신청은 수락할 수 없습니다.");
+      ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+          "이미 처리되었거나 대기 중이 아닌 신청은 수락할 수 없습니다.");
       throw new ErrorResponseException(HttpStatus.BAD_REQUEST, pd, null);
     }
 
@@ -116,7 +118,8 @@ public class PTApplicationService {
 
     if (ptApplication.getStatus() != PTApplicationStatus.PENDING) {
       //throw new IllegalStateException("이미 처리되었거나 대기 중이 아닌 신청은 수락할 수 없습니다.");
-      ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "이미 처리되었거나 대기 중이 아닌 신청은 수락할 수 없습니다.");
+      ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+          "이미 처리되었거나 대기 중이 아닌 신청은 수락할 수 없습니다.");
       throw new ErrorResponseException(HttpStatus.CONFLICT, pd, null);
     }
 

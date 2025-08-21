@@ -93,7 +93,8 @@ public class PTContractService {
 
     // 이미 진행중인 계약만 취소 가능하도록 비즈니스 규칙 설정
     if (contract.getStatus() != PTContractStatus.ACTIVE) {
-      ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "이미 시작되었거나 종료된 계약은 취소할 수 없습니다.");
+      ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+          "이미 시작되었거나 종료된 계약은 취소할 수 없습니다.");
       throw new ErrorResponseException(HttpStatus.BAD_REQUEST, pd, null);
     }
 
@@ -116,7 +117,8 @@ public class PTContractService {
 
     // 이미 진행중인 계약만 취소 가능하도록 비즈니스 규칙 설정
     if (contract.getStatus() != PTContractStatus.ACTIVE) {
-      ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "이미 시작되었거나 종료된 계약은 취소할 수 없습니다.");
+      ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+          "이미 시작되었거나 종료된 계약은 취소할 수 없습니다.");
       throw new ErrorResponseException(HttpStatus.BAD_REQUEST, pd, null);
     }
 
@@ -150,7 +152,8 @@ public class PTContractService {
       throw new AccessDeniedException("트레이너만 클라이언트 목록을 조회할 수 있습니다.");
     }
 
-    Page<PTContract> contractsPage = ptContractRepository.findAllByTrainerId(trainerUser.getUserId(), pageable);
+    Page<PTContract> contractsPage = ptContractRepository.findAllByTrainerId(
+        trainerUser.getUserId(), pageable);
 
     return contractsPage.map(contract -> MemberResponse.from(contract.getMember()));
   }

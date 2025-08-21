@@ -51,7 +51,7 @@ public class WorkoutController {
    * 운동일지 상세 조회
    */
   @GetMapping("/logs/{id}")
-  public ResponseEntity<WorkoutLogResponse> getWorkoutLog(@PathVariable("id") Long id) {
+  public ResponseEntity<WorkoutLogResponse> getWorkoutLog(@PathVariable("id") Long id, @AuthenticationPrincipal UserPrincipal userPrincipal) {
     WorkoutLogResponse response = workoutLogService.findWorkoutLogById(id);
     return ResponseEntity.ok(response);
   }

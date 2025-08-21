@@ -1,9 +1,11 @@
 package com.workout.pt.dto.request;
 
+import com.workout.workout.dto.log.WorkoutLogCreateRequest;
 import jakarta.validation.constraints.NotNull;
 
 public record PTSessionCreateRequest(
-    @NotNull Long workoutLogId,
-    @NotNull Long appointmentId
+    @NotNull Long appointmentId,
+    @NotNull WorkoutLogCreateRequest workoutLog
 ) {
+
 }

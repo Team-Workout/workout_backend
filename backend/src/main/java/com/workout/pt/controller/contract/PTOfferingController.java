@@ -33,7 +33,6 @@ public class PTOfferingController {
     return ResponseEntity.status(HttpStatus.CREATED).build();
   }
 
-  // 특정 트레이너가 등록한 PT 상품 목록 조회 (회원이 사용)
   @GetMapping("/trainer/{trainerId}")
   public ResponseEntity<PtOfferingResponse> getOfferingsByTrainer(
       @PathVariable Long trainerId) {
