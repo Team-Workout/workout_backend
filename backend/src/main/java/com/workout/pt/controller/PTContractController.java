@@ -1,9 +1,12 @@
 package com.workout.pt.controller;
 
 import com.workout.auth.domain.UserPrincipal;
+import com.workout.global.dto.ApiResponse;
 import com.workout.pt.dto.response.ContractResponse;
 import com.workout.pt.service.PTContractService;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,13 +32,15 @@ public class PTContractController {
       @AuthenticationPrincipal UserPrincipal user,
       @PathVariable Long contractId) {
     ptContractService.cancelContract(user, contractId);
-    return ResponseEntity.noContent().build(); // 성공적으로 내용 없이 응답
+    return ResponseEntity.noContent().build();
   }
 
-  @GetMapping("/me") // "/me"를 추가하여 '나의 계약'이라는 의미를 명확히 합니다.
-  public ResponseEntity<List<ContractResponse>> getMyContracts(
-      @AuthenticationPrincipal UserPrincipal user) {
-    List<ContractResponse> contracts = ptContractService.getMyContracts(user);
-    return ResponseEntity.ok(contracts);
+  @GetMapping("/me")
+  public ResponseEntity<ApiResponse<List<ContractResponse>>> getMyContracts(
+      @AuthenticationPrincipal UserPrincipal user,
+      Pageable pageable
+  ) {
+    Page<ContractResponse> response = ptContractService.getMyContracts(user, pageable);
+    return ResponseEntity.ok(ApiResponse.of(response));
   }
 }

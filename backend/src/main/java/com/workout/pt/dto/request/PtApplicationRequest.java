@@ -1,9 +1,9 @@
 package com.workout.pt.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record PtApplicationRequest(
-    @NotBlank(message = "offeringid는 비워둘 수 없습니다.")
+    @NotNull
     Long offeringId
 ) {
 

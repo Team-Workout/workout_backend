@@ -7,10 +7,13 @@ import com.workout.member.repository.MemberRepository;
 import com.workout.pt.domain.contract.PTContract;
 import com.workout.pt.domain.contract.PTContractStatus;
 import com.workout.pt.dto.response.ClientListResponse;
+import com.workout.pt.dto.response.ClientListResponse.MemberResponse;
 import com.workout.pt.repository.PTContractRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +29,8 @@ public class PTTrainerService {
     this.ptContractRepository = ptContractRepository;
   }
 
-  public ClientListResponse findMyClients(UserPrincipal trainerPrincipal) {
+  public Page<MemberResponse> findMyClients(UserPrincipal trainerPrincipal, Pageable pageable) {
+    // 1. 사용자 조회 및 트레이너 역할 검증
     Member trainer = memberRepository.findById(trainerPrincipal.getUserId())
         .orElseThrow(() -> new EntityNotFoundException(
             "트레이너를 찾을 수 없습니다. ID: " + trainerPrincipal.getUserId()));
@@ -35,14 +39,12 @@ public class PTTrainerService {
       throw new AccessDeniedException("트레이너만 이용할 수 있는 서비스입니다.");
     }
 
-    List<PTContract> activeContracts = ptContractRepository
-        .findByTrainerIdAndStatus(trainer.getId(), PTContractStatus.ACTIVE);
+    // 2. 트레이너의 활성 계약 목록을 페이징하여 조회
+    Page<PTContract> contractsPage = ptContractRepository
+        .findByTrainerIdAndStatus(trainer.getId(), PTContractStatus.ACTIVE, pageable);
 
-    List<Member> clients = activeContracts.stream()
-        .map(PTContract::getMember)
-        .distinct()
-        .collect(Collectors.toList());
-
-    return ClientListResponse.from(clients);
+    // 3. Page<PTContract>를 Page<MemberResponse>로 직접 변환하여 반환
+    // .distinct()가 필요 없어졌고, 페이징 정보가 그대로 유지됩니다.
+    return contractsPage.map(contract -> MemberResponse.from(contract.getMember()));
   }
 }

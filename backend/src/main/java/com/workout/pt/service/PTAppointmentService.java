@@ -12,7 +12,10 @@ import com.workout.pt.dto.response.AppointmentResponse;
 import com.workout.pt.repository.PTAppointmentRepository;
 import com.workout.pt.repository.PTContractRepository;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.security.access.AccessDeniedException;
@@ -33,21 +36,40 @@ public class PTAppointmentService {
     this.ptContractService = ptContractService;
   }
 
-  public AppointmentResponse findMyScheduledAppointments(UserPrincipal user) {
+  public List<AppointmentResponse> findMyScheduledAppointmentsByPeriod(
+      UserPrincipal user, LocalDate startDate, LocalDate endDate) {
+
+    // 1. 기간 유효성 검증 (최대 7일)
+    if (startDate.isAfter(endDate)) {
+      throw new IllegalArgumentException("시작일은 종료일보다 늦을 수 없습니다.");
+    }
+    if (Duration.between(startDate.atStartOfDay(), endDate.atStartOfDay()).toDays() >= 7) {
+      throw new IllegalArgumentException("조회 기간은 최대 7일까지 가능합니다.");
+    }
+
+    // LocalDate를 LocalDateTime으로 변환 (하루의 시작과 끝)
+    LocalDateTime startDateTime = startDate.atStartOfDay();
+    LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
+
     List<PTAppointment> appointments;
 
+    // 2. 역할 확인
     boolean isTrainer = user.getAuthorities().stream()
         .anyMatch(auth -> auth.getAuthority().equals("ROLE_TRAINER"));
 
+    // 3. 역할에 맞는 Repository 메소드 호출
     if (isTrainer) {
-      appointments = ptAppointmentRepository.findAllByContract_Trainer_IdAndStatus(
-          user.getUserId(), PTAppointmentStatus.SCHEDULED);
-    } else { // 회원이거나 다른 역할일 경우 기본적으로 회원의 일정을 조회
-      appointments = ptAppointmentRepository.findAllByContract_Member_IdAndStatus(
-          user.getUserId(), PTAppointmentStatus.SCHEDULED);
+      appointments = ptAppointmentRepository.findAllByContract_Trainer_IdAndStatusAndStartTimeBetween(
+          user.getUserId(), PTAppointmentStatus.SCHEDULED, startDateTime, endDateTime);
+    } else {
+      appointments = ptAppointmentRepository.findAllByContract_Member_IdAndStatusAndStartTimeBetween(
+          user.getUserId(), PTAppointmentStatus.SCHEDULED, startDateTime, endDateTime);
     }
 
-    return AppointmentResponse.from(appointments);
+    // 4. Entity List -> DTO List 변환하여 반환
+    return appointments.stream()
+        .map(AppointmentResponse::from)
+        .collect(Collectors.toList());
   }
 
   @Transactional
@@ -97,7 +119,6 @@ public class PTAppointmentService {
     PTAppointment appointment = ptAppointmentRepository.findById(appointmentId)
         .orElseThrow(() -> new EntityNotFoundException("예약 정보를 찾을 수 없습니다."));
 
-    // TODO: 상태를 변경할 권한이 있는지 확인 (예: 트레이너만 '완료'로 변경 가능)
     if (!appointment.getContract().getTrainer().getId().equals(user.getUserId())) {
       throw new IllegalStateException("트레이너만 완료로 변경할 수 있습니다.");
     }

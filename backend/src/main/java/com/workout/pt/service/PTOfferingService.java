@@ -41,6 +41,7 @@ public class PTOfferingService {
     PTOffering offering = PTOffering.builder()
         .trainer((Trainer) user) // Member를 Trainer로 캐스팅
         .title(request.title())
+        .gym(user.getGym())
         .description(request.description())
         .price(request.price())
         .totalSessions(request.totalSessions())

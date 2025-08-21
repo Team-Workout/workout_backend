@@ -1,13 +1,16 @@
 package com.workout.pt.controller;
 
 import com.workout.auth.domain.UserPrincipal;
+import com.workout.global.dto.ApiResponse;
 import com.workout.pt.dto.request.AppointmentRequest;
 import com.workout.pt.dto.request.AppointmentStatusUpdateRequest;
 import com.workout.pt.dto.request.AppointmentUpdateRequest;
 import com.workout.pt.dto.response.AppointmentResponse;
 import com.workout.pt.service.PTAppointmentService;
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -30,13 +34,17 @@ public class PTAppointmentController {
 
   /**
    * PT 스케줄 조회
+   * 최대 일주일 단위까지 조회 가능
    */
   @GetMapping("/me/scheduled")
-  public ResponseEntity<AppointmentResponse> getMyScheduledAppointments(
-      @AuthenticationPrincipal UserPrincipal user
+  public ResponseEntity<ApiResponse<List<AppointmentResponse>>> getMyScheduledAppointments(
+      @AuthenticationPrincipal UserPrincipal user,
+      @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
   ) {
-    AppointmentResponse appointments = appointmentService.findMyScheduledAppointments(user);
-    return ResponseEntity.ok(appointments);
+    List<AppointmentResponse> appointments = appointmentService.findMyScheduledAppointmentsByPeriod(user, startDate, endDate);
+
+    return ResponseEntity.ok(ApiResponse.of(appointments));
   }
 
   //region 트레이너

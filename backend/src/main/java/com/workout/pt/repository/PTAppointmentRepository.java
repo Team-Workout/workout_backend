@@ -25,4 +25,10 @@ public interface PTAppointmentRepository extends JpaRepository<PTAppointment, Lo
   List<PTAppointment> findAllByContract_Member_IdAndStatus(Long memberId, PTAppointmentStatus status);
 
   List<PTAppointment> findAllByContract_Trainer_IdAndStatus(Long trainerId, PTAppointmentStatus status);
+
+  List<PTAppointment> findAllByContract_Member_IdAndStatusAndStartTimeBetween(
+      Long memberId, PTAppointmentStatus status, LocalDateTime startTime, LocalDateTime endTime);
+  
+  List<PTAppointment> findAllByContract_Trainer_IdAndStatusAndStartTimeBetween(
+      Long trainerId, PTAppointmentStatus status, LocalDateTime startTime, LocalDateTime endTime);
 }

@@ -1,18 +1,27 @@
 package com.workout.pt.service;
 
 import com.workout.auth.domain.UserPrincipal;
+import com.workout.global.dto.ApiResponse;
 import com.workout.pt.domain.contract.PTApplication;
+import com.workout.pt.domain.contract.PTApplicationStatus;
 import com.workout.pt.domain.contract.PTContract;
 import com.workout.pt.domain.contract.PTContractStatus;
 import com.workout.pt.domain.contract.PTOffering;
+import com.workout.pt.dto.response.ClientListResponse;
+import com.workout.pt.dto.response.ClientListResponse.MemberResponse;
 import com.workout.pt.dto.response.ContractResponse;
 import com.workout.pt.repository.PTContractRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
+import org.springframework.web.ErrorResponseException;
 
 @Service
 public class PTContractService {
@@ -88,7 +97,8 @@ public class PTContractService {
 
     // 이미 진행중인 계약만 취소 가능하도록 비즈니스 규칙 설정
     if (contract.getStatus() != PTContractStatus.ACTIVE) {
-      throw new IllegalStateException("이미 시작되었거나 종료된 계약은 취소할 수 없습니다.");
+      ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "이미 시작되었거나 종료된 계약은 취소할 수 없습니다.");
+      throw new ErrorResponseException(HttpStatus.BAD_REQUEST, pd, null);
     }
 
     contract.setStatus(PTContractStatus.CANCELLED);
@@ -110,7 +120,8 @@ public class PTContractService {
 
     // 이미 진행중인 계약만 취소 가능하도록 비즈니스 규칙 설정
     if (contract.getStatus() != PTContractStatus.ACTIVE) {
-      throw new IllegalStateException("이미 시작되었거나 종료된 계약은 취소할 수 없습니다.");
+      ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "이미 시작되었거나 종료된 계약은 취소할 수 없습니다.");
+      throw new ErrorResponseException(HttpStatus.BAD_REQUEST, pd, null);
     }
 
     contract.setStatus(PTContractStatus.CANCELLED);
@@ -118,20 +129,33 @@ public class PTContractService {
     ptContractRepository.save(contract);
   }
 
-  public List<ContractResponse> getMyContracts(UserPrincipal user) {
-    List<PTContract> contracts;
+  public Page<ContractResponse> getMyContracts(UserPrincipal user, Pageable pageable) {
+    Page<PTContract> contractsPage;
 
-    // 사용자의 역할 확인
     boolean isTrainer = user.getAuthorities().stream()
         .anyMatch(auth -> auth.getAuthority().equals("ROLE_TRAINER"));
 
     if (isTrainer) {
-      contracts = ptContractRepository.findAllByTrainerId(user.getUserId());
-    } else { // 기본적으로 회원의 계약을 조회
-      contracts = ptContractRepository.findAllByMemberId(user.getUserId());
+      contractsPage = ptContractRepository.findAllByTrainerId(user.getUserId(), pageable);
+    } else {
+      contractsPage = ptContractRepository.findAllByMemberId(user.getUserId(), pageable);
     }
 
-    // 조회된 엔티티 리스트를 DTO 리스트로 변환하여 반환
-    return ContractResponse.from(contracts);
+    Page<ContractResponse> dtoPage = contractsPage.map(ContractResponse::from);
+
+    return dtoPage;
+  }
+
+  public Page<MemberResponse> getMyClients(UserPrincipal trainerUser, Pageable pageable) {
+    boolean isTrainer = trainerUser.getAuthorities().stream()
+        .anyMatch(auth -> auth.getAuthority().equals("ROLE_TRAINER"));
+
+    if (!isTrainer) {
+      throw new AccessDeniedException("트레이너만 클라이언트 목록을 조회할 수 있습니다.");
+    }
+
+    Page<PTContract> contractsPage = ptContractRepository.findAllByTrainerId(trainerUser.getUserId(), pageable);
+
+    return contractsPage.map(contract -> MemberResponse.from(contract.getMember()));
   }
 }

@@ -90,6 +90,33 @@ VALUES (1, '2025-07-15', 85, 20, 38),
 INSERT INTO body_composition (member_id, measurement_date, weight_kg, fat_kg, muscle_mass_kg)
 VALUES (4, '2025-08-01', 55, 15, 22);
 
+
+-- 트레이너 '이영희'(id=2)가 PT 상품(오퍼링)을 등록
+INSERT INTO pt_offering (id, trainer_id, gym_id, title, description, price, total_sessions, status)
+VALUES (1, 2, 1, '12주 바디프로필 완성반', '12주 동안 주 2회씩 진행되는 바디프로필 전문 PT입니다. 식단 관리 포함.', 1500000, 24, 'OPEN')
+ON DUPLICATE KEY UPDATE title = VALUES(title), price = VALUES(price);
+
+-- 회원 '김철수'(id=1)가 위 PT 상품을 신청
+INSERT INTO pt_application (id, offering_id, member_id, pt_application_status, total_sessions)
+VALUES (1, 1, 1, 'PENDING', 24)
+ON DUPLICATE KEY UPDATE pt_application_status = VALUES(pt_application_status);
+
+-- (예시) 신청이 수락되어 계약이 생성된 상태
+-- 실제로는 트레이너가 신청을 수락하면 서비스 로직에서 생성되지만, 테스트를 위해 미리 데이터를 넣어둡니다.
+-- 위 PENDING 상태의 신청(id=1)이 APPROVED 되고 계약이 생성되었다고 가정.
+UPDATE pt_application SET pt_application_status = 'APPROVED' WHERE id = 1;
+
+INSERT INTO pt_contract (id, gym_id, application_id, member_id, trainer_id, status, price, payment_date, start_date, total_sessions, remaining_sessions)
+VALUES (1, 1, 1, 1, 2, 'ACTIVE', 1500000, '2025-08-20', '2025-08-22', 24, 24)
+ON DUPLICATE KEY UPDATE status = VALUES(status), remaining_sessions = VALUES(remaining_sessions);
+
+-- (예시) 생성된 계약(id=1)에 대한 첫 번째 PT 수업 예약
+INSERT INTO pt_appointment (id, contract_id, status, start_time, end_time)
+VALUES (1, 1, 'SCHEDULED', '2025-08-22 10:00:00', '2025-08-22 11:00:00')
+ON DUPLICATE KEY UPDATE status = VALUES(status), start_time = VALUES(start_time);
+
+
+
 -- ########## 8. 마스터 데이터 버전 초기화 ##########
 INSERT INTO master_data_version (data_type, version, updated_at)
 VALUES ('EXERCISE', '1.0.0', NOW()),

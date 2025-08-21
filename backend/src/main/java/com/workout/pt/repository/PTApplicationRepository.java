@@ -11,9 +11,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PTApplicationRepository extends JpaRepository<PTApplication, Long> {
 
-  List<PTApplication> findByTrainerIdAndStatus(Long trainerId,
-      PTApplicationStatus ptApplicationStatus);
-
   List<PTApplication> findByMemberIdAndStatus(Long id, PTApplicationStatus ptApplicationStatus);
 
   @Query("SELECT pa FROM PTApplication pa JOIN pa.offering o WHERE o.trainer.id = :trainerId AND pa.status = :status")

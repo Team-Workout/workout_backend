@@ -1,8 +1,15 @@
 package com.workout.pt.controller;
 
 import com.workout.auth.domain.UserPrincipal;
+import com.workout.global.dto.ApiResponse;
 import com.workout.pt.dto.response.ClientListResponse;
+import com.workout.pt.dto.response.ClientListResponse.MemberResponse;
+import com.workout.pt.dto.response.ContractResponse;
+import com.workout.pt.service.PTContractService;
 import com.workout.pt.service.PTTrainerService;
+import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,11 +29,14 @@ public class TrainerClientsController {
   /**
    * 관리 중인 pt 회원 조회
    */
-  @GetMapping
-  public ResponseEntity<ClientListResponse> getMyClients(
-      @AuthenticationPrincipal UserPrincipal trainerPrincipal
+  @GetMapping("/me")
+  public ResponseEntity<ApiResponse<List<MemberResponse>>> getMyClients(
+      @AuthenticationPrincipal UserPrincipal trainerUser,
+      Pageable pageable
   ) {
-    return ResponseEntity.ok(ptTrainerService.findMyClients(trainerPrincipal));
+    Page<MemberResponse> clientsPage = ptTrainerService.findMyClients(trainerUser, pageable);
+
+    return ResponseEntity.ok(ApiResponse.of(clientsPage));
   }
 }
 

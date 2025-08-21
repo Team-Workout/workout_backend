@@ -1,6 +1,5 @@
 package com.workout.pt.dto.request;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public record AppointmentRequest(
