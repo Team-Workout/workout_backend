@@ -10,6 +10,8 @@ import com.workout.pt.domain.contract.PTContractStatus;
 import com.workout.pt.dto.request.AppointmentRequest;
 import com.workout.pt.repository.PTAppointmentRepository;
 import com.workout.pt.repository.PTContractRepository;
+import com.workout.pt.service.contract.PTAppointmentService;
+import com.workout.pt.service.contract.PTContractService;
 import com.workout.trainer.domain.Trainer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

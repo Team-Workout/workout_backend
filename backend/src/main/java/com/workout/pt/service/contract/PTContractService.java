@@ -1,19 +1,15 @@
-package com.workout.pt.service;
+package com.workout.pt.service.contract;
 
 import com.workout.auth.domain.UserPrincipal;
-import com.workout.global.dto.ApiResponse;
 import com.workout.pt.domain.contract.PTApplication;
-import com.workout.pt.domain.contract.PTApplicationStatus;
 import com.workout.pt.domain.contract.PTContract;
 import com.workout.pt.domain.contract.PTContractStatus;
 import com.workout.pt.domain.contract.PTOffering;
-import com.workout.pt.dto.response.ClientListResponse;
 import com.workout.pt.dto.response.ClientListResponse.MemberResponse;
 import com.workout.pt.dto.response.ContractResponse;
 import com.workout.pt.repository.PTContractRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;

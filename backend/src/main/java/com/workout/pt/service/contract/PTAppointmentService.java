@@ -1,4 +1,4 @@
-package com.workout.pt.service;
+package com.workout.pt.service.contract;
 
 
 import com.workout.auth.domain.UserPrincipal;

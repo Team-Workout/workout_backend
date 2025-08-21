@@ -1,4 +1,4 @@
-package com.workout.pt.service;
+package com.workout.pt.service.contract;
 
 import com.workout.auth.domain.UserPrincipal;
 import com.workout.member.domain.Member;
@@ -11,7 +11,6 @@ import com.workout.pt.dto.response.PtOfferingResponse;
 import com.workout.pt.repository.PTOfferingRepository;
 import com.workout.trainer.domain.Trainer;
 import jakarta.persistence.EntityNotFoundException;
-import java.util.List;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 

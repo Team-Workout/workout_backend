@@ -1,4 +1,4 @@
-package com.workout.pt.service;
+package com.workout.pt.service.contract;
 
 import com.workout.auth.domain.UserPrincipal;
 import com.workout.member.domain.Member;
@@ -6,12 +6,9 @@ import com.workout.member.domain.Role;
 import com.workout.member.repository.MemberRepository;
 import com.workout.pt.domain.contract.PTContract;
 import com.workout.pt.domain.contract.PTContractStatus;
-import com.workout.pt.dto.response.ClientListResponse;
 import com.workout.pt.dto.response.ClientListResponse.MemberResponse;
 import com.workout.pt.repository.PTContractRepository;
 import jakarta.persistence.EntityNotFoundException;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;

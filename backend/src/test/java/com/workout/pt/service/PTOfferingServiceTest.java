@@ -7,6 +7,7 @@ import com.workout.member.repository.MemberRepository;
 import com.workout.pt.domain.contract.PTOffering;
 import com.workout.pt.dto.request.OfferingCreateRequest;
 import com.workout.pt.repository.PTOfferingRepository;
+import com.workout.pt.service.contract.PTOfferingService;
 import com.workout.trainer.domain.Trainer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

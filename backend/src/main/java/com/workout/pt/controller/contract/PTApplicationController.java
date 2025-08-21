@@ -1,10 +1,10 @@
-package com.workout.pt.controller;
+package com.workout.pt.controller.contract;
 
 import com.workout.auth.domain.UserPrincipal;
 import com.workout.pt.dto.request.PtApplicationRequest;
 import com.workout.pt.dto.response.PendingApplicationResponse;
-import com.workout.pt.service.PTApplicationService;
-import com.workout.pt.service.PTContractService;
+import com.workout.pt.service.contract.PTApplicationService;
+import com.workout.pt.service.contract.PTContractService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

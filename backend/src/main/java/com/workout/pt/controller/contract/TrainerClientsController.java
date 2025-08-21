@@ -1,12 +1,9 @@
-package com.workout.pt.controller;
+package com.workout.pt.controller.contract;
 
 import com.workout.auth.domain.UserPrincipal;
 import com.workout.global.dto.ApiResponse;
-import com.workout.pt.dto.response.ClientListResponse;
 import com.workout.pt.dto.response.ClientListResponse.MemberResponse;
-import com.workout.pt.dto.response.ContractResponse;
-import com.workout.pt.service.PTContractService;
-import com.workout.pt.service.PTTrainerService;
+import com.workout.pt.service.contract.PTTrainerService;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

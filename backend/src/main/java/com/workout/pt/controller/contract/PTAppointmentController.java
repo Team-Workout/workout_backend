@@ -1,4 +1,4 @@
-package com.workout.pt.controller;
+package com.workout.pt.controller.contract;
 
 import com.workout.auth.domain.UserPrincipal;
 import com.workout.global.dto.ApiResponse;
@@ -6,7 +6,7 @@ import com.workout.pt.dto.request.AppointmentRequest;
 import com.workout.pt.dto.request.AppointmentStatusUpdateRequest;
 import com.workout.pt.dto.request.AppointmentUpdateRequest;
 import com.workout.pt.dto.response.AppointmentResponse;
-import com.workout.pt.service.PTAppointmentService;
+import com.workout.pt.service.contract.PTAppointmentService;
 import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;

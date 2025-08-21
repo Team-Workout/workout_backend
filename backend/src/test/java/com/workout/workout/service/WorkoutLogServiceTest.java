@@ -7,7 +7,9 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 
+import com.workout.auth.domain.UserPrincipal;
 import com.workout.member.domain.Member;
+import com.workout.member.domain.Role;
 import com.workout.member.repository.MemberRepository;
 import com.workout.workout.domain.exercise.Exercise;
 import com.workout.workout.domain.log.Feedback;
@@ -60,10 +62,20 @@ class WorkoutLogServiceTest {
   private Exercise benchPress;
   private Exercise squat;
   private WorkoutLogCreateRequest createRequest;
+  private UserPrincipal testUserPrincipal;
 
   @BeforeEach
   void setUp() {
-    testUser = Member.builder().id(1L).name("테스트유저").build();
+    testUser = Member.builder()
+        .id(1L)
+        .email("test@example.com")
+        .password("password123") // 실제 값은 중요하지 않음
+        .role(Role.MEMBER)
+        .name("테스트유저")
+        .build();
+
+    // [FIXED] 테스트용 UserPrincipal 객체 생성
+    testUserPrincipal = new UserPrincipal(testUser);
     benchPress = Exercise.builder().id(101L).name("벤치프레스").build();
     squat = Exercise.builder().id(102L).name("스쿼트").build();
 
@@ -100,10 +112,10 @@ class WorkoutLogServiceTest {
     @DisplayName("성공: 유효한 요청 시 운동일지와 하위 항목들이 saveAll을 통해 올바르게 저장된다")
     void createWorkoutLog_Success() {
       // given
+      // 서비스 내부에서는 UserPrincipal에서 UserId를 꺼내 사용하므로, 이 Mocking은 유효합니다.
       given(memberRepository.findById(testUser.getId())).willReturn(Optional.of(testUser));
       given(exerciseRepository.findAllByIdIn(anyList())).willReturn(List.of(benchPress));
 
-      // [수정] 빌더 패턴으로 객체 생성
       WorkoutLog savedLog = WorkoutLog.builder()
           .member(testUser)
           .workoutDate(createRequest.workoutDate())
@@ -112,7 +124,8 @@ class WorkoutLogServiceTest {
       given(workoutLogRepository.save(any(WorkoutLog.class))).willReturn(savedLog);
 
       // when
-      workoutLogService.createWorkoutLog(createRequest, testUser.getId());
+      // [FIXED] Long userId 대신 UserPrincipal 객체를 전달하도록 수정
+      workoutLogService.createWorkoutLog(createRequest, testUserPrincipal);
 
       // then
       then(workoutLogRepository).should(times(1)).save(any(WorkoutLog.class));
@@ -127,7 +140,7 @@ class WorkoutLogServiceTest {
 
       ArgumentCaptor<List<Feedback>> feedbacksCaptor = ArgumentCaptor.forClass(List.class);
       then(feedbackRepository).should(times(1)).saveAll(feedbacksCaptor.capture());
-      assertThat(feedbacksCaptor.getValue()).hasSize(2); // 로그 피드백 1개, 세트 피드백 1개
+      assertThat(feedbacksCaptor.getValue()).hasSize(2);
     }
   }
 

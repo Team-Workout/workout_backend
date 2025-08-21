@@ -101,9 +101,6 @@ INSERT INTO pt_application (id, offering_id, member_id, pt_application_status, t
 VALUES (1, 1, 1, 'PENDING', 24)
 ON DUPLICATE KEY UPDATE pt_application_status = VALUES(pt_application_status);
 
--- (예시) 신청이 수락되어 계약이 생성된 상태
--- 실제로는 트레이너가 신청을 수락하면 서비스 로직에서 생성되지만, 테스트를 위해 미리 데이터를 넣어둡니다.
--- 위 PENDING 상태의 신청(id=1)이 APPROVED 되고 계약이 생성되었다고 가정.
 UPDATE pt_application SET pt_application_status = 'APPROVED' WHERE id = 1;
 
 INSERT INTO pt_contract (id, gym_id, application_id, member_id, trainer_id, status, price, payment_date, start_date, total_sessions, remaining_sessions)
@@ -115,6 +112,13 @@ INSERT INTO pt_appointment (id, contract_id, status, start_time, end_time)
 VALUES (1, 1, 'SCHEDULED', '2025-08-22 10:00:00', '2025-08-22 11:00:00')
 ON DUPLICATE KEY UPDATE status = VALUES(status), start_time = VALUES(start_time);
 
+-- 회원 '김철수'(id=1)의 PT 수업(appointment_id=1)에 대한 운동일지 생성
+INSERT INTO workout_log (id, member_id, workout_date) VALUES (1, 1, '2025-08-22') ON DUPLICATE KEY UPDATE workout_date=VALUES(workout_date);
+INSERT INTO workout_exercise (id, workout_log_id, exercise_id, log_order) VALUES (1, 1, 1, 1) ON DUPLICATE KEY UPDATE log_order=VALUES(log_order); -- 벤치프레스
+INSERT INTO workout_set (id, workout_exercise_id, set_order, weight, reps) VALUES (1, 1, 1, 80.0, 10) ON DUPLICATE KEY UPDATE weight=VALUES(weight);
+
+-- 위에서 생성된 운동일지(id=1)와 PT예약(id=1)을 PT세션으로 연결
+INSERT INTO pt_session (id, workout_log_id, appointment_id) VALUES (1, 1, 1) ON DUPLICATE KEY UPDATE workout_log_id=VALUES(workout_log_id);
 
 
 -- ########## 8. 마스터 데이터 버전 초기화 ##########

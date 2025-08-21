@@ -322,6 +322,14 @@ CREATE TABLE IF NOT EXISTS pt_appointment_change_request
     CONSTRAINT fk_change_request_member FOREIGN KEY (member_id) REFERENCES `member` (id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS pt_session
+(
+    id             BIGINT AUTO_INCREMENT PRIMARY KEY,
+    workout_log_id  BIGINT NOT NULL UNIQUE,
+    appointment_id BIGINT NOT NULL UNIQUE,
+    CONSTRAINT fk_session_workout_log FOREIGN KEY (workout_log_id) REFERENCES workout_log (id) ON DELETE CASCADE,
+    CONSTRAINT fk_session_appointment FOREIGN KEY (appointment_id) REFERENCES pt_appointment (id) ON DELETE CASCADE
+);
 
 -- 마스터 데이터 버전 관리 테이블
 CREATE TABLE IF NOT EXISTS master_data_version
@@ -339,3 +347,4 @@ CREATE INDEX idx_body_composition_member_date ON body_composition (member_id, me
 CREATE INDEX idx_pt_contract_member_id ON pt_contract (member_id);
 CREATE INDEX idx_pt_contract_trainer_id ON pt_contract (trainer_id);
 CREATE INDEX idx_pt_appointment_contract_id ON pt_appointment (contract_id);
+CREATE INDEX idx_pt_session_appointment_id ON pt_session (appointment_id);

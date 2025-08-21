@@ -9,6 +9,7 @@ import com.workout.pt.domain.contract.PTContract;
 import com.workout.pt.domain.contract.PTContractStatus;
 import com.workout.pt.dto.response.ClientListResponse.MemberResponse;
 import com.workout.pt.repository.PTContractRepository;
+import com.workout.pt.service.contract.PTTrainerService;
 import com.workout.trainer.domain.Trainer;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;

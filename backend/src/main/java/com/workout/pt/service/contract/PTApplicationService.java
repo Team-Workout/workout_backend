@@ -1,4 +1,4 @@
-package com.workout.pt.service;
+package com.workout.pt.service.contract;
 
 import com.workout.auth.domain.UserPrincipal;
 import com.workout.member.domain.Member;
@@ -18,7 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.ErrorResponseException;
 
 @Service

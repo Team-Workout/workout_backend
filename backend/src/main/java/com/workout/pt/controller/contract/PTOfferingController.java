@@ -1,9 +1,9 @@
-package com.workout.pt.controller;
+package com.workout.pt.controller.contract;
 
 import com.workout.auth.domain.UserPrincipal;
 import com.workout.pt.dto.request.OfferingCreateRequest;
 import com.workout.pt.dto.response.PtOfferingResponse;
-import com.workout.pt.service.PTOfferingService;
+import com.workout.pt.service.contract.PTOfferingService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
