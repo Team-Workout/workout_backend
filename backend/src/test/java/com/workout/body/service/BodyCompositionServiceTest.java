@@ -4,11 +4,11 @@ import com.workout.body.domain.BodyComposition;
 import com.workout.body.repository.BodyCompositionRepository;
 import com.workout.gym.domain.Gym;
 import com.workout.gym.repository.GymRepository;
-import com.workout.user.domain.AccountStatus;
-import com.workout.user.domain.Gender;
-import com.workout.user.domain.Role;
-import com.workout.user.domain.User;
-import com.workout.user.repository.UserRepository;
+import com.workout.member.domain.AccountStatus;
+import com.workout.member.domain.Gender;
+import com.workout.member.domain.Role;
+import com.workout.member.domain.Member;
+import com.workout.member.repository.MemberRepository;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +33,7 @@ class BodyCompositionServiceTest {
     private BodyCompositionRepository bodyCompositionRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private MemberRepository memberRepository;
 
     @Autowired
     private GymRepository gymRepository;
@@ -47,19 +47,19 @@ class BodyCompositionServiceTest {
                 .address("Seoul")
                 .build());
 
-        User user = userRepository.save(User.builder()
+        Member user = memberRepository.save(Member.builder()
                 .gym(gym)
                 .name("홍길동")
                 .email("user@workout.com")
                 .password("1234")
                 .gender(Gender.MALE)
                 .accountStatus(AccountStatus.ACTIVE)
-                .role(Role.USER)
+                .role(Role.MEMBER)
                 .build());
 
         BodyComposition bodyComposition = bodyCompositionRepository.save(
                 BodyComposition.builder()
-                        .user(user)
+                        .member(user)
                         .measurementDate(LocalDate.now())
                         .weightKg(70L)
                         .fatKg(20L)

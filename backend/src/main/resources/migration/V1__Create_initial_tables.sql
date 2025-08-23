@@ -241,6 +241,19 @@ CREATE TABLE IF NOT EXISTS master_data_version
     updated_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- 파일 테이블
+CREATE TABLE files (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id BIGINT NOT NULL,
+    file_name VARCHAR(255),
+    file_path VARCHAR(255),
+    file_size BIGINT,
+    file_type VARCHAR(255),
+    CONSTRAINT fk_files_member
+        FOREIGN KEY (member_id) REFERENCES member(id)
+        ON DELETE CASCADE
+);
+
 -- 성능 최적화를 위한 인덱스 추가
 CREATE INDEX idx_member_gym_id ON `member` (gym_id);
 CREATE INDEX idx_workout_log_member_date ON workout_log (member_id, workout_date);
