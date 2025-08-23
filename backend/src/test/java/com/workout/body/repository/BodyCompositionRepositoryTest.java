@@ -12,7 +12,6 @@ import com.workout.member.domain.Role;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -30,7 +29,7 @@ class BodyCompositionRepositoryTest {
     private BodyCompositionRepository bodyCompositionRepository;
 
     @Autowired
-    private MemberRepository MemberRepository;
+    private MemberRepository memberRepository;
 
     @Autowired
     private GymRepository gymRepository;
@@ -44,7 +43,7 @@ class BodyCompositionRepositoryTest {
                 .address("Seoul")
                 .build());
 
-        Member Member1 = MemberRepository.save(Member.builder()
+        Member Member1 = memberRepository.save(Member.builder()
                 .gym(gym)
                 .name("홍길동")
                 .email("Member1@workout.com")
@@ -54,7 +53,7 @@ class BodyCompositionRepositoryTest {
                 .role(Role.MEMBER)
                 .build());
 
-        Member Member2 = MemberRepository.save(Member.builder()
+        Member Member2 = memberRepository.save(Member.builder()
                 .gym(gym)
                 .name("김영희")
                 .email("Member2@workout.com")

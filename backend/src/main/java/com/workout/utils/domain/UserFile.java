@@ -3,10 +3,6 @@ package com.workout.utils.domain;
 import com.workout.member.domain.Member;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.time.LocalDate;
-import java.util.Objects;
 
 @Entity
 @Getter
