@@ -12,7 +12,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-
 public record SignupRequest(
     @NotNull(message = "헬스장 ID는 필수입니다.")
     Long gymId,
@@ -36,26 +35,26 @@ public record SignupRequest(
     Role role
 ) {
 
-  public Member toMemberEntity(Gym gym, String encodedPassword) {
+  public Member toMemberEntity(Gym gym, String password) {
     return Member.builder()
         .gym(gym)
         .email(this.email)
-        .password(encodedPassword)
+        .password(password)
         .name(this.name)
         .gender(this.gender)
-        .role(this.role) // DTO에 따라 USER 또는 ADMIN이 될 것임
+        .role(this.role)
         .accountStatus(AccountStatus.ACTIVE)
         .build();
   }
 
-  public Trainer toTrainerEntity(Gym gym, String encodedPassword) {
+  public Trainer toTrainerEntity(Gym gym, String password) {
     return Trainer.builder()
         .gym(gym)
         .email(this.email)
-        .password(encodedPassword)
+        .password(password)
         .name(this.name)
         .gender(this.gender)
-        .role(Role.TRAINER) // 역할은 TRAINER로 고정
+        .role(Role.TRAINER)
         .accountStatus(AccountStatus.ACTIVE)
         .build();
   }

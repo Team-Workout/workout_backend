@@ -36,7 +36,6 @@ public class Gym extends BaseEntity {
   @Column(name = "phone_number")
   private String phoneNumber;
 
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {

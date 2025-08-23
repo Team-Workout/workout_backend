@@ -17,7 +17,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 @SuperBuilder
-@NoArgsConstructor(access = AccessLevel.PROTECTED) // <-- JPA와 빌더를 위한 기본 생성자 추가
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public abstract class BaseEntity {
 
