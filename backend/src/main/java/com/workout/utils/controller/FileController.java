@@ -2,9 +2,13 @@ package com.workout.utils.controller;
 
 
 import com.workout.auth.domain.UserPrincipal;
+import com.workout.utils.domain.UserFile;
 import com.workout.utils.dto.FileResponse;
 import com.workout.utils.service.FileService;
+import com.workout.workout.dto.routine.RoutineResponse;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -33,17 +37,27 @@ public class FileController {
   }
 
   /**
-   * 단일 파일 업로드
+   * 파일 삭제
    */
-  @PostMapping("/file")
-  public ResponseEntity<FileResponse> uploadFile(@RequestParam("file") MultipartFile file,
+  @DeleteMapping("/file/{id}")
+  public ResponseEntity<Void> deleteFile(
+      @PathVariable("id") Long id,
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
     Long userId = userPrincipal.getUserId();
-    FileResponse response = fileService.uploadFile(file, userId);
-
-    return ResponseEntity.ok(response);
+    fileService.deleteFile(id, userId);
+    return ResponseEntity.noContent().build();
   }
 
+
+  /**
+   * 이미지 조회
+   */
+  @GetMapping("/file/{id}")
+  public ResponseEntity<Resource> getFile(@PathVariable Long fileId) {
+    Resource resource = fileService.findFile(fileId);
+
+    return ResponseEntity.ok().body(resource);
+  }
 
 }

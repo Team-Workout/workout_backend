@@ -6,11 +6,14 @@ import com.workout.utils.domain.UserFile;
 import com.workout.member.domain.Member;
 import com.workout.utils.repository.FileRepository;
 
+import jakarta.persistence.EntityNotFoundException;
 import java.io.File;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,35 +34,6 @@ public class FileService {
 
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-    // 단일 파일 업로드
-    public FileResponse uploadFile(MultipartFile file, Long userId){
-        Member member = memberRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid User"));
-
-        // 1. 파일 검사
-        validateFile(file);
-
-        // 2. DB에 파일의 메타데이터 저장
-        String originalName = file.getOriginalFilename();
-        String storedName = convertFileName(originalName);
-        String fullPath = getFullPath(storedName);
-
-        UserFile userFile = UserFile.from(
-            member,
-            storedName,
-            fullPath,
-            file.getSize(),
-            file.getContentType()
-        );
-
-        fileRepository.save(userFile);
-
-        // 3. 로컬에 파일 저장
-        storeFile(fullPath, file);
-
-        return new FileResponse(file.getOriginalFilename(), storedName);
-    }
-
     // 복수 파일 업로드
     public List<FileResponse> uploadFiles(final MultipartFile[] files, Long userId) {
         Member member = memberRepository.findById(userId)
@@ -77,7 +51,6 @@ public class FileService {
 
             UserFile userFile = UserFile.from(
                     member,
-                    storedName,
                     fullPath,
                     file.getSize(),
                     file.getContentType()
@@ -92,6 +65,21 @@ public class FileService {
 
         return responses;
     }
+
+    // 파일 조회
+    public Resource findFile(Long fileId){
+        UserFile userFile = fileRepository.findById(fileId)
+            .orElseThrow(() -> new EntityNotFoundException("File Not Exists."));
+
+        File file = new File(userFile.getFilePath());
+        if (!file.exists()) {
+            throw new EntityNotFoundException("서버에 파일이 존재하지 않습니다.");
+        }
+
+      return new FileSystemResource(file);
+
+    }
+
 
     // 파일 검증
     private void validateFile(MultipartFile file) {
@@ -153,6 +141,39 @@ public class FileService {
             throw new RuntimeException(e);
         }
         log.info("File stored: {}", fullPath);
+
+    }
+
+    public void deleteFile(Long id, Long userId){
+        UserFile userFile = fileRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("삭제할 파일을 찾을 수 없습니다."));
+
+        if (!userFile.getMember().getId().equals(userId)) {
+            throw new SecurityException("파일을 삭제할 권한이 없습니다.");
+        }
+
+        try {
+
+            // 1. 로컬 서버 파일 삭제
+            File file = new File(userFile.getFilePath());
+            if (file.exists()) {
+                boolean deleted = file.delete();
+                if (!deleted) {
+                    throw new IOException("파일 삭제 실패: " + file.getAbsolutePath());
+                } else {
+                    log.info("File Delete SUCCESS : fileId={}, userId={}", id, userId);
+                }
+            } else {
+                log.warn("File Not Exists: {}", file.getAbsolutePath());
+            }
+
+            // 2. DB에서 파일 메타데이터 삭제
+            fileRepository.delete(userFile);
+
+        } catch(Exception e){
+            log.error("File Delete Error : fileId={}, userId={}", id, userId, e);
+            throw new RuntimeException("파일 삭제에 실패했습니다.");
+        }
 
     }
 

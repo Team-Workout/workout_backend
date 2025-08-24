@@ -1,5 +1,6 @@
 package com.workout.utils.domain;
 
+import com.workout.global.BaseEntity;
 import com.workout.member.domain.Member;
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,7 +11,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @Table(name = "files")
-public class UserFile {
+public class UserFile extends BaseEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,16 +21,14 @@ public class UserFile {
   @JoinColumn(name = "member_id", nullable = false)
   private Member member;
 
-  private String fileName;
   private String filePath;
   private Long fileSize;
   private String fileType;
 
   // MultipartFile → UserFile 변환
-  public static UserFile from(Member member, String fileName, String filePath, Long fileSize, String fileType) {
+  public static UserFile from(Member member, String filePath, Long fileSize, String fileType) {
     return UserFile.builder()
             .member(member)
-            .fileName(fileName)
             .filePath(filePath)
             .fileSize(fileSize)
             .fileType(fileType)
