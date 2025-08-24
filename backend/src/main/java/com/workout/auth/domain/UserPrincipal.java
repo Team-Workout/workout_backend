@@ -1,6 +1,7 @@
 package com.workout.auth.domain;
 
 import com.workout.member.domain.Member;
+import com.workout.member.domain.Role;
 import java.util.Collection;
 import java.util.Collections;
 import lombok.Getter;

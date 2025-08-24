@@ -36,27 +36,26 @@ public class AuthController {
   }
 
   @PostMapping("/signin")
-  public ResponseEntity<SigninResponse> signin(@Valid @RequestBody SigninRequest signinRequest,
+  public ResponseEntity<SigninResponse> signin(
+      @Valid @RequestBody SigninRequest signinRequest,
       HttpServletRequest request,
       HttpServletResponse response) {
 
-    Member member = authService.login(signinRequest.email(), signinRequest.password(), request,
-        response);
-    SigninResponse signinResponse = new SigninResponse(member.getId(), member.getName());
+    Member member = authService.login(signinRequest.email(), signinRequest.password(), request, response);
+
+    SigninResponse signinResponse = SigninResponse.from(member);
+
     return ResponseEntity.ok(signinResponse);
   }
 
-  // --- 회원가입 엔드포인트 분리 ---
   @PostMapping("/signup/user")
   public ResponseEntity<Long> signupUser(@Valid @RequestBody SignupRequest signupRequest) {
-    // 일반 유저 생성은 UserService가 담당
     Member member = memberService.registerUser(signupRequest);
     return ResponseEntity.status(HttpStatus.CREATED).body(member.getId());
   }
 
   @PostMapping("/signup/trainer")
   public ResponseEntity<Long> signupTrainer(@Valid @RequestBody SignupRequest signupRequest) {
-    // 트레이너 생성은 TrainerService가 담당
     Trainer trainer = trainerService.registerTrainer(signupRequest);
     return ResponseEntity.status(HttpStatus.CREATED).body(trainer.getId());
   }
