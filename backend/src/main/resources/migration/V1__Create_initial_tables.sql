@@ -233,104 +233,6 @@ CREATE TABLE IF NOT EXISTS routine_set
     CONSTRAINT fk_rs_routine_exercise FOREIGN KEY (routine_exercise_id) REFERENCES routine_exercise (id) ON DELETE CASCADE
 );
 
--- PT 상품(오퍼링) 테이블
-CREATE TABLE IF NOT EXISTS pt_offering
-(
-    id             BIGINT AUTO_INCREMENT PRIMARY KEY,
-    trainer_id     BIGINT       NOT NULL,
-    gym_id         BIGINT       NOT NULL,
-    title          VARCHAR(255) NOT NULL,
-    description    LONGTEXT,
-    price          BIGINT       NOT NULL,
-    total_sessions BIGINT       NOT NULL,
-    status         VARCHAR(255) NOT NULL,
-    created_at     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_offering_trainer FOREIGN KEY (trainer_id) REFERENCES `member` (id),
-    CONSTRAINT fk_offering_gym FOREIGN KEY (gym_id) REFERENCES gym (id)
-);
-
--- PT 신청 정보 테이블
-CREATE TABLE IF NOT EXISTS pt_application
-(
-    id                    BIGINT AUTO_INCREMENT PRIMARY KEY,
-    offering_id           BIGINT       NOT NULL,
-    member_id             BIGINT       NOT NULL,
-    pt_application_status VARCHAR(255) NOT NULL,
-    total_sessions        BIGINT,
-    created_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_application_offering FOREIGN KEY (offering_id) REFERENCES pt_offering (id),
-    CONSTRAINT fk_application_member FOREIGN KEY (member_id) REFERENCES `member` (id)
-);
-
--- PT 계약 정보 테이블
-CREATE TABLE IF NOT EXISTS pt_contract
-(
-    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
-    version             INT       NOT NULL DEFAULT 0,
-    gym_id              BIGINT    NOT NULL,
-    application_id      BIGINT    NOT NULL,
-    member_id           BIGINT    NOT NULL,
-    trainer_id          BIGINT    NOT NULL,
-    status              VARCHAR(255),
-    price               BIGINT,
-    payment_date        DATE,
-    start_date          DATE,
-    total_sessions      BIGINT,
-    remaining_sessions  BIGINT,
-    allow_body_comp_view BOOLEAN   NOT NULL DEFAULT FALSE,
-    allow_photoview     BOOLEAN   NOT NULL DEFAULT FALSE,
-    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_contract_gym FOREIGN KEY (gym_id) REFERENCES gym (id),
-    CONSTRAINT fk_contract_application FOREIGN KEY (application_id) REFERENCES pt_application (id),
-    CONSTRAINT fk_contract_member FOREIGN KEY (member_id) REFERENCES `member` (id),
-    CONSTRAINT fk_contract_trainer FOREIGN KEY (trainer_id) REFERENCES `member` (id)
-);
-
--- PT 예약(수업) 정보 테이블
-CREATE TABLE IF NOT EXISTS pt_appointment
-(
-    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
-    contract_id         BIGINT NOT NULL,
-    status              VARCHAR(255),
-    cancellation_reason VARCHAR(500),
-    start_time          TIMESTAMP,
-    end_time            TIMESTAMP,
-    proposed_start_time TIMESTAMP,
-    proposed_end_time   TIMESTAMP,
-    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_appointment_contract FOREIGN KEY (contract_id) REFERENCES pt_contract (id) ON DELETE CASCADE
-);
-
--- PT 예약 변경 요청 테이블
-CREATE TABLE IF NOT EXISTS pt_appointment_change_request
-(
-    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
-    appointment_id      BIGINT       NOT NULL,
-    member_id           BIGINT       NOT NULL,
-    original_start_time TIMESTAMP    NOT NULL,
-    proposed_start_time TIMESTAMP    NOT NULL,
-    proposed_end_time   TIMESTAMP    NOT NULL,
-    reason              VARCHAR(255),
-    status              VARCHAR(255) NOT NULL,
-    created_at          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_change_request_appointment FOREIGN KEY (appointment_id) REFERENCES pt_appointment (id) ON DELETE CASCADE,
-    CONSTRAINT fk_change_request_member FOREIGN KEY (member_id) REFERENCES `member` (id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS pt_session
-(
-    id             BIGINT AUTO_INCREMENT PRIMARY KEY,
-    workout_log_id  BIGINT NOT NULL UNIQUE,
-    appointment_id BIGINT NOT NULL UNIQUE,
-    CONSTRAINT fk_session_workout_log FOREIGN KEY (workout_log_id) REFERENCES workout_log (id) ON DELETE CASCADE,
-    CONSTRAINT fk_session_appointment FOREIGN KEY (appointment_id) REFERENCES pt_appointment (id) ON DELETE CASCADE
-);
-
 -- 마스터 데이터 버전 관리 테이블
 CREATE TABLE IF NOT EXISTS master_data_version
 (
@@ -339,12 +241,21 @@ CREATE TABLE IF NOT EXISTS master_data_version
     updated_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+CREATE TABLE files (
+  id bigint NOT NULL AUTO_INCREMENT,
+  member_id bigint NOT NULL,
+  file_path varchar(255) DEFAULT NULL,
+  file_size bigint DEFAULT NULL,
+  file_type varchar(255) DEFAULT NULL,
+  created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY fk_files_member (member_id),
+  CONSTRAINT fk_files_member FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
+);
+
 -- 성능 최적화를 위한 인덱스 추가
 CREATE INDEX idx_member_gym_id ON `member` (gym_id);
 CREATE INDEX idx_workout_log_member_date ON workout_log (member_id, workout_date);
 CREATE INDEX idx_routine_member_id ON routine (member_id);
 CREATE INDEX idx_body_composition_member_date ON body_composition (member_id, measurement_date);
-CREATE INDEX idx_pt_contract_member_id ON pt_contract (member_id);
-CREATE INDEX idx_pt_contract_trainer_id ON pt_contract (trainer_id);
-CREATE INDEX idx_pt_appointment_contract_id ON pt_appointment (contract_id);
-CREATE INDEX idx_pt_session_appointment_id ON pt_session (appointment_id);
