@@ -1,6 +1,8 @@
 package com.workout.member.service;
 
 import com.workout.auth.dto.SignupRequest;
+import com.workout.global.exception.RestApiException;
+import com.workout.global.exception.errorcode.MemberErrorCode;
 import com.workout.gym.domain.Gym;
 import com.workout.gym.service.GymService;
 import com.workout.member.domain.Member;
@@ -26,10 +28,10 @@ public class MemberService {
 
   public Member authenticate(String email, String password) {
     Member member = memberRepository.findByEmail(email)
-        .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
+        .orElseThrow(() -> new RestApiException(MemberErrorCode.AUTHENTICATION_FAILED));
 
     if (!passwordEncoder.matches(password, member.getPassword())) {
-      throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+      throw new RestApiException(MemberErrorCode.AUTHENTICATION_FAILED);
     }
 
     return member;
@@ -37,7 +39,7 @@ public class MemberService {
 
   public void ensureEmailIsUnique(String email) {
     if (memberRepository.existsByEmail(email)) {
-      throw new IllegalArgumentException("존재하는 이메일입니다");
+      throw new RestApiException(MemberErrorCode.EMAIL_ALREADY_EXISTS);
     }
   }
 
