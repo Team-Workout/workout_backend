@@ -1,6 +1,7 @@
 package com.workout.workout.controller;
 
 import com.workout.auth.domain.UserPrincipal;
+import com.workout.workout.domain.log.WorkoutLog;
 import com.workout.workout.dto.log.WorkoutLogCreateRequest;
 import com.workout.workout.dto.log.WorkoutLogResponse;
 import com.workout.workout.dto.routine.RoutineCreateRequest;
@@ -41,17 +42,16 @@ public class WorkoutController {
       @Valid @RequestBody WorkoutLogCreateRequest request,
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
-    Long userId = userPrincipal.getUserId();
-    Long workoutLogId = workoutLogService.createWorkoutLog(request, userId);
+    WorkoutLog workoutLogId = workoutLogService.createWorkoutLog(request, userPrincipal);
 
-    return ResponseEntity.created(URI.create("/api/workout-logs/" + workoutLogId)).build();
+    return ResponseEntity.created(URI.create("/api/workout-logs/" + workoutLogId.getId())).build();
   }
 
   /**
    * 운동일지 상세 조회
    */
   @GetMapping("/logs/{id}")
-  public ResponseEntity<WorkoutLogResponse> getWorkoutLog(@PathVariable("id") Long id) {
+  public ResponseEntity<WorkoutLogResponse> getWorkoutLog(@PathVariable("id") Long id, @AuthenticationPrincipal UserPrincipal userPrincipal) {
     WorkoutLogResponse response = workoutLogService.findWorkoutLogById(id);
     return ResponseEntity.ok(response);
   }

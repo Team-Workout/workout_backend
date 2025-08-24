@@ -1,5 +1,6 @@
 package com.workout.workout.service;
 
+import com.workout.auth.domain.UserPrincipal;
 import com.workout.member.domain.Member;
 import com.workout.member.repository.MemberRepository;
 import com.workout.workout.domain.exercise.Exercise;
@@ -51,9 +52,9 @@ public class WorkoutLogService {
   }
 
   @Transactional
-  public Long createWorkoutLog(WorkoutLogCreateRequest request, Long userId) {
-    Member member = userRepository.findById(userId)
-        .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
+  public WorkoutLog createWorkoutLog(WorkoutLogCreateRequest request, UserPrincipal trainerPrincipal) {
+    Member member = userRepository.findById(trainerPrincipal.getUserId())
+        .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + trainerPrincipal.getUserId()));
 
     WorkoutLog workoutLog = request.toEntity(member);
     workoutLogRepository.save(workoutLog);
@@ -96,7 +97,7 @@ public class WorkoutLogService {
     workoutSetRepository.saveAll(setsToSave);
     feedbackRepository.saveAll(feedbacksToSave);
 
-    return workoutLog.getId();
+    return workoutLog;
   }
 
   public WorkoutLogResponse findWorkoutLogById(Long workoutLogId) {
