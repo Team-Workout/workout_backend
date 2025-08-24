@@ -31,6 +31,7 @@ class BodyCompositionRepositoryTest {
     @Autowired
     private MemberRepository memberRepository;
 
+
     @Autowired
     private GymRepository gymRepository;
 
@@ -43,6 +44,7 @@ class BodyCompositionRepositoryTest {
                 .address("Seoul")
                 .build());
 
+
         Member Member1 = memberRepository.save(Member.builder()
                 .gym(gym)
                 .name("홍길동")
@@ -54,6 +56,7 @@ class BodyCompositionRepositoryTest {
                 .build());
 
         Member Member2 = memberRepository.save(Member.builder()
+
                 .gym(gym)
                 .name("김영희")
                 .email("Member2@workout.com")
@@ -65,6 +68,7 @@ class BodyCompositionRepositoryTest {
 
         BodyComposition body1 = BodyComposition.builder()
                 .member(Member1)
+
                 .measurementDate(LocalDate.now())
                 .weightKg(70L)
                 .fatKg(20L)
@@ -95,5 +99,4 @@ class BodyCompositionRepositoryTest {
         // then
         assertThat(result).hasSize(2);
         assertThat(result).allMatch(bc -> bc.getMember().getId().equals(Member1.getId()));
-    }
 }
