@@ -1,6 +1,5 @@
 package com.workout.trainer.controller;
 
-
 import com.workout.auth.domain.UserPrincipal;
 import com.workout.pt.service.contract.PTContractService;
 import com.workout.trainer.dto.ProfileCreateDto;
@@ -23,11 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class TrainerController {
 
   private final TrainerService trainerService;
-  private final PTContractService ptContractService;
 
-  public TrainerController(TrainerService trainerService, PTContractService ptContractService) {
+  public TrainerController(TrainerService trainerService) {
     this.trainerService = trainerService;
-    this.ptContractService = ptContractService;
   }
 
   /**
@@ -53,16 +50,6 @@ public class TrainerController {
 
     ProfileResponseDto profile = trainerService.getProfile(trainerId);
     return ResponseEntity.ok(profile);
-  }
-
-  /**
-   * 특정 체육관의 모든 트레이너 프로필 목록 조회
-   */
-  @GetMapping("/gyms/{gymId}/trainers")
-  public ResponseEntity<List<ProfileResponseDto>> getTrainerProfilesByGym(
-      @PathVariable Long gymId) {
-    List<ProfileResponseDto> trainerProfiles = trainerService.getTrainerProfilesByGym(gymId);
-    return ResponseEntity.ok(trainerProfiles);
   }
 
   /**

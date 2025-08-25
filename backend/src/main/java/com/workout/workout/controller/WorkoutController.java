@@ -44,15 +44,17 @@ public class WorkoutController {
 
     WorkoutLog workoutLogId = workoutLogService.createWorkoutLog(request, userPrincipal);
 
-    return ResponseEntity.created(URI.create("/api/workout-logs/" + workoutLogId.getId())).build();
+    return ResponseEntity.created(URI.create("/api/workout/logs/" + workoutLogId.getId())).build();
   }
 
   /**
    * 운동일지 상세 조회
    */
   @GetMapping("/logs/{id}")
-  public ResponseEntity<WorkoutLogResponse> getWorkoutLog(@PathVariable("id") Long id, @AuthenticationPrincipal UserPrincipal userPrincipal) {
-    WorkoutLogResponse response = workoutLogService.findWorkoutLogById(id);
+  public ResponseEntity<WorkoutLogResponse> getWorkoutLog(
+      @PathVariable("id") Long id,
+      @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    WorkoutLogResponse response = workoutLogService.findWorkoutLogById(id,userPrincipal);
     return ResponseEntity.ok(response);
   }
 
@@ -69,7 +71,6 @@ public class WorkoutController {
     return ResponseEntity.noContent().build();
   }
 
-
   /**
    * 루틴 생성
    */
@@ -81,7 +82,7 @@ public class WorkoutController {
     Long userId = userPrincipal.getUserId(); //
     Long routineId = routineService.createRoutine(request, userId);
 
-    return ResponseEntity.created(URI.create("/api/workout-logs/" + routineId)).build();
+    return ResponseEntity.created(URI.create("/api/workout/routine/" + routineId)).build();
   }
 
   /**

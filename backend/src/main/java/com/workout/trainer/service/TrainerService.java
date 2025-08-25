@@ -1,9 +1,14 @@
 package com.workout.trainer.service;
 
 import com.workout.auth.dto.SignupRequest;
+import com.workout.global.exception.RestApiException;
+import com.workout.global.exception.errorcode.MemberErrorCode;
+import com.workout.global.exception.errorcode.ProfileErrorCode;
 import com.workout.gym.domain.Gym;
 import com.workout.gym.service.GymService;
+import com.workout.member.domain.Member;
 import com.workout.member.service.MemberService;
+import com.workout.pt.service.contract.PTContractService;
 import com.workout.trainer.domain.Award;
 import com.workout.trainer.domain.Certification;
 import com.workout.trainer.domain.Education;
@@ -31,6 +36,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -53,7 +61,8 @@ public class TrainerService {
       CertificationRepository certificationRepository, EducationRepository educationRepository,
       WorkexperiencesRepository workexperiencesRepository, SpecialtyRepository specialtyRepository,
       TrainerSpecialtyRepository trainerSpecialtyRepository, GymService gymService,
-      PasswordEncoder passwordEncoder, MemberService memberService) {
+      PasswordEncoder passwordEncoder, MemberService memberService)
+  {
     this.trainerRepository = trainerRepository;
     this.awardRepository = awardRepository;
     this.certificationRepository = certificationRepository;
@@ -67,30 +76,23 @@ public class TrainerService {
   }
 
   public ProfileResponseDto getProfile(Long trainerId) {
-    Trainer trainer = trainerRepository.findById(trainerId)
-        .orElseThrow(() -> new EntityNotFoundException("트레이너를 찾을 수 없습니다. ID: " + trainerId));
+    Trainer trainer = trainerRepository.findByIdWithDetails(trainerId)
+        .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-    List<Award> awards = awardRepository.findAllByTrainerId(trainerId);
-    List<Certification> certifications = certificationRepository.findAllByTrainerId(trainerId);
-    List<Education> educations = educationRepository.findAllByTrainerId(trainerId);
-    List<Workexperience> workexperiences = workexperiencesRepository.findAllByTrainerId(trainerId);
-    Set<Specialty> specialties = trainerSpecialtyRepository.findSpecialtiesByTrainerId(trainerId);
-
-    return ProfileResponseDto.from(trainer, awards, certifications, educations, workexperiences,
-        specialties);
+    return ProfileResponseDto.fromEntity(trainer);
   }
 
   @Transactional
   public void createProfile(Long trainerId, ProfileCreateDto requestDto) {
     Trainer trainer = trainerRepository.findById(trainerId)
-        .orElseThrow(() -> new EntityNotFoundException("트레이너를 찾을 수 없습니다. ID: " + trainerId));
+        .orElseThrow(() -> new RestApiException(ProfileErrorCode.NOT_FOUND_PROFILE));
     saveProfileDetails(trainer, requestDto);
   }
 
   @Transactional
   public void updateProfile(Long trainerId, ProfileCreateDto requestDto) {
     Trainer trainer = trainerRepository.findById(trainerId)
-        .orElseThrow(() -> new EntityNotFoundException("트레이너를 찾을 수 없습니다. ID: " + trainerId));
+        .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
 
     trainer.setIntroduction(requestDto.introduction());
 
@@ -279,95 +281,10 @@ public class TrainerService {
     handleSpecialties(trainer, requestDto.specialties());
   }
 
-  public List<ProfileResponseDto> getTrainerProfilesByGym(Long gymId) {
-    // 1. JPQL을 통해 모든 정보를 DTO 리스트로 한번에 조회 (단일 쿼리)
-    List<TrainerProfileDto> flatResults = trainerRepository.findTrainerProfilesByGymIdAsFlatDto(
-        gymId);
+  public Page<ProfileResponseDto> getTrainerProfilesByGym(Long gymId, Pageable pageable) {
+    Page<Trainer> trainerPage = trainerRepository.findAllByGymId(gymId, pageable);
 
-    if (flatResults.isEmpty()) {
-      return Collections.emptyList();
-    }
-
-    // 2. 조회된 트레이너들의 ID 목록을 추출 (중복 제거)
-    List<Long> trainerIds = flatResults.stream()
-        .map(TrainerProfileDto::trainerId)
-        .distinct()
-        .toList();
-
-    // 3. Specialty 정보를 IN 쿼리로 한번에 조회 후, trainerId 기준으로 그룹핑 (쿼리 1번)
-    List<TrainerSpecialtyDto> specialtyDtos = trainerSpecialtyRepository.findSpecialtiesByTrainerIds(
-        trainerIds);
-
-    Map<Long, Set<String>> specialtiesMap = specialtyDtos.stream()
-        .collect(Collectors.groupingBy(
-            TrainerSpecialtyDto::trainerId,
-            Collectors.mapping(TrainerSpecialtyDto::specialtyName, Collectors.toSet())
-        ));
-
-    // 4. trainerId를 기준으로 DTO들을 그룹핑 (메모리에서 수행)
-    Map<Long, List<TrainerProfileDto>> groupedByTrainerId = flatResults.stream()
-        .collect(Collectors.groupingBy(TrainerProfileDto::trainerId));
-
-    // 5. 그룹핑된 데이터를 최종 ProfileResponseDto 형태로 조립
-    return groupedByTrainerId.values().stream()
-        .map(trainerGroup -> {
-          TrainerProfileDto first = trainerGroup.get(0);
-          Long currentTrainerId = first.trainerId();
-
-          // AwardDto 리스트 생성
-          List<ProfileResponseDto.AwardDto> awards = trainerGroup.stream()
-              .filter(dto -> dto.awardName() != null)
-              .map(dto -> new ProfileResponseDto.AwardDto(dto.awardId(), dto.awardName(),
-                  dto.awardDate(),
-                  dto.awardPlace()))
-              .distinct()
-              .toList();
-
-          // CertificationDto 리스트 생성
-          List<ProfileResponseDto.CertificationDto> certifications = trainerGroup.stream()
-              .filter(dto -> dto.certificationName() != null)
-              .map(dto -> new ProfileResponseDto.CertificationDto(dto.certificationId(),
-                  dto.certificationName(),
-                  dto.issuingOrganization(), dto.acquisitionDate()))
-              .distinct()
-              .toList();
-
-          // EducationDto 리스트 생성
-          List<ProfileResponseDto.EducationDto> educations = trainerGroup.stream()
-              .filter(dto -> dto.schoolName() != null)
-              .map(dto -> new ProfileResponseDto.EducationDto(dto.educationId(), dto.schoolName(),
-                  dto.educationName(),
-                  dto.degree(), dto.startDate(), dto.endDate()))
-              .distinct()
-              .toList();
-
-          // WorkExperienceDto 리스트 생성
-          List<ProfileResponseDto.WorkExperienceDto> workExperiences = trainerGroup.stream()
-              .filter(dto -> dto.workName() != null)
-              .map(dto -> new ProfileResponseDto.WorkExperienceDto(dto.workExperienceId(),
-                  dto.workName(), dto.workPlace(),
-                  dto.workPosition(), dto.workStart(), dto.workEnd()))
-              .distinct()
-              .toList();
-
-          // 해당 트레이너의 Specialty Set을 Map에서 조회
-          Set<String> specialties = specialtiesMap.getOrDefault(currentTrainerId,
-              Collections.emptySet());
-
-          // 최종 DTO 반환
-          return new ProfileResponseDto(
-              first.trainerId(),
-              first.name(),
-              first.email(),
-              first.introduction(),
-              awards,
-              certifications,
-              educations,
-              workExperiences,
-              specialties // 조회한 Specialty 정보 채워넣기
-          );
-        })
-        .collect(Collectors.toList());
+    return trainerPage.map(ProfileResponseDto::fromEntity);
   }
 
   private void handleSpecialties(Trainer trainer, Set<String> specialtyNames) {
@@ -409,5 +326,9 @@ public class TrainerService {
     Trainer trainer = signupRequest.toTrainerEntity(gym, encodedPassword);
 
     return trainerRepository.save(trainer);
+  }
+
+  public Trainer findById(Long userId) {
+    return trainerRepository.findById(userId).orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
   }
 }

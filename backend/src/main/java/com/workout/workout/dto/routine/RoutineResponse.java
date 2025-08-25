@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
 public record RoutineResponse(
     Long routineId,
     String routineName,
@@ -47,7 +46,7 @@ public record RoutineResponse(
           .collect(Collectors.toList());
       return new RoutineExerciseResponse(
           routineExercise.getId(),
-          routineExercise.getExercise().getName(), // Exercise 엔티티는 LAZY 로딩이 아님을 가정
+          routineExercise.getExercise().getName(),
           routineExercise.getOrder(),
           setResponses
       );

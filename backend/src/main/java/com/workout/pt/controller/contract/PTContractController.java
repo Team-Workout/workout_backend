@@ -29,7 +29,8 @@ public class PTContractController {
   public ResponseEntity<Void> cancelContract(
       @AuthenticationPrincipal UserPrincipal user,
       @PathVariable Long contractId) {
-    ptContractService.cancelContract(user, contractId);
+    Long userId = user.getUserId();
+    ptContractService.cancelContract(userId, contractId);
     return ResponseEntity.noContent().build();
   }
 
@@ -38,7 +39,8 @@ public class PTContractController {
       @AuthenticationPrincipal UserPrincipal user,
       Pageable pageable
   ) {
-    Page<ContractResponse> response = ptContractService.getMyContracts(user, pageable);
+    Long userId = user.getUserId();
+    Page<ContractResponse> response = ptContractService.getMyContracts(userId, pageable);
     return ResponseEntity.ok(ApiResponse.of(response));
   }
 }

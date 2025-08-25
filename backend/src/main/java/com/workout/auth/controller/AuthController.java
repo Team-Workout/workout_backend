@@ -41,6 +41,7 @@ public class AuthController {
       HttpServletRequest request,
       HttpServletResponse response) {
 
+    //1 회원가입
     Member member = authService.login(signinRequest.email(), signinRequest.password(), request, response);
 
     SigninResponse signinResponse = SigninResponse.from(member);

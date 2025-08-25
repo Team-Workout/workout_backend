@@ -29,7 +29,8 @@ public class PTSessionController {
       @AuthenticationPrincipal UserPrincipal user,
       @Valid @RequestBody PTSessionCreateRequest request) {
 
-    Long ptSessionId = ptSessionService.createPTSessionAndWorkoutLog(request, user);
+    Long userId = user.getUserId();
+    Long ptSessionId = ptSessionService.createPTSessionAndWorkoutLog(request, userId);
     return ResponseEntity.created(URI.create("/api/pt-sessions/" + ptSessionId)).build();
   }
 
@@ -38,7 +39,8 @@ public class PTSessionController {
       @AuthenticationPrincipal UserPrincipal user,
       @PathVariable Long ptSessionId) {
 
-    ptSessionService.deletePTSession(ptSessionId, user);
+    Long userId = user.getUserId();
+    ptSessionService.deletePTSession(ptSessionId, userId);
     return ResponseEntity.noContent().build();
   }
 }

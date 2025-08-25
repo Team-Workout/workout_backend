@@ -41,8 +41,9 @@ public class PTAppointmentController {
       @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
       @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
   ) {
+    Long userId = user.getUserId();
     List<AppointmentResponse> appointments = appointmentService.findMyScheduledAppointmentsByPeriod(
-        user, startDate, endDate);
+        userId, startDate, endDate);
 
     return ResponseEntity.ok(ApiResponse.of(appointments));
   }
@@ -57,7 +58,8 @@ public class PTAppointmentController {
       @AuthenticationPrincipal UserPrincipal user,
       @RequestBody AppointmentRequest request
   ) {
-    Long appointmentId = appointmentService.create(user, request);
+    Long userId = user.getUserId();
+    Long appointmentId = appointmentService.create(userId, request);
 
     return ResponseEntity.ok().build();
   }
@@ -70,7 +72,8 @@ public class PTAppointmentController {
       @AuthenticationPrincipal UserPrincipal trainer,
       @PathVariable Long appointmentId
   ) {
-    appointmentService.confirm(trainer, appointmentId);
+    Long userId = trainer.getUserId();
+    appointmentService.confirm(userId, appointmentId);
     return ResponseEntity.ok().build();
   }
 
@@ -83,7 +86,8 @@ public class PTAppointmentController {
       @PathVariable Long appointmentId,
       @RequestBody AppointmentUpdateRequest request
   ) {
-    appointmentService.requestChangeByTrainer(trainer, appointmentId, request);
+    Long userId = trainer.getUserId();
+    appointmentService.requestChangeByTrainer(userId, appointmentId, request);
     return ResponseEntity.ok().build();
   }
 
@@ -96,7 +100,8 @@ public class PTAppointmentController {
       @PathVariable Long appointmentId,
       @RequestBody AppointmentStatusUpdateRequest request
   ) {
-    appointmentService.updateStatus(user, appointmentId, request.status());
+    Long userId = user.getUserId();
+    appointmentService.updateStatus(userId, appointmentId, request.status());
     return ResponseEntity.ok().build();
   }
 
@@ -108,7 +113,8 @@ public class PTAppointmentController {
       @AuthenticationPrincipal UserPrincipal user,
       @PathVariable Long appointmentId
   ) {
-    appointmentService.approveChange(user, appointmentId);
+    Long userId = user.getUserId();
+    appointmentService.approveChange(userId, appointmentId);
     return ResponseEntity.ok().build();
   }
 
@@ -120,7 +126,8 @@ public class PTAppointmentController {
       @AuthenticationPrincipal UserPrincipal user,
       @PathVariable Long appointmentId
   ) {
-    appointmentService.rejectChange(user, appointmentId);
+    Long userId = user.getUserId();
+    appointmentService.rejectChange(userId, appointmentId);
     return ResponseEntity.ok().build();
   }
   //endregion
@@ -135,8 +142,8 @@ public class PTAppointmentController {
       @AuthenticationPrincipal UserPrincipal user,
       @RequestBody AppointmentRequest request
   ) {
-    Long appointmentId = appointmentService.propose(user, request);
-    // 생성된 리소스의 위치를 헤더에 담아 반환 (RESTful Best Practice)
+    Long userId = user.getUserId();
+    Long appointmentId = appointmentService.propose(userId, request);
     return ResponseEntity.created(URI.create("/api/pt-appointments/" + appointmentId)).build();
   }
 
@@ -148,7 +155,8 @@ public class PTAppointmentController {
       @AuthenticationPrincipal UserPrincipal member,
       @PathVariable Long appointmentId
   ) {
-    appointmentService.approveChangeByMember(member, appointmentId);
+    Long userId = member.getUserId();
+    appointmentService.approveChangeByMember(userId, appointmentId);
     return ResponseEntity.ok().build();
   }
 
@@ -159,9 +167,10 @@ public class PTAppointmentController {
   public ResponseEntity<Void> requestAppointmentChange(
       @AuthenticationPrincipal UserPrincipal user,
       @PathVariable Long appointmentId,
-      @RequestBody AppointmentUpdateRequest request // DTO: { "startTime": "...", "endTime": "..." }
+      @RequestBody AppointmentUpdateRequest request
   ) {
-    appointmentService.requestChange(user, appointmentId, request);
+    Long userId = user.getUserId();
+    appointmentService.requestChange(userId, appointmentId, request);
     return ResponseEntity.ok().build();
   }
   //endregion

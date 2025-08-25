@@ -1,5 +1,4 @@
 // AuthService.java
-
 package com.workout.auth.service;
 
 import com.workout.auth.domain.UserPrincipal;

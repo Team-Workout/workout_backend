@@ -31,7 +31,8 @@ public class TrainerClientsController {
       @AuthenticationPrincipal UserPrincipal trainerUser,
       Pageable pageable
   ) {
-    Page<MemberResponse> clientsPage = ptTrainerService.findMyClients(trainerUser, pageable);
+    Long trainerId = trainerUser.getUserId();
+    Page<MemberResponse> clientsPage = ptTrainerService.findMyClients(trainerId, pageable);
 
     return ResponseEntity.ok(ApiResponse.of(clientsPage));
   }

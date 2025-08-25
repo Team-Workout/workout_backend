@@ -17,4 +17,4 @@ public interface PTContractRepository extends JpaRepository<PTContract, Long> {
 
   Page<PTContract> findByTrainerIdAndStatus(Long trainerId, PTContractStatus status, Pageable pageable);
 
-}
+  boolean existsByTrainerIdAndMemberIdAndStatus(Long trainerId, Long memberId, PTContractStatus status);}

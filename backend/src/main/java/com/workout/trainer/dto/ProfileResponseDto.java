@@ -46,7 +46,46 @@ public record ProfileResponseDto(
     );
   }
 
-  public record AwardDto(
+  public static ProfileResponseDto fromEntity(Trainer trainer) {
+    if (trainer == null) {
+      return null;
+    }
+
+    List<AwardDto> awardDtos = trainer.getAwards().stream()
+        .map(AwardDto::fromEntity)
+        .toList();
+
+    List<CertificationDto> certificationDtos = trainer.getCertifications().stream()
+        .map(CertificationDto::fromEntity)
+        .toList();
+
+    List<EducationDto> educationDtos = trainer.getEducations().stream()
+        .map(EducationDto::fromEntity)
+        .toList();
+
+    List<WorkExperienceDto> workExperienceDtos = trainer.getWorkexperiences().stream()
+        .map(WorkExperienceDto::fromEntity)
+        .toList();
+
+    Set<String> specialtyNames = trainer.getTrainerSpecialties().stream()
+        .map(trainerSpecialty -> trainerSpecialty.getSpecialty().getName())
+        .collect(Collectors.toSet());
+
+    return new ProfileResponseDto(
+        trainer.getId(),
+        trainer.getName(),
+        trainer.getEmail(),
+        trainer.getIntroduction(),
+        awardDtos,
+        certificationDtos,
+        educationDtos,
+        workExperienceDtos,
+        specialtyNames
+    );
+  }
+
+
+    public record AwardDto(
       Long id,
       String awardName,
       LocalDate awardDate,
@@ -57,7 +96,11 @@ public record ProfileResponseDto(
       return new AwardDto(award.getId(), award.getAwardName(), award.getAwardDate(),
           award.getAwardPlace());
     }
-  }
+
+      public static AwardDto fromEntity(Award award) {
+        return new AwardDto(award.getId(), award.getAwardName(), award.getAwardDate(), award.getAwardPlace());
+      }
+    }
 
   public record CertificationDto(
       Long id,
@@ -69,6 +112,10 @@ public record ProfileResponseDto(
     public static CertificationDto from(Certification certification) {
       return new CertificationDto(certification.getId(), certification.getCertificationName(),
           certification.getIssuingOrganization(), certification.getAcquisitionDate());
+    }
+
+    public static CertificationDto fromEntity(Certification certification) {
+      return new CertificationDto(certification.getId(), certification.getCertificationName(), certification.getIssuingOrganization(), certification.getAcquisitionDate());
     }
   }
 
@@ -86,6 +133,10 @@ public record ProfileResponseDto(
           education.getEducationName(),
           education.getDegree(), education.getStartDate(), education.getEndDate());
     }
+
+    public static EducationDto fromEntity(Education education) {
+      return new EducationDto(education.getId(), education.getSchoolName(), education.getEducationName(), education.getDegree(), education.getStartDate(), education.getEndDate());
+    }
   }
 
   public record WorkExperienceDto(
@@ -102,6 +153,10 @@ public record ProfileResponseDto(
           workExperience.getWorkPlace(),
           workExperience.getWorkPosition(), workExperience.getWorkStart(),
           workExperience.getWorkEnd());
+    }
+
+    public static WorkExperienceDto fromEntity(Workexperience workExperience) {
+      return new WorkExperienceDto(workExperience.getId(), workExperience.getWorkName(), workExperience.getWorkPlace(), workExperience.getWorkPosition(), workExperience.getWorkStart(), workExperience.getWorkEnd());
     }
   }
 }
