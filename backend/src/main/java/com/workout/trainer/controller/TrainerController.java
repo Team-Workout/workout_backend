@@ -39,7 +39,7 @@ public class TrainerController {
     trainerService.updateProfile(currentTrainerId, profileCreateDto);
 
     return ResponseEntity.ok().build();
-  }
+  } 
 
   /**
    * 특정 트레이너 프로필 조회

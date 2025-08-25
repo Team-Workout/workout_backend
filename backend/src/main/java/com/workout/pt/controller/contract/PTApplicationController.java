@@ -31,8 +31,8 @@ public class PTApplicationController {
    */
   @GetMapping
   public ResponseEntity<PendingApplicationResponse> findPendingApplications(
-      @AuthenticationPrincipal UserPrincipal userPrincipal) {
-
+      @AuthenticationPrincipal UserPrincipal userPrincipal
+  ) {
     Long userId = userPrincipal.getUserId();
     return ResponseEntity.ok(ptApplicationService.findPendingApplicationsForUser(userId));
   }

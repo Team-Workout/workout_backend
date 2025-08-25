@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS `member`
     updated_at     TIMESTAMP                                NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     phone_number   VARCHAR(50),
     introduction   TEXT,
-
+    is_open_workout_record BOOLEAN,
     CONSTRAINT fk_member_gym FOREIGN KEY (gym_id) REFERENCES gym (id),
     CONSTRAINT chk_member_role CHECK (role IN ('MEMBER', 'TRAINER', 'ADMIN'))
 );

@@ -59,4 +59,20 @@ public class MemberService {
     return memberRepository.findById(id)
         .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
   }
+
+  public void allowAccessWorkoutLog(Long userId) {
+    Member member = memberRepository.findById(userId)
+        .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+    member.setIsOpenWorkoutRecord(true);
+    memberRepository.save(member);
+  }
+
+  public void forbidAccessWorkoutLog(Long userId) {
+    Member member = memberRepository.findById(userId)
+        .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+    member.setIsOpenWorkoutRecord(false);
+    memberRepository.save(member);
+  }
 }

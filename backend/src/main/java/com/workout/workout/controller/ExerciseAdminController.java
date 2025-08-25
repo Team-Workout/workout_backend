@@ -11,10 +11,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/admin/exercises")
-@RequiredArgsConstructor
 public class ExerciseAdminController {
 
   private final WorkoutService workoutService;
+
+  public ExerciseAdminController(WorkoutService workoutService) {
+    this.workoutService = workoutService;
+  }
 
   @PatchMapping("/{exerciseId}/name")
   public ResponseEntity<Void> updateExerciseName(
