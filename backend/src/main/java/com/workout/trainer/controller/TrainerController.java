@@ -1,12 +1,10 @@
 package com.workout.trainer.controller;
 
 import com.workout.auth.domain.UserPrincipal;
-import com.workout.pt.service.contract.PTContractService;
 import com.workout.trainer.dto.ProfileCreateDto;
 import com.workout.trainer.dto.ProfileResponseDto;
 import com.workout.trainer.service.TrainerService;
 import jakarta.validation.Valid;
-import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,7 +37,7 @@ public class TrainerController {
     trainerService.updateProfile(currentTrainerId, profileCreateDto);
 
     return ResponseEntity.ok().build();
-  } 
+  }
 
   /**
    * 특정 트레이너 프로필 조회

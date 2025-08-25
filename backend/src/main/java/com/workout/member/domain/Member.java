@@ -67,7 +67,7 @@ public class Member extends BaseEntity {
   @Column(name = "role", insertable = false, updatable = false)
   private Role role;
 
-  private Boolean isOpenWorkoutRecord;
+  private Boolean isOpenWorkoutRecord = false;
 
   @Override
   public boolean equals(Object o) {
