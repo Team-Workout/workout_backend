@@ -11,4 +11,6 @@ public interface RoutineExerciseRepository extends JpaRepository<RoutineExercise
   List<RoutineExercise> findAllByRoutineIdOrderByOrderAsc(Long routineId);
 
   void deleteAllByRoutineId(Long routineId);
+
+  List<RoutineExercise> findAllByRoutineIdInOrderByOrderAsc(List<Long> routineIds);
 }

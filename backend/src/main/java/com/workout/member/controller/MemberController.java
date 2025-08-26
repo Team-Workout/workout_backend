@@ -1,11 +1,13 @@
 package com.workout.member.controller;
 
 import com.workout.auth.domain.UserPrincipal;
+import com.workout.member.dto.ProfileResponse;
 import com.workout.member.dto.WorkoutLogSettingsDto;
 import com.workout.member.service.MemberService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,5 +38,12 @@ public class MemberController {
     }
 
     return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/me")
+  public ResponseEntity<ProfileResponse> getMyInfo(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+    Long userId = userPrincipal.getUserId();
+    ProfileResponse response = ProfileResponse.from(memberService.findById(userId));
+    return ResponseEntity.ok(response);
   }
 }

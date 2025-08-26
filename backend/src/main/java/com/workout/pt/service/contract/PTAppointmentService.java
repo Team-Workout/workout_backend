@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -99,7 +100,12 @@ public class PTAppointmentService {
         .status(PTAppointmentStatus.SCHEDULED)
         .build();
 
-    return ptAppointmentRepository.save(appointment).getId();
+    try {
+      return ptAppointmentRepository.save(appointment).getId();
+    } catch (DataIntegrityViolationException e) {
+      throw new RestApiException(PTErrorCode.ALREADY_PRESENT_APPOINTMENT);
+    }
+
   }
 
   private void checkTrainerScheduleOverlap(Long trainerId, LocalDateTime startTime,
@@ -116,14 +122,10 @@ public class PTAppointmentService {
     PTAppointment appointment = ptAppointmentRepository.findById(appointmentId)
         .orElseThrow(() -> new RestApiException(PTErrorCode.NOT_FOUND_PT_APPOINTMENT));
 
-    if (!appointment.getContract().getTrainer().getId().equals(userId)) {
-      throw new RestApiException(PTErrorCode.NOT_ALLOWED_ACCESS);
-    }
+    appointment.changeStatus(status);
 
-    appointment.setStatus(status);
     ptAppointmentRepository.save(appointment);
 
-    // 수업이 '완료(COMPLETED)'로 변경되면, 계약의 남은 세션을 차감
     if (status == PTAppointmentStatus.COMPLETED) {
       ptContractService.deductSession(appointment.getContract().getId());
     }
@@ -157,7 +159,11 @@ public class PTAppointmentService {
         .status(PTAppointmentStatus.MEMBER_REQUESTED) // '회원 요청' 상태로 생성
         .build();
 
-    return ptAppointmentRepository.save(appointment).getId();
+    try {
+      return ptAppointmentRepository.save(appointment).getId();
+    } catch (DataIntegrityViolationException e) {
+      throw new RestApiException(PTErrorCode.ALREADY_PRESENT_APPOINTMENT);
+    }
   }
 
   @Transactional

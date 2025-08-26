@@ -47,7 +47,6 @@ public class PTAppointmentController {
 
     return ResponseEntity.ok(ApiResponse.of(appointments));
   }
-
   //region 트레이너
 
   /**

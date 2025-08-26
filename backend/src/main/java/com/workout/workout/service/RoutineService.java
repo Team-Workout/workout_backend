@@ -16,6 +16,7 @@ import com.workout.workout.repository.routine.RoutineRepository;
 import com.workout.workout.repository.routine.RoutineSetRepository;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -135,5 +136,50 @@ public class RoutineService {
 
     // 서비스 계층에서 DTO로 조립하여 반환
     return RoutineResponse.from(routine, routineExercises, routineSetsMap);
+  }
+
+  public List<RoutineResponse> findAllRoutinesByUserId(Long userId) {
+    // 1. 사용자의 모든 루틴 조회
+    List<Routine> routines = routineRepository.findAllRoutinesByUserId(userId);
+
+    if (routines.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    // 2. 루틴 ID 목록 추출
+    List<Long> routineIds = routines.stream()
+        .map(Routine::getId)
+        .toList();
+
+    // 3. 루틴에 속한 모든 RoutineExercise를 한 번의 쿼리로 조회 (N+1 방지)
+    // ※ 참고: RoutineExerciseRepository에 findAllByRoutineIdInOrderByOrderAsc 메소드 추가 필요
+    List<RoutineExercise> allRoutineExercises = routineExerciseRepository.findAllByRoutineIdInOrderByOrderAsc(routineIds);
+
+    Map<Long, List<RoutineSet>> routineSetsMap;
+    if (allRoutineExercises.isEmpty()) {
+      routineSetsMap = Collections.emptyMap();
+    } else {
+      // 4. RoutineExercise에 속한 모든 RoutineSet을 한 번의 쿼리로 조회 (N+1 방지)
+      List<Long> allRoutineExerciseIds = allRoutineExercises.stream()
+          .map(RoutineExercise::getId)
+          .toList();
+      List<RoutineSet> allRoutineSets = routineSetRepository.findAllByRoutineExerciseIdInOrderByOrderAsc(allRoutineExerciseIds);
+      // 5. RoutineSet들을 RoutineExercise ID를 기준으로 그룹핑
+      routineSetsMap = allRoutineSets.stream()
+          .collect(Collectors.groupingBy(rs -> rs.getRoutineExercise().getId()));
+    }
+
+    // 6. RoutineExercise들을 루틴 ID를 기준으로 그룹핑
+    Map<Long, List<RoutineExercise>> routineExercisesMap = allRoutineExercises.stream()
+        .collect(Collectors.groupingBy(re -> re.getRoutine().getId()));
+
+
+    // 7. 조회된 데이터를 RoutineResponse DTO 리스트로 조립
+    return routines.stream()
+        .map(routine -> {
+          List<RoutineExercise> exercisesForRoutine = routineExercisesMap.getOrDefault(routine.getId(), Collections.emptyList());
+          return RoutineResponse.from(routine, exercisesForRoutine, routineSetsMap);
+        })
+        .collect(Collectors.toList());
   }
 }

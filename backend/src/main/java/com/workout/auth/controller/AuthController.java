@@ -5,6 +5,7 @@ import com.workout.auth.dto.SigninResponse;
 import com.workout.auth.dto.SignupRequest;
 import com.workout.auth.service.AuthService;
 import com.workout.member.domain.Member;
+import com.workout.member.domain.Role;
 import com.workout.member.service.MemberService;
 import com.workout.trainer.domain.Trainer;
 import com.workout.trainer.service.TrainerService;
@@ -51,13 +52,13 @@ public class AuthController {
 
   @PostMapping("/signup/user")
   public ResponseEntity<Long> signupUser(@Valid @RequestBody SignupRequest signupRequest) {
-    Member member = memberService.registerUser(signupRequest);
-    return ResponseEntity.status(HttpStatus.CREATED).body(member.getId());
+    Long memberId = authService.signup(signupRequest, Role.MEMBER); // AuthService에 위임
+    return ResponseEntity.status(HttpStatus.CREATED).body(memberId);
   }
 
   @PostMapping("/signup/trainer")
   public ResponseEntity<Long> signupTrainer(@Valid @RequestBody SignupRequest signupRequest) {
-    Trainer trainer = trainerService.registerTrainer(signupRequest);
-    return ResponseEntity.status(HttpStatus.CREATED).body(trainer.getId());
+    Long trainerId = authService.signup(signupRequest, Role.TRAINER); // AuthService에 위임
+    return ResponseEntity.status(HttpStatus.CREATED).body(trainerId);
   }
 }

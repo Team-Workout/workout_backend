@@ -10,6 +10,7 @@ import com.workout.workout.service.RoutineService;
 import com.workout.workout.service.WorkoutLogService;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -90,8 +91,19 @@ public class WorkoutController {
    */
   @GetMapping("/routine/{id}")
   public ResponseEntity<RoutineResponse> getRoutine(@PathVariable("id") Long id) {
-    RoutineResponse response = routineService.findRoutineById(id);
+      RoutineResponse response = routineService.findRoutineById(id);
     return ResponseEntity.ok(response);
+  }
+
+  /**
+   * 나의 루틴 조회
+   */
+  @GetMapping("me/routines")
+  public ResponseEntity<List<RoutineResponse>> getMyRoutine(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+    Long userId = userPrincipal.getUserId();
+    List<RoutineResponse> responses = routineService.findAllRoutinesByUserId(userId);
+    return ResponseEntity.ok(responses);
+
   }
 
   /**

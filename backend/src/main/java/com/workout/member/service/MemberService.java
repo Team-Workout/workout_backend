@@ -43,18 +43,6 @@ public class MemberService {
     }
   }
 
-  public Member registerUser(SignupRequest signupRequest) {
-    Gym gym = gymService.findById(signupRequest.gymId());
-
-    ensureEmailIsUnique(signupRequest.email());
-
-    String encodedPassword = passwordEncoder.encode(signupRequest.password());
-
-    Member member = signupRequest.toMemberEntity(gym, encodedPassword);
-
-    return memberRepository.save(member);
-  }
-
   public Member findById(Long id) {
     return memberRepository.findById(id)
         .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));

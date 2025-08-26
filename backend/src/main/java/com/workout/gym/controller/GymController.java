@@ -25,7 +25,7 @@ public class GymController {
   /**
    * 특정 체육관의 모든 트레이너 프로필 목록 조회
    */
-  @GetMapping("/gyms/{gymId}/trainers")
+  @GetMapping("/{gymId}/trainers")
   public ResponseEntity<ApiResponse<List<ProfileResponseDto>>> getTrainerProfilesByGym(
       @PathVariable Long gymId,
       @PageableDefault(size = 10, sort = "name") Pageable pageable) {

@@ -316,18 +316,6 @@ public class TrainerService {
     trainerSpecialtyRepository.saveAll(trainerSpecialties);
   }
 
-  public Trainer registerTrainer(@Valid SignupRequest signupRequest) {
-    Gym gym = gymService.findById(signupRequest.gymId());
-
-    memberService.ensureEmailIsUnique(signupRequest.email());
-
-    String encodedPassword = passwordEncoder.encode(signupRequest.password());
-
-    Trainer trainer = signupRequest.toTrainerEntity(gym, encodedPassword);
-
-    return trainerRepository.save(trainer);
-  }
-
   public Trainer findById(Long userId) {
     return trainerRepository.findById(userId).orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
   }

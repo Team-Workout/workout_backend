@@ -54,9 +54,7 @@ public class PTSessionService {
       throw new RestApiException(PTErrorCode.NOT_ALLOWED_ACCESS);
     }
 
-    UserPrincipal memberPrincipal = new UserPrincipal(appointment.getContract().getMember());
-    WorkoutLog workoutLog = workoutLogService.createWorkoutLog(request.workoutLog(),
-        memberPrincipal);
+    WorkoutLog workoutLog = workoutLogService.createWorkoutLog(request.workoutLog(), userId);
 
     PTSession ptSession = PTSession.builder()
         .workoutLog(workoutLog)

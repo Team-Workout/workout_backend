@@ -64,8 +64,8 @@ public class WorkoutLogService {
 
   @Transactional
   public WorkoutLog createWorkoutLog(WorkoutLogCreateRequest request,
-      UserPrincipal trainerPrincipal) {
-    Member member = userRepository.findById(trainerPrincipal.getUserId())
+      Long userId) {
+    Member member = userRepository.findById(userId)
         .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
 
     WorkoutLog workoutLog = request.toEntity(member);
