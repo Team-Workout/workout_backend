@@ -140,7 +140,7 @@ public class RoutineService {
 
   public List<RoutineResponse> findAllRoutinesByUserId(Long userId) {
     // 1. 사용자의 모든 루틴 조회
-    List<Routine> routines = routineRepository.findAllRoutinesByUserId(userId);
+    List<Routine> routines = routineRepository.findAllRoutinesByMemberId(userId);
 
     if (routines.isEmpty()) {
       return Collections.emptyList();
