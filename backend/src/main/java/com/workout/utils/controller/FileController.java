@@ -2,19 +2,21 @@ package com.workout.utils.controller;
 
 
 import com.workout.auth.domain.UserPrincipal;
-import com.workout.utils.domain.UserFile;
 import com.workout.utils.dto.FileResponse;
 import com.workout.utils.service.FileService;
-import com.workout.workout.dto.routine.RoutineResponse;
-import jakarta.persistence.EntityNotFoundException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,8 +29,9 @@ public class FileController {
    * 복수 파일 업로드
    */
   @PostMapping("/files")
-  public ResponseEntity<List<FileResponse>> uploadMultipleFiles(@RequestParam("files") MultipartFile[] files,
-                                                                @AuthenticationPrincipal UserPrincipal userPrincipal) {
+  public ResponseEntity<List<FileResponse>> uploadMultipleFiles(
+      @RequestParam("files") MultipartFile[] files,
+      @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
     Long userId = userPrincipal.getUserId();
     List<FileResponse> responses = fileService.uploadFiles(files, userId);
