@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -24,7 +25,12 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @SuperBuilder
 @Entity
-@Table(name = "pt_appointment")
+@Table(name = "pt_appointment", uniqueConstraints = {
+    @UniqueConstraint(
+        name = "uk_appointment_contract_starttime", // 제약조건 이름 (DB에서 식별하기 위함)
+        columnNames = {"contract_id", "startTime"} // 유니크해야 할 컬럼들
+    )
+})
 public class PTAppointment extends BaseEntity {
 
   @Id
@@ -45,4 +51,16 @@ public class PTAppointment extends BaseEntity {
   private LocalDateTime endTime;
   private LocalDateTime proposedStartTime;
   private LocalDateTime proposedEndTime;
+
+  public void changeStatus(PTAppointmentStatus newStatus) {
+    if (this.status == PTAppointmentStatus.COMPLETED) {
+      throw new IllegalStateException("이미 완료된 예약의 상태는 변경할 수 없습니다.");
+    }
+    if (this.status == PTAppointmentStatus.CANCELLED) {
+      throw new IllegalStateException("이미 취소된 예약입니다.");
+    }
+
+    this.status = newStatus;
+  }
+
 }

@@ -7,6 +7,8 @@ import java.util.List;
 public record AppointmentResponse(
     Long id,
     Long contractId,
+    String trainerName,
+    String memberName,
     LocalDateTime startTime,
     LocalDateTime endTime
 ) {
@@ -14,6 +16,8 @@ public record AppointmentResponse(
     return new AppointmentResponse(
         appointments.getId(),
         appointments.getContract().getId(),
+        appointments.getContract().getTrainer().getName(),
+        appointments.getContract().getMember().getName(),
         appointments.getStartTime(),
         appointments.getEndTime()
     );

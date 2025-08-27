@@ -29,7 +29,8 @@ public class PTOfferingController {
   public ResponseEntity<Void> createOffering(
       @AuthenticationPrincipal UserPrincipal trainer,
       @RequestBody OfferingCreateRequest request) {
-    offeringService.register(request, trainer);
+    Long userId = trainer.getUserId();
+    offeringService.register(request, userId);
     return ResponseEntity.status(HttpStatus.CREATED).build();
   }
 
@@ -44,7 +45,8 @@ public class PTOfferingController {
       @AuthenticationPrincipal UserPrincipal trainer,
       @PathVariable Long offeringId
   ) {
-    offeringService.delete(offeringId, trainer);
+    Long userId = trainer.getUserId();
+    offeringService.delete(offeringId, userId);
     return ResponseEntity.noContent().build();
   }
 }

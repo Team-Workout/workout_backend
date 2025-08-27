@@ -20,9 +20,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@AllArgsConstructor // 모든 필드를 인자로 받는 생성자 (빌더가 사용)
+@AllArgsConstructor
 @Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)// JPA가 사용하는 기본 생성자성자 (빌더가 사용)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 public class ExerciseTargetMuscle {
 

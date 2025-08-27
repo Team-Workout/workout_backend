@@ -1,13 +1,10 @@
 package com.workout.trainer.controller;
 
-
 import com.workout.auth.domain.UserPrincipal;
-import com.workout.pt.service.contract.PTContractService;
 import com.workout.trainer.dto.ProfileCreateDto;
 import com.workout.trainer.dto.ProfileResponseDto;
 import com.workout.trainer.service.TrainerService;
 import jakarta.validation.Valid;
-import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,11 +20,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class TrainerController {
 
   private final TrainerService trainerService;
-  private final PTContractService ptContractService;
 
-  public TrainerController(TrainerService trainerService, PTContractService ptContractService) {
+  public TrainerController(TrainerService trainerService) {
     this.trainerService = trainerService;
-    this.ptContractService = ptContractService;
   }
 
   /**
@@ -40,7 +35,6 @@ public class TrainerController {
 
     Long currentTrainerId = userPrincipal.getUserId();
     trainerService.updateProfile(currentTrainerId, profileCreateDto);
-
     return ResponseEntity.ok().build();
   }
 
@@ -56,21 +50,12 @@ public class TrainerController {
   }
 
   /**
-   * 특정 체육관의 모든 트레이너 프로필 목록 조회
-   */
-  @GetMapping("/gyms/{gymId}/trainers")
-  public ResponseEntity<List<ProfileResponseDto>> getTrainerProfilesByGym(
-      @PathVariable Long gymId) {
-    List<ProfileResponseDto> trainerProfiles = trainerService.getTrainerProfilesByGym(gymId);
-    return ResponseEntity.ok(trainerProfiles);
-  }
-
-  /**
    * 프로필 삭제
    */
   @DeleteMapping("/profile")
   public ResponseEntity<Void> deleteProfile(
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
     Long currentTrainerId = userPrincipal.getUserId();
     trainerService.deleteProfile(currentTrainerId);
     return ResponseEntity.noContent().build();

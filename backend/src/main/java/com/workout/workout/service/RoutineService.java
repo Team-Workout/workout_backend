@@ -1,7 +1,9 @@
 package com.workout.workout.service;
 
+import com.workout.global.exception.RestApiException;
+import com.workout.global.exception.errorcode.WorkoutErrorCode;
 import com.workout.member.domain.Member;
-import com.workout.member.repository.MemberRepository;
+import com.workout.member.service.MemberService;
 import com.workout.workout.domain.exercise.Exercise;
 import com.workout.workout.domain.routine.Routine;
 import com.workout.workout.domain.routine.RoutineExercise;
@@ -12,9 +14,9 @@ import com.workout.workout.repository.ExerciseRepository;
 import com.workout.workout.repository.routine.RoutineExerciseRepository;
 import com.workout.workout.repository.routine.RoutineRepository;
 import com.workout.workout.repository.routine.RoutineSetRepository;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,27 +28,25 @@ import org.springframework.transaction.annotation.Transactional;
 public class RoutineService {
 
   private final RoutineRepository routineRepository;
-  private final MemberRepository userRepository;
   private final ExerciseRepository exerciseRepository;
   private final RoutineExerciseRepository routineExerciseRepository;
   private final RoutineSetRepository routineSetRepository;
+  private final MemberService memberService;
 
   public RoutineService(
-      RoutineRepository routineRepository, MemberRepository userRepository,
+      RoutineRepository routineRepository,
       ExerciseRepository exerciseRepository, RoutineExerciseRepository routineExerciseRepository,
-      RoutineSetRepository routineSetRepository) {
-
+      RoutineSetRepository routineSetRepository, MemberService memberService) {
     this.routineRepository = routineRepository;
-    this.userRepository = userRepository;
     this.exerciseRepository = exerciseRepository;
     this.routineExerciseRepository = routineExerciseRepository;
     this.routineSetRepository = routineSetRepository;
+    this.memberService = memberService;
   }
 
   @Transactional
   public Long createRoutine(@Valid RoutineCreateRequest request, Long userId) {
-    Member member = userRepository.findById(userId)
-        .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
+    Member member = memberService.findById(userId);
 
     Routine routine = request.toEntity(member);
 
@@ -66,7 +66,7 @@ public class RoutineService {
     request.routineExercises().forEach(exerciseDto -> {
       Exercise exercise = exerciseMap.get(exerciseDto.exerciseId());
       if (exercise == null) {
-        throw new EntityNotFoundException("운동 정보를 찾을 수 없습니다. ID: " + exerciseDto.exerciseId());
+        throw new RestApiException(WorkoutErrorCode.NOT_FOUND_EXERCISE);
       }
 
       RoutineExercise routineExercise = exerciseDto.toEntity(savedRoutine, exercise);
@@ -87,29 +87,34 @@ public class RoutineService {
   @Transactional
   public void deleteRoutine(Long id, Long userId) {
     Routine routine = routineRepository.findById(id)
-        .orElseThrow(() -> new EntityNotFoundException("삭제할 루틴을 찾을 수 없습니다. ID: " + id));
+        .orElseThrow(() -> new RestApiException(WorkoutErrorCode.NOT_FOUND_ROUTINE));
 
     if (!routine.getMember().getId().equals(userId)) {
-      throw new SecurityException("해당 루틴을 삭제할 권한이 없습니다.");
+      throw new RestApiException(WorkoutErrorCode.NOT_ALLOWED_ACCESS);
     }
 
-    List<RoutineExercise> routineExercises = routineExerciseRepository.findAllByRoutineIdOrderByOrderAsc(
-        id);
-    if (routineExercises.isEmpty()) {
-      routineRepository.delete(routine);
-      return;
-    }
-    List<Long> routineExerciseIds = routineExercises.stream().map(RoutineExercise::getId).toList();
+    // 1. 삭제할 자식(RoutineExercise)들의 ID 목록만 조회합니다. (Set 삭제에 필요)
+    List<Long> routineExerciseIds = routineExerciseRepository.findAllByRoutineIdOrderByOrderAsc(id)
+        .stream()
+        .map(RoutineExercise::getId)
+        .toList();
 
-    routineSetRepository.deleteAllByRoutineExerciseIdIn(routineExerciseIds);
+    // 2. 자손(RoutineSet)들을 SELECT 없이 바로 삭제합니다.
+    if (!routineExerciseIds.isEmpty()) {
+      routineSetRepository.deleteAllByRoutineExerciseIdIn(routineExerciseIds);
+    }
+
+    // 3. 자식(RoutineExercise)들을 SELECT 없이 바로 삭제합니다.
     routineExerciseRepository.deleteAllByRoutineId(id);
+
+    // 4. 부모(Routine)를 삭제합니다.
     routineRepository.delete(routine);
   }
 
   public RoutineResponse findRoutineById(Long routineId) {
     // 부모(Routine) 조회
     Routine routine = routineRepository.findById(routineId)
-        .orElseThrow(() -> new EntityNotFoundException("루틴을 찾을 수 없습니다. ID: " + routineId));
+        .orElseThrow(() -> new RestApiException(WorkoutErrorCode.NOT_FOUND_ROUTINE));
 
     // 자식(RoutineExercise) 목록 조회
     List<RoutineExercise> routineExercises = routineExerciseRepository.findAllByRoutineIdOrderByOrderAsc(
@@ -131,5 +136,50 @@ public class RoutineService {
 
     // 서비스 계층에서 DTO로 조립하여 반환
     return RoutineResponse.from(routine, routineExercises, routineSetsMap);
+  }
+
+  public List<RoutineResponse> findAllRoutinesByUserId(Long userId) {
+    // 1. 사용자의 모든 루틴 조회
+    List<Routine> routines = routineRepository.findAllRoutinesByUserId(userId);
+
+    if (routines.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    // 2. 루틴 ID 목록 추출
+    List<Long> routineIds = routines.stream()
+        .map(Routine::getId)
+        .toList();
+
+    // 3. 루틴에 속한 모든 RoutineExercise를 한 번의 쿼리로 조회 (N+1 방지)
+    // ※ 참고: RoutineExerciseRepository에 findAllByRoutineIdInOrderByOrderAsc 메소드 추가 필요
+    List<RoutineExercise> allRoutineExercises = routineExerciseRepository.findAllByRoutineIdInOrderByOrderAsc(routineIds);
+
+    Map<Long, List<RoutineSet>> routineSetsMap;
+    if (allRoutineExercises.isEmpty()) {
+      routineSetsMap = Collections.emptyMap();
+    } else {
+      // 4. RoutineExercise에 속한 모든 RoutineSet을 한 번의 쿼리로 조회 (N+1 방지)
+      List<Long> allRoutineExerciseIds = allRoutineExercises.stream()
+          .map(RoutineExercise::getId)
+          .toList();
+      List<RoutineSet> allRoutineSets = routineSetRepository.findAllByRoutineExerciseIdInOrderByOrderAsc(allRoutineExerciseIds);
+      // 5. RoutineSet들을 RoutineExercise ID를 기준으로 그룹핑
+      routineSetsMap = allRoutineSets.stream()
+          .collect(Collectors.groupingBy(rs -> rs.getRoutineExercise().getId()));
+    }
+
+    // 6. RoutineExercise들을 루틴 ID를 기준으로 그룹핑
+    Map<Long, List<RoutineExercise>> routineExercisesMap = allRoutineExercises.stream()
+        .collect(Collectors.groupingBy(re -> re.getRoutine().getId()));
+
+
+    // 7. 조회된 데이터를 RoutineResponse DTO 리스트로 조립
+    return routines.stream()
+        .map(routine -> {
+          List<RoutineExercise> exercisesForRoutine = routineExercisesMap.getOrDefault(routine.getId(), Collections.emptyList());
+          return RoutineResponse.from(routine, exercisesForRoutine, routineSetsMap);
+        })
+        .collect(Collectors.toList());
   }
 }

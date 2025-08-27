@@ -1,8 +1,13 @@
 package com.workout.workout.service;
 
-import com.workout.auth.domain.UserPrincipal;
+import com.workout.global.exception.RestApiException;
+import com.workout.global.exception.errorcode.MemberErrorCode;
+import com.workout.global.exception.errorcode.WorkoutErrorCode;
 import com.workout.member.domain.Member;
+import com.workout.member.domain.Role;
 import com.workout.member.repository.MemberRepository;
+import com.workout.member.service.MemberService;
+import com.workout.pt.service.contract.PTContractService;
 import com.workout.workout.domain.exercise.Exercise;
 import com.workout.workout.domain.log.Feedback;
 import com.workout.workout.domain.log.WorkoutExercise;
@@ -15,7 +20,9 @@ import com.workout.workout.repository.log.FeedbackRepository;
 import com.workout.workout.repository.log.WorkoutExerciseRepository;
 import com.workout.workout.repository.log.WorkoutLogRepository;
 import com.workout.workout.repository.log.WorkoutSetRepository;
-import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,25 +43,31 @@ public class WorkoutLogService {
   private final FeedbackRepository feedbackRepository;
   private final WorkoutSetRepository workoutSetRepository;
   private final WorkoutExerciseRepository workoutExerciseRepository;
-
+  private final MemberService memberService;
+  private final PTContractService ptContractService;
 
   public WorkoutLogService(WorkoutLogRepository workoutLogRepository,
       MemberRepository userRepository,
       ExerciseRepository exerciseRepository, FeedbackRepository feedbackRepository,
       WorkoutSetRepository workoutSetRepository,
-      WorkoutExerciseRepository workoutExerciseRepository) {
+      WorkoutExerciseRepository workoutExerciseRepository,
+      MemberService memberService,
+      PTContractService ptContractService) {
     this.workoutLogRepository = workoutLogRepository;
     this.userRepository = userRepository;
     this.exerciseRepository = exerciseRepository;
     this.feedbackRepository = feedbackRepository;
     this.workoutSetRepository = workoutSetRepository;
     this.workoutExerciseRepository = workoutExerciseRepository;
+    this.memberService = memberService;
+    this.ptContractService = ptContractService;
   }
 
   @Transactional
-  public WorkoutLog createWorkoutLog(WorkoutLogCreateRequest request, UserPrincipal trainerPrincipal) {
-    Member member = userRepository.findById(trainerPrincipal.getUserId())
-        .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + trainerPrincipal.getUserId()));
+  public WorkoutLog createWorkoutLog(WorkoutLogCreateRequest request,
+      Long userId) {
+    Member member = userRepository.findById(userId)
+        .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
 
     WorkoutLog workoutLog = request.toEntity(member);
     workoutLogRepository.save(workoutLog);
@@ -72,7 +85,7 @@ public class WorkoutLogService {
     request.workoutExercises().forEach(exerciseDto -> {
       Exercise exercise = exerciseMap.get(exerciseDto.exerciseId());
       if (exercise == null) {
-        throw new EntityNotFoundException("운동 정보를 찾을 수 없습니다. ID: " + exerciseDto.exerciseId());
+        throw new RestApiException(WorkoutErrorCode.NOT_FOUND_EXERCISE);
       }
       WorkoutExercise workoutExercise = exerciseDto.toEntity(workoutLog, exercise);
       exercisesToSave.add(workoutExercise);
@@ -100,10 +113,13 @@ public class WorkoutLogService {
     return workoutLog;
   }
 
-  public WorkoutLogResponse findWorkoutLogById(Long workoutLogId) {
-    // 최상위 엔티티 조회
+  public WorkoutLogResponse findWorkoutLogById(Long workoutLogId, Long userId) {
+    Member member = memberService.findById(userId);
+
     WorkoutLog workoutLog = workoutLogRepository.findById(workoutLogId)
-        .orElseThrow(() -> new EntityNotFoundException("운동일지를 찾을 수 없습니다. ID: " + workoutLogId));
+        .orElseThrow(() -> new RestApiException(WorkoutErrorCode.NOT_FOUND_WORKOUT_LOG));
+
+    hasGetAuthority(member, workoutLog);
 
     // 자식 엔티티 목록 조회 (WorkoutExercise)
     List<WorkoutExercise> exercises = workoutExerciseRepository.findAllByWorkoutLogIdOrderByOrderAsc(
@@ -123,12 +139,69 @@ public class WorkoutLogService {
     return WorkoutLogResponse.from(workoutLog, exercises, sets, feedbacks);
   }
 
+  public List<WorkoutLogResponse> findMyWorkoutLogsByMonth(Long userId, int year, int month) {
+
+    YearMonth yearMonth = YearMonth.of(year, month);
+    LocalDateTime startDateTime = yearMonth.atDay(1).atStartOfDay();
+    LocalDateTime endDateTime = yearMonth.atEndOfMonth().atTime(LocalTime.MAX);
+
+    List<WorkoutLog> workoutLogs = workoutLogRepository.findAllByMemberIdAndWorkoutDateBetweenOrderByWorkoutDateDesc(
+        userId, startDateTime, endDateTime);
+
+    if (workoutLogs.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<Long> workoutLogIds = workoutLogs.stream().map(WorkoutLog::getId).toList();
+    List<WorkoutExercise> exercises = workoutExerciseRepository.findAllByWorkoutLogIdInOrderByOrderAsc(
+        workoutLogIds);
+    List<Long> exerciseIds = exercises.stream().map(WorkoutExercise::getId).toList();
+    List<WorkoutSet> sets = exerciseIds.isEmpty() ? Collections.emptyList()
+        : workoutSetRepository.findAllByWorkoutExerciseIdInOrderByOrderAsc(exerciseIds);
+    List<Long> setIds = sets.stream().map(WorkoutSet::getId).toList();
+    List<Feedback> feedbacks = feedbackRepository.findByWorkoutElements(workoutLogIds, exerciseIds,
+        setIds);
+
+    Map<Long, List<WorkoutExercise>> exercisesByLogId = exercises.stream()
+        .collect(Collectors.groupingBy(exercise -> exercise.getWorkoutLog().getId()));
+    Map<Long, List<WorkoutSet>> setsByExerciseId = sets.stream()
+        .collect(Collectors.groupingBy(set -> set.getWorkoutExercise().getId()));
+
+    Map<Long, List<Feedback>> feedbacksByLogId = feedbacks.stream()
+        .filter(f -> f.getWorkoutLog() != null)
+        .collect(Collectors.groupingBy(f -> f.getWorkoutLog().getId()));
+    Map<Long, List<Feedback>> feedbacksByExerciseId = feedbacks.stream()
+        .filter(f -> f.getWorkoutExercise() != null)
+        .collect(Collectors.groupingBy(f -> f.getWorkoutExercise().getId()));
+    Map<Long, List<Feedback>> feedbacksBySetId = feedbacks.stream()
+        .filter(f -> f.getWorkoutSet() != null)
+        .collect(Collectors.groupingBy(f -> f.getWorkoutSet().getId()));
+
+    return workoutLogs.stream()
+        .map(log -> {
+          List<WorkoutExercise> exercisesForLog = exercisesByLogId.getOrDefault(log.getId(),
+              Collections.emptyList());
+
+          List<WorkoutSet> setsForLog = exercisesForLog.stream()
+              .flatMap(
+                  ex -> setsByExerciseId.getOrDefault(ex.getId(), Collections.emptyList()).stream())
+              .collect(Collectors.toList());
+
+          List<Feedback> feedbacksForLog = new ArrayList<>(
+              feedbacksByLogId.getOrDefault(log.getId(), Collections.emptyList()));
+          exercisesForLog.forEach(ex -> feedbacksForLog.addAll(
+              feedbacksByExerciseId.getOrDefault(ex.getId(), Collections.emptyList())));
+          setsForLog.forEach(set -> feedbacksForLog.addAll(
+              feedbacksBySetId.getOrDefault(set.getId(), Collections.emptyList())));
+
+          return WorkoutLogResponse.from(log, exercisesForLog, setsForLog, feedbacksForLog);
+        })
+        .collect(Collectors.toList());
+  }
+
   @Transactional
   public void deleteWorkoutLog(Long workoutLogId, Long userId) {
-    boolean hasAuthority = workoutLogRepository.existsByIdAndMemberId(workoutLogId, userId);
-    if (!hasAuthority) {
-      throw new SecurityException("운동일지가 존재하지 않거나 삭제할 권한이 없습니다.");
-    }
+    hasDeleteAuthority(workoutLogId, userId);
 
     // 삭제할 대상 ID 목록 조회 (자식 -> 손자 순)
     List<Long> exerciseIds = workoutExerciseRepository.findIdsByWorkoutLogId(workoutLogId);
@@ -168,5 +241,29 @@ public class WorkoutLogService {
 
   //todo
   //트레이터가 운동일지id or 운동셋id를 통해 피드백 작성 가능
-  //서비스 단에서 내가 pt받고 있는 트레이너가 맞는지 확인하는 validation등 검증 코드 필수
+
+  void hasGetAuthority(Member member, WorkoutLog workoutLog) {
+    if (member.getId().equals(workoutLog.getMember().getId())) {
+      return;
+    }
+
+    if (!Role.TRAINER.equals(member.getRole())) {
+      throw new RestApiException(WorkoutErrorCode.NOT_ALLOWED_ACCESS);
+    }
+
+    if (!ptContractService.isMyClient(member.getId(), workoutLog.getMember().getId())) {
+      throw new RestApiException(WorkoutErrorCode.NOT_ALLOWED_ACCESS);
+    }
+
+    if (!workoutLog.getMember().getIsOpenWorkoutRecord()) {
+      throw new RestApiException(WorkoutErrorCode.NOT_ALLOWED_ACCESS);
+    }
+  }
+
+  void hasDeleteAuthority(Long workoutLogId, Long userId) {
+    boolean hasAuthority = workoutLogRepository.existsByIdAndMemberId(workoutLogId, userId);
+    if (!hasAuthority) {
+      throw new RestApiException(WorkoutErrorCode.NOT_ALLOWED_ACCESS);
+    }
+  }
 }

@@ -11,7 +11,8 @@ import jakarta.validation.constraints.NotEmpty;
 import java.math.BigDecimal;
 import java.util.List;
 
-public record RoutineCreateRequest(
+public record
+RoutineCreateRequest(
     @NotBlank(message = "루틴 이름은 비워둘 수 없습니다.")
     String name,
     String description,
@@ -19,14 +20,14 @@ public record RoutineCreateRequest(
     @Valid
     List<RoutineExerciseDto> routineExercises
 ) {
-
   public Routine toEntity(Member member) {
     return Routine.builder()
-        .name(this.name)
-        .description(this.description)
         .member(member)
+        .description(this.description)
+        .name(this.name)
         .build();
   }
+
 
   public record RoutineExerciseDto(
       Long exerciseId,
@@ -34,7 +35,6 @@ public record RoutineCreateRequest(
       @Valid
       List<RoutineSetDto> routineSets
   ) {
-
     public RoutineExercise toEntity(Routine routine, Exercise exercise) {
       return RoutineExercise.builder()
           .routine(routine)

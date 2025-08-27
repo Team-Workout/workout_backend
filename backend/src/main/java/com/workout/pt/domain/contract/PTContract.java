@@ -1,6 +1,8 @@
 package com.workout.pt.domain.contract;
 
 import com.workout.global.BaseEntity;
+import com.workout.global.exception.RestApiException;
+import com.workout.global.exception.errorcode.PTErrorCode;
 import com.workout.gym.domain.Gym;
 import com.workout.member.domain.Member;
 import com.workout.trainer.domain.Trainer;
@@ -62,6 +64,10 @@ public class PTContract extends BaseEntity {
   private Long totalSessions;
   private Long remainingSessions;
 
-  boolean allowBodyCompView = false;
-  boolean allowPhotoview = false;
+  public void cancel() {
+    if (this.status != PTContractStatus.ACTIVE) {
+      throw new RestApiException(PTErrorCode.INVALID_STATUS_REQUEST);
+    }
+    this.status = PTContractStatus.CANCELLED;
+  }
 }

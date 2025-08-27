@@ -1,6 +1,10 @@
 package com.workout.pt.service.contract;
 
-import com.workout.auth.domain.UserPrincipal;
+import com.workout.global.exception.RestApiException;
+import com.workout.global.exception.errorcode.PTErrorCode;
+import com.workout.member.domain.Member;
+import com.workout.member.domain.Role;
+import com.workout.member.service.MemberService;
 import com.workout.pt.domain.contract.PTApplication;
 import com.workout.pt.domain.contract.PTContract;
 import com.workout.pt.domain.contract.PTContractStatus;
@@ -12,20 +16,18 @@ import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
-import org.springframework.web.ErrorResponseException;
 
 @Service
 public class PTContractService {
 
   private final PTContractRepository ptContractRepository;
+  private final MemberService memberService;
 
-  public PTContractService(PTContractRepository ptContractRepository) {
+  public PTContractService(PTContractRepository ptContractRepository, MemberService memberService) {
     this.ptContractRepository = ptContractRepository;
+    this.memberService = memberService;
   }
 
   public void createContractFromApplication(PTApplication application) {
@@ -46,10 +48,10 @@ public class PTContractService {
 
   public void deductSession(Long contractId) {
     PTContract contract = ptContractRepository.findById(contractId)
-        .orElseThrow(() -> new EntityNotFoundException("계약 정보를 찾을 수 없습니다. ID: " + contractId));
+        .orElseThrow(() -> new RestApiException(PTErrorCode.NOT_FOUND_PT_CONTRACT));
 
     if (contract.getRemainingSessions() <= 0) {
-      throw new IllegalStateException("남은 세션이 없어 차감할 수 없습니다.");
+      throw new RestApiException(PTErrorCode.NO_REMAIN_SESSION);
     }
 
     // 세션 차감
@@ -63,39 +65,33 @@ public class PTContractService {
     ptContractRepository.save(contract);
   }
 
-  public void cancelContract(UserPrincipal user, Long contractId) {
-    boolean isTrainer = user.getAuthorities().stream().map(GrantedAuthority::getAuthority)
-        .anyMatch("ROLE_TRAINER"::equals);
+  public void cancelContract(Long userId, Long contractId) {
+    Member member = memberService.findById(userId);
 
-    boolean isMember = user.getAuthorities().stream().map(GrantedAuthority::getAuthority)
-        .anyMatch("ROLE_MEMBER"::equals);
-
-    if (isTrainer) {
-      cancelContractByTrainer(user, contractId);
-    } else if (isMember) {
-      cancelContractByMember(user, contractId);
+    if (member.getRole() == Role.TRAINER) {
+      cancelContractByTrainer(userId, contractId);
+    } else if (member.getRole() == Role.MEMBER) {
+      cancelContractByMember(userId, contractId);
     } else {
-      throw new AccessDeniedException("계약을 취소할 권한이 없습니다.");
+      throw new RestApiException(PTErrorCode.NOT_ALLOWED_ACCESS);
     }
   }
 
   /**
    * 회원이 PT 계약 취소
    */
-  public void cancelContractByMember(UserPrincipal member, Long contractId) {
+  public void cancelContractByMember(Long userId, Long contractId) {
     PTContract contract = ptContractRepository.findById(contractId)
         .orElseThrow(() -> new EntityNotFoundException("계약 정보를 찾을 수 없습니다. ID: " + contractId));
 
     // 본인의 계약이 맞는지 확인
-    if (!contract.getMember().getId().equals(member.getUserId())) {
+    if (!contract.getMember().getId().equals(userId)) {
       throw new AccessDeniedException("계약을 취소할 권한이 없습니다.");
     }
 
     // 이미 진행중인 계약만 취소 가능하도록 비즈니스 규칙 설정
     if (contract.getStatus() != PTContractStatus.ACTIVE) {
-      ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
-          "이미 시작되었거나 종료된 계약은 취소할 수 없습니다.");
-      throw new ErrorResponseException(HttpStatus.BAD_REQUEST, pd, null);
+      throw new RestApiException(PTErrorCode.INVALID_STATUS_REQUEST);
     }
 
     contract.setStatus(PTContractStatus.CANCELLED);
@@ -106,20 +102,18 @@ public class PTContractService {
   /**
    * 트레이너가 PT 계약 취소
    */
-  public void cancelContractByTrainer(UserPrincipal trainer, Long contractId) {
+  public void cancelContractByTrainer(Long userId, Long contractId) {
     PTContract contract = ptContractRepository.findById(contractId)
-        .orElseThrow(() -> new EntityNotFoundException("계약 정보를 찾을 수 없습니다. ID: " + contractId));
+        .orElseThrow(() -> new RestApiException(PTErrorCode.NOT_FOUND_PT_CONTRACT));
 
     // 본인의 계약이 맞는지 확인
-    if (!contract.getTrainer().getId().equals(trainer.getUserId())) {
-      throw new AccessDeniedException("계약을 취소할 권한이 없습니다.");
+    if (!contract.getTrainer().getId().equals(userId)) {
+      throw new RestApiException(PTErrorCode.NOT_ALLOWED_ACCESS);
     }
 
     // 이미 진행중인 계약만 취소 가능하도록 비즈니스 규칙 설정
     if (contract.getStatus() != PTContractStatus.ACTIVE) {
-      ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
-          "이미 시작되었거나 종료된 계약은 취소할 수 없습니다.");
-      throw new ErrorResponseException(HttpStatus.BAD_REQUEST, pd, null);
+      throw new RestApiException(PTErrorCode.INVALID_STATUS_REQUEST);
     }
 
     contract.setStatus(PTContractStatus.CANCELLED);
@@ -127,16 +121,15 @@ public class PTContractService {
     ptContractRepository.save(contract);
   }
 
-  public Page<ContractResponse> getMyContracts(UserPrincipal user, Pageable pageable) {
+  public Page<ContractResponse> getMyContracts(Long userId, Pageable pageable) {
     Page<PTContract> contractsPage;
 
-    boolean isTrainer = user.getAuthorities().stream()
-        .anyMatch(auth -> auth.getAuthority().equals("ROLE_TRAINER"));
+    Member member = memberService.findById(userId);
 
-    if (isTrainer) {
-      contractsPage = ptContractRepository.findAllByTrainerId(user.getUserId(), pageable);
+    if (member.getRole() == Role.TRAINER) {
+      contractsPage = ptContractRepository.findAllByTrainerId(userId, pageable);
     } else {
-      contractsPage = ptContractRepository.findAllByMemberId(user.getUserId(), pageable);
+      contractsPage = ptContractRepository.findAllByMemberId(userId, pageable);
     }
 
     Page<ContractResponse> dtoPage = contractsPage.map(ContractResponse::from);
@@ -144,17 +137,21 @@ public class PTContractService {
     return dtoPage;
   }
 
-  public Page<MemberResponse> getMyClients(UserPrincipal trainerUser, Pageable pageable) {
-    boolean isTrainer = trainerUser.getAuthorities().stream()
-        .anyMatch(auth -> auth.getAuthority().equals("ROLE_TRAINER"));
+  public Page<MemberResponse> getMyClients(Long userId, Pageable pageable) {
+    Member member = memberService.findById(userId);
 
-    if (!isTrainer) {
-      throw new AccessDeniedException("트레이너만 클라이언트 목록을 조회할 수 있습니다.");
+    if (member.getRole() == Role.MEMBER) {
+      throw new RestApiException(PTErrorCode.NOT_ALLOWED_ACCESS);
     }
 
     Page<PTContract> contractsPage = ptContractRepository.findAllByTrainerId(
-        trainerUser.getUserId(), pageable);
+        userId, pageable);
 
     return contractsPage.map(contract -> MemberResponse.from(contract.getMember()));
+  }
+
+  public boolean isMyClient(Long trainerId, Long memberId) {
+    return ptContractRepository.existsByTrainerIdAndMemberIdAndStatus(trainerId, memberId,
+        PTContractStatus.ACTIVE);
   }
 }

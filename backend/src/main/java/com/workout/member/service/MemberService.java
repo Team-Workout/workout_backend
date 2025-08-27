@@ -43,15 +43,24 @@ public class MemberService {
     }
   }
 
-  public Member registerUser(SignupRequest signupRequest) {
-    Gym gym = gymService.findById(signupRequest.gymId());
+  public Member findById(Long id) {
+    return memberRepository.findById(id)
+        .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
+  }
 
-    ensureEmailIsUnique(signupRequest.email());
+  public void allowAccessWorkoutLog(Long userId) {
+    Member member = memberRepository.findById(userId)
+        .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-    String encodedPassword = passwordEncoder.encode(signupRequest.password());
+    member.setIsOpenWorkoutRecord(true);
+    memberRepository.save(member);
+  }
 
-    Member member = signupRequest.toMemberEntity(gym, encodedPassword);
+  public void forbidAccessWorkoutLog(Long userId) {
+    Member member = memberRepository.findById(userId)
+        .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-    return memberRepository.save(member);
+    member.setIsOpenWorkoutRecord(false);
+    memberRepository.save(member);
   }
 }

@@ -4,7 +4,6 @@ import com.workout.auth.domain.UserPrincipal;
 import com.workout.pt.dto.request.PtApplicationRequest;
 import com.workout.pt.dto.response.PendingApplicationResponse;
 import com.workout.pt.service.contract.PTApplicationService;
-import com.workout.pt.service.contract.PTContractService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,8 +21,7 @@ public class PTApplicationController {
 
   private final PTApplicationService ptApplicationService;
 
-  public PTApplicationController(PTContractService ptContractService,
-      PTApplicationService ptApplicationService) {
+  public PTApplicationController(PTApplicationService ptApplicationService) {
     this.ptApplicationService = ptApplicationService;
   }
 
@@ -32,9 +30,10 @@ public class PTApplicationController {
    */
   @GetMapping
   public ResponseEntity<PendingApplicationResponse> findPendingApplications(
-      @AuthenticationPrincipal UserPrincipal userPrincipal) {
-
-    return ResponseEntity.ok(ptApplicationService.findPendingApplicationsForUser(userPrincipal));
+      @AuthenticationPrincipal UserPrincipal userPrincipal
+  ) {
+    Long userId = userPrincipal.getUserId();
+    return ResponseEntity.ok(ptApplicationService.findPendingApplicationsForUser(userId));
   }
 
   /**
@@ -45,7 +44,8 @@ public class PTApplicationController {
       @AuthenticationPrincipal UserPrincipal user,
       @Valid @RequestBody PtApplicationRequest request
   ) {
-    ptApplicationService.createApplication(request, user);
+    Long userId = user.getUserId();
+    ptApplicationService.createApplication(request, userId);
     return ResponseEntity.ok().build();
   }
 
@@ -57,7 +57,8 @@ public class PTApplicationController {
       @AuthenticationPrincipal UserPrincipal trainer,
       @PathVariable Long applicationId
   ) {
-    ptApplicationService.acceptApplication(applicationId, trainer);
+    Long userId = trainer.getUserId();
+    ptApplicationService.acceptApplication(applicationId, userId);
     return ResponseEntity.ok().build();
   }
 
@@ -69,7 +70,8 @@ public class PTApplicationController {
       @AuthenticationPrincipal UserPrincipal trainer,
       @PathVariable Long applicationId
   ) {
-    ptApplicationService.rejectApplication(applicationId, trainer);
+    Long userId = trainer.getUserId();
+    ptApplicationService.rejectApplication(applicationId, userId);
     return ResponseEntity.ok().build();
   }
 
@@ -81,7 +83,8 @@ public class PTApplicationController {
       @AuthenticationPrincipal UserPrincipal user,
       @PathVariable Long applicationId
   ) {
-    ptApplicationService.cancelApplication(applicationId, user);
+    Long userId = user.getUserId();
+    ptApplicationService.cancelApplication(applicationId, userId);
     return ResponseEntity.ok().build();
   }
 

@@ -1,6 +1,8 @@
 package com.workout.pt.service.session;
 
 import com.workout.auth.domain.UserPrincipal;
+import com.workout.global.exception.RestApiException;
+import com.workout.global.exception.errorcode.PTErrorCode;
 import com.workout.member.domain.Member;
 import com.workout.pt.domain.contract.PTAppointment;
 import com.workout.pt.domain.contract.PTAppointmentStatus;
@@ -9,10 +11,10 @@ import com.workout.pt.dto.request.PTSessionCreateRequest;
 import com.workout.pt.repository.PTAppointmentRepository;
 import com.workout.pt.repository.PTSessionRepository;
 import com.workout.pt.service.contract.PTContractService;
+import com.workout.trainer.domain.Trainer;
+import com.workout.trainer.service.TrainerService;
 import com.workout.workout.domain.log.WorkoutLog;
 import com.workout.workout.service.WorkoutLogService;
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,40 +25,36 @@ public class PTSessionService {
   private final WorkoutLogService workoutLogService;
   private final PTAppointmentRepository ptAppointmentRepository;
   private final PTContractService ptContractService;
+  private final TrainerService trainerService;
 
   public PTSessionService(PTSessionRepository ptSessionRepository,
       WorkoutLogService workoutLogService, PTAppointmentRepository ptAppointmentRepository,
-      PTContractService ptContractService) {
+      PTContractService ptContractService, TrainerService trainerService) {
     this.ptSessionRepository = ptSessionRepository;
     this.ptAppointmentRepository = ptAppointmentRepository;
     this.workoutLogService = workoutLogService;
     this.ptContractService = ptContractService;
+    this.trainerService = trainerService;
   }
 
   @Transactional
   public Long createPTSessionAndWorkoutLog(PTSessionCreateRequest request,
-      UserPrincipal userPrincipal) {
-    boolean isTrainer = userPrincipal.getAuthorities().stream()
-        .anyMatch(auth -> auth.getAuthority().equals("ROLE_TRAINER"));
-    if (!isTrainer) {
-      throw new AccessDeniedException("트레이너만 PT 세션을 생성할 수 있습니다.");
-    }
+      Long userId) {
+    Trainer trainer = trainerService.findById(userId);
 
     PTAppointment appointment = ptAppointmentRepository.findById(request.appointmentId())
         .orElseThrow(
-            () -> new EntityNotFoundException("PT 예약을 찾을 수 없습니다. ID: " + request.appointmentId()));
+            () -> new RestApiException(PTErrorCode.NOT_FOUND_PT_APPOINTMENT));
 
     if (appointment.getStatus() != PTAppointmentStatus.SCHEDULED) {
-      throw new IllegalStateException("예약(SCHEDULED) 상태인 수업에 대해서만 세션을 생성할 수 있습니다.");
+      throw new RestApiException(PTErrorCode.INVALID_STATUS_REQUEST);
     }
 
-    if (!appointment.getContract().getTrainer().getId().equals(userPrincipal.getUserId())) {
-      throw new AccessDeniedException("담당하는 PT 수업에 대해서만 세션을 생성할 수 있습니다.");
+    if (!appointment.getContract().getTrainer().getId().equals(trainer.getId())) {
+      throw new RestApiException(PTErrorCode.NOT_ALLOWED_ACCESS);
     }
 
-    UserPrincipal memberPrincipal = new UserPrincipal(appointment.getContract().getMember());
-    WorkoutLog workoutLog = workoutLogService.createWorkoutLog(request.workoutLog(),
-        memberPrincipal);
+    WorkoutLog workoutLog = workoutLogService.createWorkoutLog(request.workoutLog(), userId);
 
     PTSession ptSession = PTSession.builder()
         .workoutLog(workoutLog)
@@ -72,17 +70,17 @@ public class PTSessionService {
   }
 
   @Transactional
-  public void deletePTSession(Long ptSessionId, UserPrincipal user) {
+  public void deletePTSession(Long ptSessionId, Long userId) {
     PTSession ptSession = ptSessionRepository.findById(ptSessionId)
-        .orElseThrow(() -> new EntityNotFoundException("PT 세션을 찾을 수 없습니다. ID: " + ptSessionId));
+        .orElseThrow(() -> new RestApiException(PTErrorCode.NOT_FOUND_PT_SESSION));
 
     Member logOwner = ptSession.getWorkoutLog().getMember();
-    boolean isOwner = logOwner.getId().equals(user.getUserId());
+    boolean isOwner = logOwner.getId().equals(userId);
     boolean isTrainer = ptSession.getAppointment().getContract().getTrainer().getId()
-        .equals(user.getUserId());
+        .equals(userId);
 
     if (!isOwner && !isTrainer) {
-      throw new AccessDeniedException("세션을 삭제할 권한이 없습니다.");
+      throw new RestApiException(PTErrorCode.NOT_ALLOWED_ACCESS);
     }
 
     Long workoutLogIdToDelete = ptSession.getWorkoutLog().getId();

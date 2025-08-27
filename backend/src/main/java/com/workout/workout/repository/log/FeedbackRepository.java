@@ -13,6 +13,14 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
   List<Feedback> findByWorkoutElements(@Param("logId") Long logId,
       @Param("exerciseIds") List<Long> exerciseIds, @Param("setIds") List<Long> setIds);
 
+  @Query("SELECT f FROM Feedback f " +
+      "WHERE f.workoutLog.id IN :workoutLogIds " +
+      "OR f.workoutExercise.id IN :exerciseIds " +
+      "OR f.workoutSet.id IN :setIds")
+  List<Feedback> findByWorkoutElements(@Param("workoutLogIds") List<Long> workoutLogIds,
+      @Param("exerciseIds") List<Long> exerciseIds,
+      @Param("setIds") List<Long> setIds);
+
   @Modifying
   @Query("DELETE FROM Feedback f WHERE f.workoutLog.id = :workoutLogId")
   void deleteAllByWorkoutLogId(@Param("workoutLogId") Long workoutLogId);

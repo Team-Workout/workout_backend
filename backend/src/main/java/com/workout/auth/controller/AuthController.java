@@ -5,9 +5,7 @@ import com.workout.auth.dto.SigninResponse;
 import com.workout.auth.dto.SignupRequest;
 import com.workout.auth.service.AuthService;
 import com.workout.member.domain.Member;
-import com.workout.member.service.MemberService;
-import com.workout.trainer.domain.Trainer;
-import com.workout.trainer.service.TrainerService;
+import com.workout.member.domain.Role;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -25,14 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
   private final AuthService authService;
-  private final MemberService memberService;
-  private final TrainerService trainerService;
 
-  public AuthController(AuthService authService, MemberService memberService,
-      TrainerService trainerService) {
+  public AuthController(AuthService authService) {
     this.authService = authService;
-    this.memberService = memberService;
-    this.trainerService = trainerService;
   }
 
   @PostMapping("/signin")
@@ -41,22 +34,22 @@ public class AuthController {
       HttpServletRequest request,
       HttpServletResponse response) {
 
-    Member member = authService.login(signinRequest.email(), signinRequest.password(), request, response);
-
+    //1 회원가입
+    Member member = authService.login(signinRequest.email(), signinRequest.password(), request,
+        response);
     SigninResponse signinResponse = SigninResponse.from(member);
-
     return ResponseEntity.ok(signinResponse);
   }
 
   @PostMapping("/signup/user")
   public ResponseEntity<Long> signupUser(@Valid @RequestBody SignupRequest signupRequest) {
-    Member member = memberService.registerUser(signupRequest);
-    return ResponseEntity.status(HttpStatus.CREATED).body(member.getId());
+    Long memberId = authService.signup(signupRequest, Role.MEMBER); // AuthService에 위임
+    return ResponseEntity.status(HttpStatus.CREATED).body(memberId);
   }
 
   @PostMapping("/signup/trainer")
   public ResponseEntity<Long> signupTrainer(@Valid @RequestBody SignupRequest signupRequest) {
-    Trainer trainer = trainerService.registerTrainer(signupRequest);
-    return ResponseEntity.status(HttpStatus.CREATED).body(trainer.getId());
+    Long trainerId = authService.signup(signupRequest, Role.TRAINER); // AuthService에 위임
+    return ResponseEntity.status(HttpStatus.CREATED).body(trainerId);
   }
 }

@@ -10,6 +10,7 @@ import com.workout.workout.service.RoutineService;
 import com.workout.workout.service.WorkoutLogService;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -41,18 +42,21 @@ public class WorkoutController {
   public ResponseEntity<Void> createWorkoutLog(
       @Valid @RequestBody WorkoutLogCreateRequest request,
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    Long userId = userPrincipal.getUserId();
+    WorkoutLog workoutLogId = workoutLogService.createWorkoutLog(request, userId);
 
-    WorkoutLog workoutLogId = workoutLogService.createWorkoutLog(request, userPrincipal);
-
-    return ResponseEntity.created(URI.create("/api/workout-logs/" + workoutLogId.getId())).build();
+    return ResponseEntity.created(URI.create("/api/workout/logs/" + workoutLogId.getId())).build();
   }
 
   /**
    * 운동일지 상세 조회
    */
   @GetMapping("/logs/{id}")
-  public ResponseEntity<WorkoutLogResponse> getWorkoutLog(@PathVariable("id") Long id, @AuthenticationPrincipal UserPrincipal userPrincipal) {
-    WorkoutLogResponse response = workoutLogService.findWorkoutLogById(id);
+  public ResponseEntity<WorkoutLogResponse> getWorkoutLog(
+      @PathVariable("id") Long id,
+      @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    Long userId = userPrincipal.getUserId();
+    WorkoutLogResponse response = workoutLogService.findWorkoutLogById(id,userId);
     return ResponseEntity.ok(response);
   }
 
@@ -69,7 +73,6 @@ public class WorkoutController {
     return ResponseEntity.noContent().build();
   }
 
-
   /**
    * 루틴 생성
    */
@@ -81,7 +84,7 @@ public class WorkoutController {
     Long userId = userPrincipal.getUserId(); //
     Long routineId = routineService.createRoutine(request, userId);
 
-    return ResponseEntity.created(URI.create("/api/workout-logs/" + routineId)).build();
+    return ResponseEntity.created(URI.create("/api/workout/routine/" + routineId)).build();
   }
 
   /**
@@ -89,8 +92,19 @@ public class WorkoutController {
    */
   @GetMapping("/routine/{id}")
   public ResponseEntity<RoutineResponse> getRoutine(@PathVariable("id") Long id) {
-    RoutineResponse response = routineService.findRoutineById(id);
+      RoutineResponse response = routineService.findRoutineById(id);
     return ResponseEntity.ok(response);
+  }
+
+  /**
+   * 나의 루틴 조회
+   */
+  @GetMapping("me/routines")
+  public ResponseEntity<List<RoutineResponse>> getMyRoutine(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+    Long userId = userPrincipal.getUserId();
+    List<RoutineResponse> responses = routineService.findAllRoutinesByUserId(userId);
+    return ResponseEntity.ok(responses);
+
   }
 
   /**
@@ -104,6 +118,20 @@ public class WorkoutController {
     Long userId = userPrincipal.getUserId();
     routineService.deleteRoutine(id, userId);
     return ResponseEntity.noContent().build();
+  }
+
+  /**
+   * 운동 일지 조회
+   */
+
+  @GetMapping("/me/logs/{year}/{month}")
+  public ResponseEntity<List<WorkoutLogResponse>> getMyWorkoutLogsByMonth(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @PathVariable("year") int year,
+      @PathVariable("month") int month) {
+    Long userId = userPrincipal.getUserId();
+    List<WorkoutLogResponse> responses = workoutLogService.findMyWorkoutLogsByMonth(userId, year, month);
+    return ResponseEntity.ok(responses);
   }
 
 
