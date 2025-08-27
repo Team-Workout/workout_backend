@@ -6,9 +6,6 @@ import com.workout.auth.dto.SignupRequest;
 import com.workout.auth.service.AuthService;
 import com.workout.member.domain.Member;
 import com.workout.member.domain.Role;
-import com.workout.member.service.MemberService;
-import com.workout.trainer.domain.Trainer;
-import com.workout.trainer.service.TrainerService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -26,14 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
   private final AuthService authService;
-  private final MemberService memberService;
-  private final TrainerService trainerService;
 
-  public AuthController(AuthService authService, MemberService memberService,
-      TrainerService trainerService) {
+  public AuthController(AuthService authService) {
     this.authService = authService;
-    this.memberService = memberService;
-    this.trainerService = trainerService;
   }
 
   @PostMapping("/signin")
@@ -43,10 +35,9 @@ public class AuthController {
       HttpServletResponse response) {
 
     //1 회원가입
-    Member member = authService.login(signinRequest.email(), signinRequest.password(), request, response);
-
+    Member member = authService.login(signinRequest.email(), signinRequest.password(), request,
+        response);
     SigninResponse signinResponse = SigninResponse.from(member);
-
     return ResponseEntity.ok(signinResponse);
   }
 

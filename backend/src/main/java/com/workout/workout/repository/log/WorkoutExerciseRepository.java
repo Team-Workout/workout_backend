@@ -19,4 +19,6 @@ public interface WorkoutExerciseRepository extends JpaRepository<WorkoutExercise
   @Modifying
   @Query("DELETE FROM WorkoutExercise we WHERE we.workoutLog.id = :workoutLogId")
   void deleteAllByWorkoutLogId(@Param("workoutLogId") Long workoutLogId);
+
+  List<WorkoutExercise> findAllByWorkoutLogIdInOrderByOrderAsc(List<Long> workoutLogIds);
 }

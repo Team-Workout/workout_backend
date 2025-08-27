@@ -1,6 +1,5 @@
 package com.workout.workout.service;
 
-import com.workout.auth.domain.UserPrincipal;
 import com.workout.global.exception.RestApiException;
 import com.workout.global.exception.errorcode.MemberErrorCode;
 import com.workout.global.exception.errorcode.WorkoutErrorCode;
@@ -21,7 +20,9 @@ import com.workout.workout.repository.log.FeedbackRepository;
 import com.workout.workout.repository.log.WorkoutExerciseRepository;
 import com.workout.workout.repository.log.WorkoutLogRepository;
 import com.workout.workout.repository.log.WorkoutSetRepository;
-import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -112,8 +113,8 @@ public class WorkoutLogService {
     return workoutLog;
   }
 
-  public WorkoutLogResponse findWorkoutLogById(Long workoutLogId, UserPrincipal userPrincipal) {
-    Member member = memberService.findById(userPrincipal.getUserId());
+  public WorkoutLogResponse findWorkoutLogById(Long workoutLogId, Long userId) {
+    Member member = memberService.findById(userId);
 
     WorkoutLog workoutLog = workoutLogRepository.findById(workoutLogId)
         .orElseThrow(() -> new RestApiException(WorkoutErrorCode.NOT_FOUND_WORKOUT_LOG));
@@ -136,6 +137,66 @@ public class WorkoutLogService {
 
     // 조회된 엔티티들을 DTO로 조립
     return WorkoutLogResponse.from(workoutLog, exercises, sets, feedbacks);
+  }
+
+  public List<WorkoutLogResponse> findMyWorkoutLogsByMonth(Long userId, int year, int month) {
+
+    YearMonth yearMonth = YearMonth.of(year, month);
+    LocalDateTime startDateTime = yearMonth.atDay(1).atStartOfDay();
+    LocalDateTime endDateTime = yearMonth.atEndOfMonth().atTime(LocalTime.MAX);
+
+    List<WorkoutLog> workoutLogs = workoutLogRepository.findAllByMemberIdAndWorkoutDateBetweenOrderByWorkoutDateDesc(
+        userId, startDateTime, endDateTime);
+
+    if (workoutLogs.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<Long> workoutLogIds = workoutLogs.stream().map(WorkoutLog::getId).toList();
+    List<WorkoutExercise> exercises = workoutExerciseRepository.findAllByWorkoutLogIdInOrderByOrderAsc(
+        workoutLogIds);
+    List<Long> exerciseIds = exercises.stream().map(WorkoutExercise::getId).toList();
+    List<WorkoutSet> sets = exerciseIds.isEmpty() ? Collections.emptyList()
+        : workoutSetRepository.findAllByWorkoutExerciseIdInOrderByOrderAsc(exerciseIds);
+    List<Long> setIds = sets.stream().map(WorkoutSet::getId).toList();
+    List<Feedback> feedbacks = feedbackRepository.findByWorkoutElements(workoutLogIds, exerciseIds,
+        setIds);
+
+    Map<Long, List<WorkoutExercise>> exercisesByLogId = exercises.stream()
+        .collect(Collectors.groupingBy(exercise -> exercise.getWorkoutLog().getId()));
+    Map<Long, List<WorkoutSet>> setsByExerciseId = sets.stream()
+        .collect(Collectors.groupingBy(set -> set.getWorkoutExercise().getId()));
+
+    Map<Long, List<Feedback>> feedbacksByLogId = feedbacks.stream()
+        .filter(f -> f.getWorkoutLog() != null)
+        .collect(Collectors.groupingBy(f -> f.getWorkoutLog().getId()));
+    Map<Long, List<Feedback>> feedbacksByExerciseId = feedbacks.stream()
+        .filter(f -> f.getWorkoutExercise() != null)
+        .collect(Collectors.groupingBy(f -> f.getWorkoutExercise().getId()));
+    Map<Long, List<Feedback>> feedbacksBySetId = feedbacks.stream()
+        .filter(f -> f.getWorkoutSet() != null)
+        .collect(Collectors.groupingBy(f -> f.getWorkoutSet().getId()));
+
+    return workoutLogs.stream()
+        .map(log -> {
+          List<WorkoutExercise> exercisesForLog = exercisesByLogId.getOrDefault(log.getId(),
+              Collections.emptyList());
+
+          List<WorkoutSet> setsForLog = exercisesForLog.stream()
+              .flatMap(
+                  ex -> setsByExerciseId.getOrDefault(ex.getId(), Collections.emptyList()).stream())
+              .collect(Collectors.toList());
+
+          List<Feedback> feedbacksForLog = new ArrayList<>(
+              feedbacksByLogId.getOrDefault(log.getId(), Collections.emptyList()));
+          exercisesForLog.forEach(ex -> feedbacksForLog.addAll(
+              feedbacksByExerciseId.getOrDefault(ex.getId(), Collections.emptyList())));
+          setsForLog.forEach(set -> feedbacksForLog.addAll(
+              feedbacksBySetId.getOrDefault(set.getId(), Collections.emptyList())));
+
+          return WorkoutLogResponse.from(log, exercisesForLog, setsForLog, feedbacksForLog);
+        })
+        .collect(Collectors.toList());
   }
 
   @Transactional
@@ -194,7 +255,7 @@ public class WorkoutLogService {
       throw new RestApiException(WorkoutErrorCode.NOT_ALLOWED_ACCESS);
     }
 
-    if(!workoutLog.getMember().getIsOpenWorkoutRecord()) {
+    if (!workoutLog.getMember().getIsOpenWorkoutRecord()) {
       throw new RestApiException(WorkoutErrorCode.NOT_ALLOWED_ACCESS);
     }
   }

@@ -35,7 +35,6 @@ public class TrainerController {
 
     Long currentTrainerId = userPrincipal.getUserId();
     trainerService.updateProfile(currentTrainerId, profileCreateDto);
-
     return ResponseEntity.ok().build();
   }
 
@@ -56,6 +55,7 @@ public class TrainerController {
   @DeleteMapping("/profile")
   public ResponseEntity<Void> deleteProfile(
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
     Long currentTrainerId = userPrincipal.getUserId();
     trainerService.deleteProfile(currentTrainerId);
     return ResponseEntity.noContent().build();

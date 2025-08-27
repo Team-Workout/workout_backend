@@ -42,8 +42,8 @@ public class WorkoutController {
   public ResponseEntity<Void> createWorkoutLog(
       @Valid @RequestBody WorkoutLogCreateRequest request,
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
-
-    WorkoutLog workoutLogId = workoutLogService.createWorkoutLog(request, userPrincipal);
+    Long userId = userPrincipal.getUserId();
+    WorkoutLog workoutLogId = workoutLogService.createWorkoutLog(request, userId);
 
     return ResponseEntity.created(URI.create("/api/workout/logs/" + workoutLogId.getId())).build();
   }
@@ -55,7 +55,8 @@ public class WorkoutController {
   public ResponseEntity<WorkoutLogResponse> getWorkoutLog(
       @PathVariable("id") Long id,
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
-    WorkoutLogResponse response = workoutLogService.findWorkoutLogById(id,userPrincipal);
+    Long userId = userPrincipal.getUserId();
+    WorkoutLogResponse response = workoutLogService.findWorkoutLogById(id,userId);
     return ResponseEntity.ok(response);
   }
 
@@ -117,6 +118,20 @@ public class WorkoutController {
     Long userId = userPrincipal.getUserId();
     routineService.deleteRoutine(id, userId);
     return ResponseEntity.noContent().build();
+  }
+
+  /**
+   * 운동 일지 조회
+   */
+
+  @GetMapping("/me/logs/{year}/{month}")
+  public ResponseEntity<List<WorkoutLogResponse>> getMyWorkoutLogsByMonth(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @PathVariable("year") int year,
+      @PathVariable("month") int month) {
+    Long userId = userPrincipal.getUserId();
+    List<WorkoutLogResponse> responses = workoutLogService.findMyWorkoutLogsByMonth(userId, year, month);
+    return ResponseEntity.ok(responses);
   }
 
 

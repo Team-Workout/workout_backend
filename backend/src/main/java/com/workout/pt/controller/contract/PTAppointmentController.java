@@ -36,7 +36,7 @@ public class PTAppointmentController {
    * PT 스케줄 조회 최대 일주일 단위까지 조회 가능
    */
   @GetMapping("/me/scheduled")
-  public ResponseEntity<ApiResponse<List<AppointmentResponse>>> getMyScheduledAppointments(
+  public ResponseEntity<List<AppointmentResponse>> getMyScheduledAppointments(
       @AuthenticationPrincipal UserPrincipal user,
       @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
       @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
@@ -45,7 +45,7 @@ public class PTAppointmentController {
     List<AppointmentResponse> appointments = appointmentService.findMyScheduledAppointmentsByPeriod(
         userId, startDate, endDate);
 
-    return ResponseEntity.ok(ApiResponse.of(appointments));
+    return ResponseEntity.ok(appointments);
   }
   //region 트레이너
 
