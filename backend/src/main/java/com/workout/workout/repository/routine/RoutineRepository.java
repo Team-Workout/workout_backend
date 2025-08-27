@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RoutineRepository extends JpaRepository<Routine, Long> {
 
-  List<Routine> findAllRoutinesByUserId(Long userId);
+  List<Routine> findAllRoutinesByMemberId(Long userId);
 }
