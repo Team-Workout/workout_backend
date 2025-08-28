@@ -84,7 +84,7 @@ ON DUPLICATE KEY UPDATE weight_kg=VALUES(weight_kg);
 -- ########## 7. PT 관련 샘플 데이터 (신청 -> 계약 -> 예약 -> 세션) ##########
 -- 트레이너 '이영희'(id=2)가 PT 상품(오퍼링)을 등록
 INSERT INTO pt_offering (id, trainer_id, gym_id, title, description, price, total_sessions, status)
-VALUES (1, 2, 1, '12주 바디프로필 완성반', '12주 동안 주 2회씩 진행되는 바디프로필 전문 PT입니다. 식단 관리 포함.', 1500000, 24, 'OPEN')
+VALUES (1, 2, 1, '12주 바디프로필 완성반', '12주 동안 주 2회씩 진행되는 바디프로필 전문 PT입니다. 식단 관리 포함.', 1500000, 24, 'ACTIVE')
 ON DUPLICATE KEY UPDATE title = VALUES(title), price = VALUES(price);
 
 -- 회원 '김철수'(id=1)가 위 PT 상품을 신청하여 바로 '승인'된 상태로 생성
