@@ -9,6 +9,8 @@ import com.workout.pt.dto.response.PtOfferingResponse;
 import com.workout.pt.repository.PTOfferingRepository;
 import com.workout.trainer.domain.Trainer;
 import com.workout.trainer.service.TrainerService;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -51,9 +53,12 @@ public class PTOfferingService {
     ptOfferingRepository.delete(ptOffering);
   }
 
-  public PtOfferingResponse findbyTrainerId(Long trainerId) {
+  public List<PtOfferingResponse> findByTrainerId(Long trainerId) {
     trainerService.findById(trainerId);
+    List<PTOffering> offerings = ptOfferingRepository.findAllByTrainerId(trainerId);
 
-    return PtOfferingResponse.from(ptOfferingRepository.findAllByTrainerId(trainerId));
+    return offerings.stream()
+        .map(PtOfferingResponse::from)
+        .collect(Collectors.toList());
   }
 }

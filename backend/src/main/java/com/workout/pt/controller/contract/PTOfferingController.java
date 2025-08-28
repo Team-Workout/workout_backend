@@ -4,6 +4,7 @@ import com.workout.auth.domain.UserPrincipal;
 import com.workout.pt.dto.request.OfferingCreateRequest;
 import com.workout.pt.dto.response.PtOfferingResponse;
 import com.workout.pt.service.contract.PTOfferingService;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,9 +36,9 @@ public class PTOfferingController {
   }
 
   @GetMapping("/trainer/{trainerId}")
-  public ResponseEntity<PtOfferingResponse> getOfferingsByTrainer(
+  public ResponseEntity<List<PtOfferingResponse>> getOfferingsByTrainer(
       @PathVariable Long trainerId) {
-    return ResponseEntity.ok(offeringService.findbyTrainerId(trainerId));
+    return ResponseEntity.ok(offeringService.findByTrainerId(trainerId));
   }
 
   @DeleteMapping("/{offeringId}")
