@@ -114,6 +114,7 @@ INSERT INTO pt_session (id, workout_log_id, appointment_id) VALUES (1, 1, 1) ON 
 
 -- ########## 8. 마스터 데이터 버전 초기화 ##########
 INSERT INTO master_data_version (data_type, version, updated_at)
-VALUES ('EXERCISE', '1.0.0', NOW()),
-       ('MUSCLE', '1.0.0', NOW())
+VALUES ('EXERCISE', 1, NOW()),
+       ('MUSCLE', 1, NOW()),
+       ('EXERCISE_TARGET_MUSCLE', 1, NOW()) -- [추가] 다른 마스터 데이터에 대한 버전도 초기화해주는 것이 좋습니다.
 ON DUPLICATE KEY UPDATE version = VALUES(version), updated_at = VALUES(updated_at);
