@@ -1,6 +1,8 @@
 package com.workout.body.dto;
 
 import jakarta.validation.constraints.NotNull;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import lombok.Getter;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -14,7 +16,7 @@ public class BodyCompositionDto {
   @DateTimeFormat
   private LocalDate measurementDate;
 
-  private Long weightKg;
-  private Long fatKg;
-  private Long muscleMassKg;
+  private BigDecimal weightKg;
+  private BigDecimal fatKg;
+  private BigDecimal muscleMassKg;
 }
