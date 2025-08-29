@@ -1,10 +1,8 @@
 package com.workout.global.version.domain;
 
 import com.workout.global.version.dto.ExerciseDto;
-import com.workout.workout.domain.exercise.Exercise;
 import com.workout.workout.repository.ExerciseRepository;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -1,6 +1,5 @@
 package com.workout.global.version.domain;
 
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

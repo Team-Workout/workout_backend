@@ -13,7 +13,6 @@ public class VersionUpdateAspect {
 
   private final MasterDataVersionService masterDataVersionService;
 
-  // @MasterDataUpdate 어노테이션을 포인트컷으로 사용
   @AfterReturning(pointcut = "@annotation(masterDataUpdate)")
   public void updateVersionAfterSuccess(MasterDataUpdate masterDataUpdate) {
     masterDataVersionService.updateVersion(masterDataUpdate.category());

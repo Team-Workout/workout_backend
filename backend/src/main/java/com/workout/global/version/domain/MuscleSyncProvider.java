@@ -3,7 +3,6 @@ package com.workout.global.version.domain;
 import com.workout.global.version.dto.MuscleDto;
 import com.workout.workout.repository.MuscleRepository;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component

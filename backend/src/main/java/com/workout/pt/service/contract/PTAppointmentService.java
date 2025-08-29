@@ -21,10 +21,12 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class PTAppointmentService {
 
@@ -43,7 +45,8 @@ public class PTAppointmentService {
   }
 
   public List<AppointmentResponse> findMyScheduledAppointmentsByPeriod(
-      Long userId, LocalDate startDate, LocalDate endDate) {
+      Long userId, LocalDate startDate, LocalDate endDate, PTAppointmentStatus status) {
+
 
     // 1. 기간 유효성 검증 (최대 7일)
     if (startDate.isAfter(endDate)) {
@@ -69,6 +72,7 @@ public class PTAppointmentService {
           member.getId(), PTAppointmentStatus.SCHEDULED, startDateTime, endDateTime);
     }
 
+    log.info("appointments: {}", appointments);
     return appointments.stream()
         .map(AppointmentResponse::from)
         .collect(Collectors.toList());
@@ -79,6 +83,9 @@ public class PTAppointmentService {
     PTContract contract = ptContractRepository.findById(request.contractId())
         .orElseThrow(() -> new RestApiException(PTErrorCode.NOT_FOUND_PT_APPOINTMENT));
 
+    log.info("contract: {}", contract);
+    log.info("getTrainer: {}", contract.getTrainer().getId());
+    log.info("userId: {}", userId);
     if (!contract.getTrainer().getId().equals(userId)) {
       throw new RestApiException(PTErrorCode.NOT_ALLOWED_ACCESS);
     }

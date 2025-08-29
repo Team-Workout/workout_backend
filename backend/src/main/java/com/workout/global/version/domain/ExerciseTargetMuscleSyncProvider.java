@@ -4,7 +4,6 @@ import com.workout.global.version.dto.ExerciseTargetMuscleDto;
 import com.workout.global.version.dto.ExerciseTargetMuscleDto.SyncResponse;
 import com.workout.workout.repository.ExerciseTargetMuscleRepository;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
