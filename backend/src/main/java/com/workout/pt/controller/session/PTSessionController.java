@@ -1,13 +1,21 @@
 package com.workout.pt.controller.session;
 
 import com.workout.auth.domain.UserPrincipal;
+import com.workout.global.dto.ApiResponse;
 import com.workout.pt.dto.request.PTSessionCreateRequest;
+import com.workout.pt.dto.response.PTSessionResponse;
 import com.workout.pt.service.session.PTSessionService;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,4 +51,15 @@ public class PTSessionController {
     ptSessionService.deletePTSession(ptSessionId, userId);
     return ResponseEntity.noContent().build();
   }
+
+  @GetMapping("/me")
+  public ResponseEntity<ApiResponse<List<PTSessionResponse>>> getMyPTSession(
+      @AuthenticationPrincipal UserPrincipal user,
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+  ) {
+    Long userId = user.getUserId();
+    Page<PTSessionResponse> responses = ptSessionService.findMySession(userId, pageable);
+    return ResponseEntity.ok(ApiResponse.of(responses));
+  }
+
 }
