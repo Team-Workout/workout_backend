@@ -1,7 +1,6 @@
 package com.workout.body.dto;
 
 import jakarta.validation.constraints.NotNull;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import lombok.Getter;

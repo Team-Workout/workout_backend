@@ -1,7 +1,6 @@
 package com.workout.body.dto;
 
 import com.workout.body.domain.BodyComposition;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 

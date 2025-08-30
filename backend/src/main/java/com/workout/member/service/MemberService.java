@@ -56,7 +56,6 @@ public class MemberService {
     memberRepository.save(member);
   }
 
-
   public void forbidAccessWorkoutLog(Long userId) {
     Member member = memberRepository.findById(userId)
         .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
