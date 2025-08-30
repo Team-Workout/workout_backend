@@ -123,7 +123,10 @@ public class PTSessionService {
         .map(PTSession::getWorkoutLog)
         .toList();
 
-    List<Long> workoutLogIds = workoutLogs.stream().map(WorkoutLog::getId).toList();
+    List<Long> workoutLogIds = ptSessionPage.getContent().stream()
+        .map(PTSession::getWorkoutLog)
+        .map(WorkoutLog::getId)
+        .toList();
 
     List<WorkoutExercise> exercises = workoutExerciseRepository.findAllByWorkoutLogIdInOrderByOrderAsc(workoutLogIds);
     List<Long> exerciseIds = exercises.stream().map(WorkoutExercise::getId).toList();
