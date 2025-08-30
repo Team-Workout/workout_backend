@@ -1,4 +1,4 @@
-package com.workout.global.securityConverter;
+package com.workout.securityConverter;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
@@ -9,12 +9,12 @@ import java.math.BigDecimal;
 
 @RequiredArgsConstructor
 @Converter
-public class EncryptionConverter implements AttributeConverter<BigDecimal, BigDecimal> {
+public class EncryptionConverter implements AttributeConverter<BigDecimal, String> {
 
     private final Encryptor encryptor;
 
     @Override
-    public BigDecimal convertToDatabaseColumn(BigDecimal raw){
+    public String convertToDatabaseColumn(BigDecimal raw){
         try {
             return encryptor.encrypt(raw);
         } catch (Exception e) {
@@ -23,7 +23,7 @@ public class EncryptionConverter implements AttributeConverter<BigDecimal, BigDe
     }
 
     @Override
-    public BigDecimal convertToEntityAttribute(BigDecimal encrypted){
+    public BigDecimal convertToEntityAttribute(String encrypted){
         try {
             return encryptor.decrypt(encrypted);
         } catch (Exception e) {

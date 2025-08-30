@@ -1,6 +1,6 @@
 package com.workout.body.domain;
 
-import com.workout.global.securityConverter.EncryptionConverter;
+import com.workout.securityConverter.EncryptionConverter;
 import com.workout.member.domain.Member;
 import jakarta.persistence.*;
 

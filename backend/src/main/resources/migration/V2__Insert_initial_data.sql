@@ -77,8 +77,9 @@ INSERT INTO trainer_specialty (member_id, specialty_id) VALUES (6, 3), (6, 4) ON
 
 -- 사용자 '김철수'(id=1)의 체성분
 INSERT INTO body_composition (member_id, measurement_date, weight_kg, fat_kg, muscle_mass_kg)
-VALUES (1, '2025-07-15', 85.00, 20.50, 38.25), (1, '2025-08-15', 82.30, 17.20, 39.10)
-ON DUPLICATE KEY UPDATE weight_kg = VALUES(weight_kg), fat_kg = VALUES(fat_kg), muscle_mass_kg = VALUES(muscle_mass_kg);
+VALUES (1, '2025-07-15', 85, 20, 38), (1, '2025-08-15', 82, 17, 39)
+ON DUPLICATE KEY UPDATE weight_kg=VALUES(weight_kg);
+
 
 -- ########## 7. PT 관련 샘플 데이터 (신청 -> 계약 -> 예약 -> 세션) ##########
 -- 트레이너 '이영희'(id=2)가 PT 상품(오퍼링)을 등록

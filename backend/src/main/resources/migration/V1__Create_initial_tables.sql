@@ -33,15 +33,16 @@ CREATE TABLE IF NOT EXISTS member
 );
 
 -- 체성분 정보 테이블
-CREATE TABLE IF NOT EXISTS body_composition (
-	`id` BIGINT(20) AUTO_INCREMENT PRIMARY KEY,
-	`fat_kg` DECIMAL(5,2) NULL DEFAULT NULL,
-	`muscle_mass_kg` DECIMAL(5,2) NULL DEFAULT NULL,
-	`weight_kg` DECIMAL(5,2) NULL DEFAULT NULL,
-	`measurement_date` DATE,
-	`member_id` BIGINT(20) NOT NULL,
-	CONSTRAINT fk_body_member FOREIGN KEY (member_id) REFERENCES member (id) ON UPDATE RESTRICT ON DELETE RESTRICT
-)
+CREATE TABLE IF NOT EXISTS body_composition
+(
+    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id        BIGINT NOT NULL,
+    measurement_date DATE   NOT NULL,
+    weight_kg        BIGINT,
+    fat_kg           BIGINT,
+    muscle_mass_kg   BIGINT,
+    CONSTRAINT fk_body_composition_member FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
+);
 
 -- 트레이너 학력
 CREATE TABLE IF NOT EXISTS education

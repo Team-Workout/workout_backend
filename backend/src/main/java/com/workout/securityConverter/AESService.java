@@ -1,4 +1,4 @@
-package com.workout.global.securityConverter;
+package com.workout.securityConverter;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -21,11 +21,10 @@ public class AESService implements Encryptor{
 
 
     private static final String AES = "AES";
-    private static final int AES_KEY_LENGTH = 16;
     private static final int INITIAL_VECTOR_LENGTH = 12;
     private static final String ENCRYPTION_TRANSFORM = "AES/GCM/NoPadding";
 
-    @Value("${encryption.key")
+    @Value("${encryption.key}")
     private String encryptionKey;
 
     private Cipher cipher;
@@ -34,11 +33,10 @@ public class AESService implements Encryptor{
     @PostConstruct
     public void init() {
         try {
-            this.cipher = Cipher.getInstance(ENCRYPTION_TRANSFORM);
             this.secretKey = new SecretKeySpec(this.encryptionKey.getBytes(), AES);
-        } catch (GeneralSecurityException e) {
-            log.error("AESService Initialization FAILED: ", e);
-            throw new IllegalStateException("AESService 초기화 중 오류 발생", e);
+        } catch (Exception e) {
+            log.error("AESService secretKey Initialization FAILED: ", e);
+            throw new IllegalStateException("암호화 설정 초기화 중 오류 발생", e);
         }
     }
 
@@ -54,10 +52,11 @@ public class AESService implements Encryptor{
 
             byte[] iv = new byte[INITIAL_VECTOR_LENGTH];
             new SecureRandom().nextBytes(iv);
-            GCMParameterSpec gcmParameter = new GCMParameterSpec(AES_KEY_LENGTH * 8, iv);
+            GCMParameterSpec gcmParameter = new GCMParameterSpec(128, iv);
 
-            this.cipher.init(Cipher.ENCRYPT_MODE, this.secretKey, gcmParameter);
-            byte[] encryptedBytes = this.cipher.doFinal(plainText.getBytes());
+            Cipher cipher = Cipher.getInstance(ENCRYPTION_TRANSFORM);
+            cipher.init(Cipher.ENCRYPT_MODE, this.secretKey, gcmParameter);
+            byte[] encryptedBytes = cipher.doFinal(plainText.getBytes());
 
             ByteBuffer byteBuffer = ByteBuffer.allocate(iv.length + encryptedBytes.length);
             byteBuffer.put(iv);
@@ -71,17 +70,26 @@ public class AESService implements Encryptor{
     }
 
     @Override
-    public BigDecimal decrypt(String encryptedText) throws Exception {
-        // Encrypted String --> Decrypted BigDecimal
+    public BigDecimal decrypt(String encryptedText) {
+        // Encrypted BigDecimal --> String
+        if (encryptedText == null) {
+            return null;
+        }
 
-        byte[] decoded = Base64.getDecoder().decode(encryptedText);
-        byte[] iv = Arrays.copyOfRange(decoded, 0, INITIAL_VECTOR_LENGTH);
-        byte[] cipherText = Arrays.copyOfRange(decoded, INITIAL_VECTOR_LENGTH, decoded.length);
+        try {
+            byte[] decoded = Base64.getDecoder().decode(encryptedText);
+            byte[] iv = Arrays.copyOfRange(decoded, 0, INITIAL_VECTOR_LENGTH);
+            byte[] cipherText = Arrays.copyOfRange(decoded, INITIAL_VECTOR_LENGTH, decoded.length);
 
-        GCMParameterSpec gcmParameter = new GCMParameterSpec(AES_KEY_LENGTH * 8, iv);
-        cipher.init(Cipher.DECRYPT_MODE, secretKey, gcmParameter);
+            Cipher cipher = Cipher.getInstance(ENCRYPTION_TRANSFORM);
+            GCMParameterSpec gcmParameter = new GCMParameterSpec(128, iv);
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, gcmParameter);
 
-        byte[] plainText = cipher.doFinal(cipherText);
-        return new String(plainText);
+            byte[] plainText = cipher.doFinal(cipherText);
+            return new BigDecimal(new String(plainText));
+        } catch (GeneralSecurityException e) {
+            log.error("복호화 실패", e);
+            throw new IllegalStateException("복호화 중 오류 발생", e);
+        }
     }
 }
