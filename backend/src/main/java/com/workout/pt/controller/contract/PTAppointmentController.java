@@ -41,7 +41,8 @@ public class PTAppointmentController {
       @AuthenticationPrincipal UserPrincipal user,
       @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
       @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-      @RequestParam("status")PTAppointmentStatus status
+      @RequestParam("status") PTAppointmentStatus status
+
   ) {
     Long userId = user.getUserId();
     List<AppointmentResponse> appointments = appointmentService.findMyScheduledAppointmentsByPeriod(

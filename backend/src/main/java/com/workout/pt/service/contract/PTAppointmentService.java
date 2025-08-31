@@ -47,7 +47,6 @@ public class PTAppointmentService {
   public List<AppointmentResponse> findMyScheduledAppointmentsByPeriod(
       Long userId, LocalDate startDate, LocalDate endDate, PTAppointmentStatus status) {
 
-
     // 1. 기간 유효성 검증 (최대 7일)
     if (startDate.isAfter(endDate)) {
       throw new RestApiException(PTErrorCode.INVALID_PARAMETER);
@@ -66,10 +65,10 @@ public class PTAppointmentService {
 
     if (member.getRole().equals(Role.TRAINER)) {
       appointments = ptAppointmentRepository.findAllByContract_Trainer_IdAndStatusAndStartTimeBetween(
-          member.getId(), PTAppointmentStatus.SCHEDULED, startDateTime, endDateTime);
+          member.getId(), status, startDateTime, endDateTime);
     } else {
       appointments = ptAppointmentRepository.findAllByContract_Member_IdAndStatusAndStartTimeBetween(
-          member.getId(), PTAppointmentStatus.SCHEDULED, startDateTime, endDateTime);
+          member.getId(), status, startDateTime, endDateTime);
     }
 
     log.info("appointments: {}", appointments);
