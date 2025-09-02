@@ -347,7 +347,7 @@ ALTER TABLE member
 CREATE TABLE IF NOT EXISTS master_data_version
 (
     data_type  VARCHAR(255) PRIMARY KEY,
-    version    VARCHAR(255) NOT NULL,
+    version    BIGINT       NOT NULL,
     updated_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 

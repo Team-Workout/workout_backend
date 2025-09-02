@@ -1,6 +1,7 @@
 package com.workout.pt.controller.contract;
 
 import com.workout.auth.domain.UserPrincipal;
+import com.workout.global.dto.ApiResponse;
 import com.workout.pt.domain.contract.PTAppointmentStatus;
 import com.workout.pt.dto.request.AppointmentRequest;
 import com.workout.pt.dto.request.AppointmentStatusUpdateRequest;
@@ -41,6 +42,7 @@ public class PTAppointmentController {
       @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
       @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
       @RequestParam("status") PTAppointmentStatus status
+
   ) {
     Long userId = user.getUserId();
     List<AppointmentResponse> appointments = appointmentService.findMyScheduledAppointmentsByPeriod(

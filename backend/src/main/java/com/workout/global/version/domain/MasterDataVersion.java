@@ -1,4 +1,4 @@
-package com.workout.global.version;
+package com.workout.global.version.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,23 +17,22 @@ public class MasterDataVersion {
 
   @Id
   @Column(name = "data_type")
-  private String dataType; // "EXERCISE", "MUSCLE" 등
+  private String dataType;
 
   @Column(nullable = false)
-  private String version;
+  private Long version;
 
-  @UpdateTimestamp // 엔티티가 수정될 때마다 자동으로 현재 시간 저장
+  @UpdateTimestamp
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
   @Builder
-  public MasterDataVersion(String dataType, String version) {
+  public MasterDataVersion(String dataType, Long version) {
     this.dataType = dataType;
     this.version = version;
   }
 
-  // 버전 업데이트를 위한 편의 메소드
-  public void updateVersion(String newVersion) {
+  public void updateVersion(Long newVersion) {
     this.version = newVersion;
   }
 }

@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -14,11 +15,15 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
 @Getter
-@AllArgsConstructor
 @Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SQLDelete(sql = "UPDATE exercise SET deleted_at = NOW() WHERE id = ?") // [핵심 1]
+@Where(clause = "deleted_at is NULL") // [핵심 2]
 @Entity
 public class Exercise {
 
@@ -32,6 +37,7 @@ public class Exercise {
   @OneToMany(mappedBy = "exercise")
   private Set<ExerciseTargetMuscle> mappedMuscles = new HashSet<>();
 
+  //private LocalDateTime deletedAt;
 
   @Override
   public boolean equals(Object o) {
