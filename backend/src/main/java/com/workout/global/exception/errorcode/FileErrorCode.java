@@ -15,6 +15,7 @@ public enum FileErrorCode implements ErrorCode {
   NOT_AUTHORITY(HttpStatus.BAD_REQUEST, "권한이 없습니다."),
   FILE_STORAGE_FAILED(HttpStatus.CONFLICT, " 파일 저장에 실패했습니다"),
   FILE_DELETE_FAILED(HttpStatus.CONFLICT, "파일 삭제가 실패했습니다."),
+  FILE_DELETION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "물리적 파일 삭제에 실패했습니다."),
   FAIL_HASH(HttpStatus.CONFLICT, "hash에 실패했습니다.");
 
   private final HttpStatus httpStatus;

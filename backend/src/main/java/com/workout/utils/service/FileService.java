@@ -209,8 +209,7 @@ public class FileService {
       File file = new File(fullPath);
       if (file.exists()) {
         if (!file.delete()) {
-          log.error("Failed to delete physical file: {}", fullPath);
-          // 필요하다면 예외를 던질 수 있지만, 로깅만으로도 충분할 수 있습니다.
+          throw new RestApiException(FileErrorCode.FILE_DELETION_FAILED);
         } else {
           log.info("Physical file deleted: {}", fullPath);
         }
