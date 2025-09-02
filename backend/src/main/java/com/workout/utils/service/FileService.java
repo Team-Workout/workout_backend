@@ -4,6 +4,8 @@ import com.workout.global.exception.RestApiException;
 import com.workout.global.exception.errorcode.FileErrorCode;
 import com.workout.member.domain.Member;
 import com.workout.member.service.MemberService;
+import com.workout.pt.service.contract.PTTrainerService;
+import com.workout.trainer.service.TrainerService;
 import com.workout.utils.domain.ImagePurpose;
 import com.workout.utils.domain.UserFile;
 import com.workout.utils.dto.FileResponse;
@@ -11,23 +13,19 @@ import com.workout.utils.repository.FileRepository;
 import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-@RequiredArgsConstructor
 @Slf4j
 @Service
 public class FileService {
@@ -35,12 +33,20 @@ public class FileService {
   private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   private final MemberService memberService;
   private final FileRepository fileRepository;
-
+  private final TrainerService trainerService;
+  private final PTTrainerService ptTrainerService;
   @Value("${upload.local.dir}")
   private String uploadDir;
-
   @Value("${default.profile.image.url}")
   private String defaultProfileImageUrl;
+
+  public FileService(MemberService memberService, FileRepository fileRepository,
+      TrainerService trainerService, PTTrainerService ptTrainerService) {
+    this.memberService = memberService;
+    this.fileRepository = fileRepository;
+    this.trainerService = trainerService;
+    this.ptTrainerService = ptTrainerService;
+  }
 
   private static String getExtension(String fileName) {
     return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
@@ -65,7 +71,8 @@ public class FileService {
   }
 
   @Transactional
-  public List<FileResponse> uploadBodyImages(final MultipartFile[] files, final LocalDate dates, Long userId) {
+  public List<FileResponse> uploadBodyImages(final MultipartFile[] files, final LocalDate dates,
+      Long userId) {
     Member member = memberService.findById(userId);
 
     List<UserFile> userFilesToSave = new java.util.ArrayList<>();
@@ -79,6 +86,7 @@ public class FileService {
         .map(FileResponse::from)
         .collect(Collectors.toList());
   }
+
   @Transactional
   public FileResponse uploadProfileImage(MultipartFile file, Long userId) {
     Member member = memberService.findById(userId);
@@ -96,7 +104,8 @@ public class FileService {
     return FileResponse.from(newProfileImage);
   }
 
-  private UserFile storeAndCreateUserFile(MultipartFile file, Member member, ImagePurpose purpose, LocalDate recordDate) {
+  private UserFile storeAndCreateUserFile(MultipartFile file, Member member, ImagePurpose purpose,
+      LocalDate recordDate) {
     validateFile(file);
 
     String originalName = file.getOriginalFilename();
@@ -117,7 +126,8 @@ public class FileService {
   }
 
   // 파일 조회
-  public List<FileResponse> findBodyImagesByRecordDate(Long userId, LocalDate startDate, LocalDate endDate) {
+  public List<FileResponse> findBodyImagesByRecordDate(Long userId, LocalDate startDate,
+      LocalDate endDate) {
     Member member = memberService.findById(userId);
 
     // 새로운 Repository 메소드 호출
@@ -134,6 +144,26 @@ public class FileService {
     return Optional.ofNullable(member.getProfileImage())
         .map(userFile -> "/images/" + userFile.getStoredFileName()) // 프로필 이미지가 있으면 해당 URL 생성
         .orElse(defaultProfileImageUrl);
+  }
+
+  public Page<FileResponse> findMemberBodyImagesByTrainer(Long trainerId, Long memberId,
+      LocalDate startDate, LocalDate endDate, Pageable pageable) {
+    log.info(trainerId + ", " + memberId + ", " + startDate + ", " + endDate + ", " + pageable);
+    trainerService.findById(trainerId);
+
+    if (!ptTrainerService.isMyClient(trainerId, memberId)) {
+      throw new RestApiException(FileErrorCode.NOT_AUTHORITY);
+    }
+
+    Member member = memberService.findById(memberId);
+    if (!member.getIsOpenWorkoutRecord()) {
+      throw new RestApiException(FileErrorCode.NOT_AUTHORITY);
+    }
+
+    Page<UserFile> userFilesPage = fileRepository.findByMemberIdAndPurposeAndRecordDateBetweenOrderByRecordDateDesc(
+        memberId, ImagePurpose.BODY, startDate, endDate, pageable);
+
+    return userFilesPage.map(FileResponse::from);
   }
 
   // 파일 검증
@@ -220,5 +250,4 @@ public class FileService {
       log.error("Error deleting physical file: {}", storedFileName, e);
     }
   }
-
 }
