@@ -1,15 +1,10 @@
 package com.workout.body.domain;
 
+import com.workout.securityConverter.EncryptionConverter;
 import com.workout.member.domain.Member;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -39,11 +34,14 @@ public class BodyComposition {
   private LocalDate measurementDate;
 
   @Column(name = "weight_kg")
-  private Long weightKg;
+  @Convert(converter = EncryptionConverter.class)
+  private BigDecimal weightKg;
 
   @Column(name = "fat_kg")
-  private Long fatKg;
+  @Convert(converter = EncryptionConverter.class)
+  private BigDecimal fatKg;
 
   @Column(name = "muscle_mass_kg")
-  private Long muscleMassKg;
+  @Convert(converter = EncryptionConverter.class)
+  private BigDecimal muscleMassKg;
 }

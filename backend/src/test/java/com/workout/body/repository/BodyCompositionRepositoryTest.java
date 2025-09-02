@@ -1,25 +1,23 @@
 package com.workout.body.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.workout.body.domain.BodyComposition;
-import com.workout.member.domain.Member;
-import com.workout.member.repository.MemberRepository;
 import com.workout.gym.domain.Gym;
 import com.workout.gym.repository.GymRepository;
 import com.workout.member.domain.AccountStatus;
 import com.workout.member.domain.Gender;
+import com.workout.member.domain.Member;
 import com.workout.member.domain.Role;
-
+import com.workout.member.repository.MemberRepository;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-
-
-import java.time.LocalDate;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -86,8 +84,8 @@ class BodyCompositionRepositoryTest {
         BodyComposition body3 = BodyComposition.builder()
                 .member(Member2)
                 .measurementDate(LocalDate.now())
-                .weightKg(68L)
-                .fatKg(19L)
+                .weightKg(BigDecimal.valueOf(68.5))
+                .fatKg(BigDecimal.valueOf(19.32))
                 .muscleMassKg(48L)
                 .build();
 

@@ -1,3 +1,0 @@
-// /WorkOut/settings.gradle
-rootProject.name = 'WorkOut'
-include 'backend'
