@@ -1,22 +1,30 @@
 package com.workout.utils.service;
 
+import com.workout.global.exception.RestApiException;
+import com.workout.global.exception.errorcode.FileErrorCode;
 import com.workout.member.domain.Member;
-import com.workout.member.repository.MemberRepository;
+import com.workout.member.service.MemberService;
+import com.workout.utils.domain.ImagePurpose;
 import com.workout.utils.domain.UserFile;
 import com.workout.utils.dto.FileResponse;
 import com.workout.utils.repository.FileRepository;
-import jakarta.persistence.EntityNotFoundException;
+import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @RequiredArgsConstructor
@@ -25,10 +33,14 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileService {
 
   private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-  private final MemberRepository memberRepository;
+  private final MemberService memberService;
   private final FileRepository fileRepository;
+
   @Value("${upload.local.dir}")
   private String uploadDir;
+
+  @Value("${default.profile.image.url}")
+  private String defaultProfileImageUrl;
 
   private static String getExtension(String fileName) {
     return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
@@ -39,68 +51,107 @@ public class FileService {
     return UUID.randomUUID() + "." + extension;
   }
 
-  // 복수 파일 업로드
-  public List<FileResponse> uploadFiles(final MultipartFile[] files, Long userId) {
-    Member member = memberRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("Invalid User"));
+  @PostConstruct
+  public void init() {
+    File directory = new File(uploadDir);
+    if (!directory.exists()) {
+      boolean created = directory.mkdirs();
+      if (created) {
+        log.info("업로드 디렉토리 생성 성공: {}", uploadDir);
+      } else {
+        log.error("업로드 디렉토리 생성 실패: {}", uploadDir);
+      }
+    }
+  }
 
-    List<UserFile> userFiles = new ArrayList<>();
-    List<FileResponse> responses = new ArrayList<>();
+  @Transactional
+  public List<FileResponse> uploadBodyImages(final MultipartFile[] files, final LocalDate dates, Long userId) {
+    Member member = memberService.findById(userId);
 
-    for (MultipartFile file : files) {
-      validateFile(file);
-
-      String originalName = file.getOriginalFilename();
-      String storedName = convertFileName(originalName);
-      String fullPath = getFullPath(storedName);
-
-      UserFile userFile = UserFile.from(
-          member,
-          fullPath,
-          file.getSize(),
-          file.getContentType()
-      );
-
-      userFiles.add(userFile);
-      responses.add(new FileResponse(originalName, storedName));
-      storeFile(fullPath, file);
+    List<UserFile> userFilesToSave = new java.util.ArrayList<>();
+    for (int i = 0; i < files.length; i++) {
+      userFilesToSave.add(storeAndCreateUserFile(files[i], member, ImagePurpose.BODY, dates));
     }
 
-    fileRepository.saveAll(userFiles);
+    List<UserFile> savedFiles = fileRepository.saveAll(userFilesToSave);
 
-    return responses;
+    return savedFiles.stream()
+        .map(FileResponse::from)
+        .collect(Collectors.toList());
+  }
+  @Transactional
+  public FileResponse uploadProfileImage(MultipartFile file, Long userId) {
+    Member member = memberService.findById(userId);
+
+    // 기존 프로필 이미지 처리
+    UserFile oldProfileImage = member.getProfileImage();
+    if (oldProfileImage != null) {
+      fileRepository.delete(oldProfileImage);
+      deletePhysicalFile(oldProfileImage.getStoredFileName());
+    }
+
+    UserFile newProfileImage = storeAndCreateUserFile(file, member, ImagePurpose.PROFILE, null);
+    member.setProfileImage(newProfileImage);
+    fileRepository.save(newProfileImage);
+    return FileResponse.from(newProfileImage);
+  }
+
+  private UserFile storeAndCreateUserFile(MultipartFile file, Member member, ImagePurpose purpose, LocalDate recordDate) {
+    validateFile(file);
+
+    String originalName = file.getOriginalFilename();
+    String storedName = convertFileName(originalName);
+    String fullPath = getFullPath(storedName);
+
+    storeFile(fullPath, file);
+
+    return UserFile.from(
+        member,
+        storedName,
+        originalName,
+        file.getSize(),
+        file.getContentType(),
+        purpose,
+        recordDate
+    );
   }
 
   // 파일 조회
-  public Resource findFile(Long fileId) {
-    UserFile userFile = fileRepository.findById(fileId)
-        .orElseThrow(() -> new EntityNotFoundException("File Not Exists."));
+  public List<FileResponse> findBodyImagesByRecordDate(Long userId, LocalDate startDate, LocalDate endDate) {
+    Member member = memberService.findById(userId);
 
-    File file = new File(userFile.getFilePath());
-    if (!file.exists()) {
-      throw new EntityNotFoundException("서버에 파일이 존재하지 않습니다.");
-    }
+    // 새로운 Repository 메소드 호출
+    List<UserFile> userFiles = fileRepository.findByMemberIdAndPurposeAndRecordDateBetweenOrderByRecordDateDesc(
+        member.getId(), ImagePurpose.BODY, startDate, endDate);
 
-    return new FileSystemResource(file);
+    return userFiles.stream()
+        .map(FileResponse::from)
+        .toList();
+  }
 
+  public String findProfile(Long userId) {
+    Member member = memberService.findById(userId);
+    return Optional.ofNullable(member.getProfileImage())
+        .map(userFile -> "/images/" + userFile.getStoredFileName()) // 프로필 이미지가 있으면 해당 URL 생성
+        .orElse(defaultProfileImageUrl);
   }
 
   // 파일 검증
   private void validateFile(MultipartFile file) {
     String originalName = file.getOriginalFilename();
     if (originalName == null || !originalName.contains(".")) {
-      throw new IllegalArgumentException("Invalid fileName");
+      throw new RestApiException(FileErrorCode.INVALID_FILE_NAME);
     }
 
     String ext = getExtension(originalName);
     String contentType = file.getContentType();
 
     if (!isValidImage(ext, contentType)) {
-      throw new IllegalArgumentException("Invalid file type");
+      throw new RestApiException(FileErrorCode.INVALID_FILE_TYPE);
     }
 
     if (!isValidSize(file.getSize())) {
-      throw new IllegalArgumentException("File size exceeds limit");
+      throw new RestApiException(FileErrorCode.INVALID_FILE_SIZE);
     }
   }
 
@@ -116,7 +167,7 @@ public class FileService {
   }
 
   public String getFullPath(String storedName) {
-    return uploadDir + "/" + storedName;
+    return uploadDir + File.separator + storedName;
   }
 
   public void storeFile(String fullPath, MultipartFile file) {
@@ -126,7 +177,7 @@ public class FileService {
       boolean created = dest.getParentFile().mkdirs();
       if (!created) {
         log.error("Failed to create directory: {}", dest.getParentFile().getAbsolutePath());
-        throw new RuntimeException("Directory creation failed");
+        throw new RestApiException(FileErrorCode.FILE_STORAGE_FAILED);
       }
     }
 
@@ -139,37 +190,35 @@ public class FileService {
 
   }
 
-  public void deleteFile(Long id, Long userId) {
-    UserFile userFile = fileRepository.findById(id)
-        .orElseThrow(() -> new EntityNotFoundException("삭제할 파일을 찾을 수 없습니다."));
+  @Transactional
+  public void deleteFileById(Long fileId, Long userId) {
+    UserFile userFile = fileRepository.findById(fileId)
+        .orElseThrow(() -> new RestApiException(FileErrorCode.FILE_NOT_FOUND));
 
     if (!userFile.getMember().getId().equals(userId)) {
-      throw new SecurityException("파일을 삭제할 권한이 없습니다.");
+      throw new RestApiException(FileErrorCode.NOT_AUTHORITY);
     }
 
-    try {
+    fileRepository.delete(userFile);
+    deletePhysicalFile(userFile.getStoredFileName());
+  }
 
-      // 1. 로컬 서버 파일 삭제
-      File file = new File(userFile.getFilePath());
+  private void deletePhysicalFile(String storedFileName) {
+    try {
+      String fullPath = getFullPath(storedFileName);
+      File file = new File(fullPath);
       if (file.exists()) {
-        boolean deleted = file.delete();
-        if (!deleted) {
-          throw new IOException("파일 삭제 실패: " + file.getAbsolutePath());
+        if (!file.delete()) {
+          throw new RestApiException(FileErrorCode.FILE_DELETION_FAILED);
         } else {
-          log.info("File Delete SUCCESS : fileId={}, userId={}", id, userId);
+          log.info("Physical file deleted: {}", fullPath);
         }
       } else {
-        log.warn("File Not Exists: {}", file.getAbsolutePath());
+        log.warn("Physical file not found for deletion: {}", fullPath);
       }
-
-      // 2. DB에서 파일 메타데이터 삭제
-      fileRepository.delete(userFile);
-
     } catch (Exception e) {
-      log.error("File Delete Error : fileId={}, userId={}", id, userId, e);
-      throw new RuntimeException("파일 삭제에 실패했습니다.");
+      log.error("Error deleting physical file: {}", storedFileName, e);
     }
-
   }
 
 }

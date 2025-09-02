@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS member
 (
     id                      BIGINT AUTO_INCREMENT PRIMARY KEY,
     gym_id                  BIGINT                                   NOT NULL,
+    profile_image_id        BIGINT UNIQUE,
     name                    VARCHAR(255)                             NOT NULL,
     email                   VARCHAR(255)                             NOT NULL UNIQUE,
     password                VARCHAR(255)                             NOT NULL,
@@ -323,18 +324,24 @@ CREATE TABLE IF NOT EXISTS routine_set
     CONSTRAINT fk_rs_routine_exercise FOREIGN KEY (routine_exercise_id) REFERENCES routine_exercise (id) ON DELETE CASCADE
 );
 
--- 파일 정보 테이블
-CREATE TABLE IF NOT EXISTS files
+CREATE TABLE IF NOT EXISTS user_file
 (
-    id         BIGINT AUTO_INCREMENT PRIMARY KEY,
-    member_id  BIGINT NOT NULL,
-    file_path  VARCHAR(255),
-    file_size  BIGINT,
-    file_type  VARCHAR(255),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_files_member FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
+    id                   BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id            BIGINT                                   NOT NULL,
+    stored_file_name     VARCHAR(255)                             NOT NULL UNIQUE,
+    original_file_name   VARCHAR(255),
+    file_size            BIGINT,
+    file_type            VARCHAR(255),
+    purpose              VARCHAR(255)                             NOT NULL,
+    record_date          DATE,
+    created_at           TIMESTAMP                                NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at           TIMESTAMP                                NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user_file_member FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
 );
+
+ALTER TABLE member
+    ADD CONSTRAINT fk_member_profile_image
+        FOREIGN KEY (profile_image_id) REFERENCES user_file (id);
 
 -- 마스터 데이터 버전 관리 테이블
 CREATE TABLE IF NOT EXISTS master_data_version

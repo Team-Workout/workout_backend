@@ -1,5 +1,7 @@
 package com.workout.utils.dto;
 
+import com.workout.utils.domain.UserFile;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -10,9 +12,17 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class FileResponse {
-    // 원본 파일명
+    private Long fileId;
+    private String fileUrl;
     private String originalFileName;
-    // 저장된 파일명 (UUID 포함)
-    private String storedFileName;
+    private LocalDate recordDate;
 
+    public static FileResponse from(UserFile userFile) {
+        return new FileResponse(
+            userFile.getId(),
+            "/images/" + userFile.getStoredFileName(),
+            userFile.getOriginalFileName(),
+            userFile.getRecordDate()
+        );
+    }
 }
