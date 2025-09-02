@@ -4,9 +4,12 @@ package com.workout.utils.controller;
 import com.workout.auth.domain.UserPrincipal;
 import com.workout.utils.dto.FileResponse;
 import com.workout.utils.service.FileService;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,15 +31,45 @@ public class FileController {
   /**
    * 복수 파일 업로드
    */
-  @PostMapping("/files")
-  public ResponseEntity<List<FileResponse>> uploadMultipleFiles(
-      @RequestParam("files") MultipartFile[] files,
+  @PostMapping("/members/me/profile-image")
+  public ResponseEntity<FileResponse> uploadProfileImage(
+      @RequestParam("image") MultipartFile image,
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    Long userId = userPrincipal.getUserId();
+    FileResponse response = fileService.uploadProfileImage(image, userId);
+    return ResponseEntity.ok(response);
+  }
+
+  @PostMapping("/members/me/body-images")
+  public ResponseEntity<List<FileResponse>> uploadBodyImages(
+      @RequestParam("images") MultipartFile[] images,
+      @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+      @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    Long userId = userPrincipal.getUserId();
+    List<FileResponse> responses = fileService.uploadBodyImages(images, date, userId);
+    return ResponseEntity.ok(responses);
+  }
+
+  /**
+   * 이미지 조회
+   */
+  @GetMapping("/members/me/profile-image")
+  public ResponseEntity<Map<String, String>> getMyProfileImage(
+      @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    Long userId = userPrincipal.getUserId();
+    String profileImageUrl = fileService.findProfile(userId);
+    return ResponseEntity.ok(Map.of("profileImageUrl", profileImageUrl));
+  }
+
+  @GetMapping("/members/me/body-images")
+  public ResponseEntity<List<FileResponse>> getMyBodyImages(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
     Long userId = userPrincipal.getUserId();
-    List<FileResponse> responses = fileService.uploadFiles(files, userId);
-
-    return ResponseEntity.ok(responses);
+    List<FileResponse> bodyImages = fileService.findBodyImagesByRecordDate(userId, startDate, endDate);
+    return ResponseEntity.ok(bodyImages);
   }
 
   /**
@@ -48,19 +81,7 @@ public class FileController {
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
     Long userId = userPrincipal.getUserId();
-    fileService.deleteFile(id, userId);
+    fileService.deleteFileById(id, userId);
     return ResponseEntity.noContent().build();
   }
-
-
-  /**
-   * 이미지 조회
-   */
-  @GetMapping("/file/{id}")
-  public ResponseEntity<Resource> getFile(@PathVariable Long fileId) {
-    Resource resource = fileService.findFile(fileId);
-
-    return ResponseEntity.ok().body(resource);
-  }
-
 }
