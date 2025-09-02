@@ -31,4 +31,9 @@ public class PTTrainerService {
 
     return contractsPage.map(contract -> MemberResponse.from(contract.getMember()));
   }
+
+  public boolean isMyClient(Long trainerId, Long memberId) {
+    return ptContractRepository.existsByTrainerIdAndMemberIdAndStatus(trainerId, memberId,
+        PTContractStatus.ACTIVE);
+  }
 }
