@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS member
     -- BaseEntity 필드
     created_at              TIMESTAMP                                NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at              TIMESTAMP                                NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at              DATETIME(6)  DEFAULT NULL,
     CONSTRAINT fk_member_gym FOREIGN KEY (gym_id) REFERENCES gym (id)
 );
 
@@ -203,7 +204,8 @@ CREATE TABLE IF NOT EXISTS pt_appointment_change_request
 CREATE TABLE IF NOT EXISTS exercise
 (
     id   BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL UNIQUE
+    name VARCHAR(255) NOT NULL UNIQUE,
+    deleted_at DATETIME(6) DEFAULT NULL
 );
 
 -- 운동 일지 테이블

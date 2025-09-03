@@ -22,7 +22,7 @@ import org.hibernate.annotations.Where;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@SQLDelete(sql = "UPDATE exercise SET deleted_at = NOW() WHERE id = ?") // [핵심 1]
+@SQLDelete(sql = "UPDATE exercise SET deleted_at = NOW() WHERE id = ?")
 @Where(clause = "deleted_at is NULL") // [핵심 2]
 @Entity
 public class Exercise {
