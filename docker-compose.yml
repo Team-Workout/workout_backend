@@ -1,6 +1,5 @@
 
 # docker-compose.yml
-version: "3.8"
 
 services:
   nginx:
@@ -10,6 +9,7 @@ services:
       - "80:80"
     volumes:
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./uploads:/usr/share/nginx/html/images:ro
     networks:
       - my-network
     depends_on:
@@ -18,7 +18,7 @@ services:
   spring-app:
     build: .
     container_name: my-spring-app
-    env_file: [".env"]
+    env_file: [ ".env" ]
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - UPLOAD_DIR=/uploads/
@@ -27,23 +27,29 @@ services:
     networks:
       - my-network
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   mysql:
     image: mysql:8.0
     container_name: my-mysql
-    env_file: [".env"]
+    env_file: [ ".env" ]
     environment:
       - MYSQL_DATABASE=workout-db
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
-      - MYSQL_USER=${DB_USERNAME}
-      - MYSQL_PASSWORD=${DB_PASSWORD}
       - TZ=Asia/Seoul
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
       - my-network
+    # [추가] mysql 서비스가 정말 준비되었는지 확인하는 healthcheck 옵션
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "${DB_USERNAME}", "-p${DB_PASSWORD}" ]
+      interval: 10s # 10초마다 체크
+      timeout: 5s   # 5초 이상 응답 없으면 실패
+      retries: 5    # 5번 재시도
 
   redis:
     image: redis:7.0-alpine
