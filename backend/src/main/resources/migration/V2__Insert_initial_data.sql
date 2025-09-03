@@ -30,17 +30,17 @@ ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 -- ########## 4. 운동-타겟 근육 관계 데이터 (exercise_target_muscle) ##########
 INSERT INTO exercise_target_muscle (exercise_id, target_muscle_id, muscle_role)
-VALUES (1, 1, 'MAIN'), (1, 3, 'SECONDARY'), (1, 5, 'SECONDARY'),
-       (2, 1, 'MAIN'), (2, 3, 'SECONDARY'), (2, 5, 'SECONDARY'),
-       (3, 1, 'MAIN'), (3, 3, 'SECONDARY'), (4, 1, 'MAIN'), (4, 5, 'MAIN'),
-       (5, 1, 'MAIN'), (5, 5, 'SECONDARY'), (5, 7, 'SECONDARY'),
-       (6, 2, 'MAIN'), (6, 4, 'SECONDARY'), (7, 2, 'MAIN'), (7, 4, 'SECONDARY'),
-       (8, 2, 'MAIN'), (8, 4, 'SECONDARY'), (9, 2, 'MAIN'), (9, 8, 'MAIN'), (9, 10, 'MAIN'),
-       (10, 3, 'MAIN'), (10, 5, 'SECONDARY'), (11, 3, 'MAIN'), (12, 3, 'MAIN'),
-       (13, 9, 'MAIN'), (13, 8, 'MAIN'), (13, 10, 'SECONDARY'),
-       (14, 9, 'MAIN'), (14, 8, 'MAIN'), (15, 9, 'MAIN'), (15, 8, 'MAIN'),
-       (16, 4, 'MAIN'), (17, 4, 'MAIN'), (18, 5, 'MAIN'), (19, 5, 'MAIN'),
-       (20, 7, 'MAIN'), (21, 7, 'MAIN')
+VALUES (1, 1, 'PRIMARY'), (1, 3, 'SECONDARY'), (1, 5, 'SECONDARY'),
+       (2, 1, 'PRIMARY'), (2, 3, 'SECONDARY'), (2, 5, 'SECONDARY'),
+       (3, 1, 'PRIMARY'), (3, 3, 'SECONDARY'), (4, 1, 'PRIMARY'), (4, 5, 'PRIMARY'),
+       (5, 1, 'PRIMARY'), (5, 5, 'SECONDARY'), (5, 7, 'SECONDARY'),
+       (6, 2, 'PRIMARY'), (6, 4, 'SECONDARY'), (7, 2, 'PRIMARY'), (7, 4, 'SECONDARY'),
+       (8, 2, 'PRIMARY'), (8, 4, 'SECONDARY'), (9, 2, 'PRIMARY'), (9, 8, 'PRIMARY'), (9, 10, 'PRIMARY'),
+       (10, 3, 'PRIMARY'), (10, 5, 'SECONDARY'), (11, 3, 'PRIMARY'), (12, 3, 'PRIMARY'),
+       (13, 9, 'PRIMARY'), (13, 8, 'PRIMARY'), (13, 10, 'SECONDARY'),
+       (14, 9, 'PRIMARY'), (14, 8, 'PRIMARY'), (15, 9, 'PRIMARY'), (15, 8, 'PRIMARY'),
+       (16, 4, 'PRIMARY'), (17, 4, 'PRIMARY'), (18, 5, 'PRIMARY'), (19, 5, 'PRIMARY'),
+       (20, 7, 'PRIMARY'), (21, 7, 'PRIMARY')
 ON DUPLICATE KEY UPDATE muscle_role = VALUES(muscle_role);
 
 
