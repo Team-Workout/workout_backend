@@ -80,15 +80,11 @@ jacoco.exec
 # Spring 설정(로컬/민감정보)
 # 공개 저장소: 샘플만 커밋하고 실제 값은 무시
 # ----------------------------
+# [수정] application-*.yml 패턴 대신, 민감 정보가 포함될 가능성이 있는
+# 로컬 개발, 스테이징, 운영 환경의 프로필만 명시적으로 무시합니다.
 src/main/resources/application-local.yml
-src/main/resources/application-dev.yml
 src/main/resources/application-staging.yml
 src/main/resources/application-prod.yml
-src/main/resources/application-*.properties
-src/main/resources/application-*.yml
-# 예시는 허용
-!src/main/resources/application-example.yml
-!src/main/resources/application-example.properties
 
 # ----------------------------
 # 환경 변수 파일
@@ -124,5 +120,7 @@ src/main/resources/application-*.yml
 # ----------------------------
 uploads/
 .cache/
-backend/src/main/resources/application.yml
 
+.env
+.env.*
+!.env.sample
