@@ -39,9 +39,9 @@ CREATE TABLE IF NOT EXISTS body_composition
     id               BIGINT AUTO_INCREMENT PRIMARY KEY,
     member_id        BIGINT NOT NULL,
     measurement_date DATE   NOT NULL,
-    weight_kg        BIGINT,
-    fat_kg           BIGINT,
-    muscle_mass_kg   BIGINT,
+    weight_kg        varchar(255),
+    fat_kg           varchar(255),
+    muscle_mass_kg   varchar(255),
     CONSTRAINT fk_body_composition_member FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
 );
 
