@@ -65,16 +65,14 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           # 서버에서 실행할 명령어들
           script: |
-            # 1. 프로젝트 폴더로 이동합니다.
+            # 프로젝트 폴더로 이동합니다.
             cd ~/Documents/GitHub/workout_backend
 
-            # 2. Docker Hub에서 최신 버전의 spring-app 이미지를 받아옵니다. (가장 중요한 부분)
-            # docker-compose.yml에 정의된 서비스 이름을 사용해야 합니다.
-            docker-compose pull spring-app
+            # Docker Hub에서 최신 버전의 spring-app 이미지를 받아옵니다.
+            /usr/local/bin/docker-compose pull spring-app
 
-            # 3. 새로운 이미지로 컨테이너를 다시 시작합니다.
-            # -d 옵션은 백그라운드에서 실행하라는 의미입니다.
-            docker-compose up -d
+            # 새로운 이미지로 컨테이너를 다시 시작합니다.
+            /usr/local/bin/docker-compose up -d
 
-            # 4. (선택사항) 불필요하게 남은 이전 버전의 Docker 이미지들을 삭제하여 서버 용량을 확보합니다.
-            docker image prune -f
+            # 불필요하게 남은 이전 버전의 Docker 이미지들을 삭제합니다.
+            /usr/local/bin/docker image prune -f
