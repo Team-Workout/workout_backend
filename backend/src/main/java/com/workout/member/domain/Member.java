@@ -22,11 +22,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.util.Objects;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Entity
@@ -74,6 +71,7 @@ public class Member extends BaseEntity {
   @Column(name = "role", insertable = false, updatable = false)
   private Role role;
 
+  @Builder.Default
   private Boolean isOpenWorkoutRecord = false;
 
   public void setProfileImage(UserFile profileImage) {
