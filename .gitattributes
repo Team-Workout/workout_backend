@@ -1,0 +1,7 @@
+# 모든 텍스트 파일은 기본적으로 Git이 알아서 처리하도록 설정
+* text=auto
+
+# 아래 파일들은 어떤 OS에서든 항상 Unix 스타일(LF) 줄 바꿈을 사용하도록 강제
+gradlew text eol=lf
+gradlew.bat text eol=crlf
+*.sh text eol=lf
