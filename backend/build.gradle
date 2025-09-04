@@ -23,18 +23,6 @@ configurations {
 	}
 }
 
-sourceSets {
-	main {
-		resources {
-			srcDirs "src/main/resources"
-		}
-	}
-}
-
-processResources {
-	duplicatesStrategy = DuplicatesStrategy.INCLUDE
-}
-
 dependencies {
 	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter-web'
