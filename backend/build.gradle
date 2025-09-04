@@ -23,6 +23,14 @@ configurations {
 	}
 }
 
+sourceSets {
+	main {
+		resources {
+			srcDirs "src/main/resources"
+		}
+	}
+}
+
 processResources {
 	duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
