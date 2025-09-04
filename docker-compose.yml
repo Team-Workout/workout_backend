@@ -16,7 +16,8 @@ services:
       - spring-app
 
   spring-app:
-    build: .
+    #build: .
+    image: ${{APP_IMAGE:-kkddong98/workout_backend:latest}}
     container_name: my-spring-app
     env_file: [ ".env" ]
     environment:
