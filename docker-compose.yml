@@ -24,6 +24,7 @@ services:
       - UPLOAD_DIR=/uploads/
     volumes:
       - ./uploads:/uploads
+      - ./logs:/app/logs
     networks:
       - my-network
     depends_on:
