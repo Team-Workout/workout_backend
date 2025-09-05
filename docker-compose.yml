@@ -23,6 +23,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - UPLOAD_DIR=/uploads/
+      - TZ=Asia/Seoul
     volumes:
       - ./uploads:/uploads
       - ./logs:/app/logs
