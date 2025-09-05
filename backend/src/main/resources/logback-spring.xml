@@ -1,14 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-  <conversionRule conversionWord="traceId" converterClass="org.springframework.cloud.sleuth.instrument.logging.TraceIdConverter" />
+  <conversionRule conversionWord="traceId" class="org.springframework.cloud.sleuth.instrument.logging.TraceIdConverter" />
 
   <property name="LOG_DIR" value="/app/logs" />
 
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
     <encoder class="net.logstash.logback.encoder.LogstashEncoder">
       <timestampPattern>yyyy-MM-dd HH:mm:ss.SSS</timestampPattern>
-      <includeVersion>false</includeVersion>
+      <jsonProviders>
+        <timestamp>
+          <pattern>${timestampPattern}</pattern>
+        </timestamp>
+        <logLevel/>
+        <loggerName/>
+        <threadName/>
+        <mdc/> <message/>
+        <stackTrace/>
+      </jsonProviders>
     </encoder>
   </appender>
 
@@ -20,7 +29,17 @@
     </rollingPolicy>
     <encoder class="net.logstash.logback.encoder.LogstashEncoder">
       <timestampPattern>yyyy-MM-dd HH:mm:ss.SSS</timestampPattern>
-      <includeVersion>false</includeVersion>
+      <jsonProviders>
+        <timestamp>
+          <pattern>${timestampPattern}</pattern>
+        </timestamp>
+        <logLevel/>
+        <loggerName/>
+        <threadName/>
+        <mdc/>
+        <message/>
+        <stackTrace/>
+      </jsonProviders>
     </encoder>
   </appender>
 

@@ -4,8 +4,6 @@ import com.workout.global.exception.RestApiException;
 import com.workout.global.exception.errorcode.FileErrorCode;
 import com.workout.member.domain.Member;
 import com.workout.member.service.MemberService;
-import com.workout.pt.service.contract.PTTrainerService;
-import com.workout.trainer.service.TrainerService;
 import com.workout.utils.domain.ImagePurpose;
 import com.workout.utils.domain.UserFile;
 import com.workout.utils.dto.FileResponse;
@@ -35,19 +33,15 @@ public class FileService {
   private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   private final MemberService memberService;
   private final FileRepository fileRepository;
-  private final TrainerService trainerService;
-  private final PTTrainerService ptTrainerService;
+
   @Value("${upload.local.dir}")
   private String uploadDir;
   @Value("${default.profile.image.url}")
   private String defaultProfileImageUrl;
 
-  public FileService(MemberService memberService, FileRepository fileRepository,
-      TrainerService trainerService, PTTrainerService ptTrainerService) {
+  public FileService(MemberService memberService, FileRepository fileRepository) {
     this.memberService = memberService;
     this.fileRepository = fileRepository;
-    this.trainerService = trainerService;
-    this.ptTrainerService = ptTrainerService;
   }
 
   private static String getExtension(String fileName) {
@@ -166,7 +160,7 @@ public class FileService {
         ));
   }
 
-  public Page<FileResponse> findMemberBodyImagesByTrainer(Long trainerId, Long memberId,
+  /*public Page<FileResponse> findMemberBodyImagesByTrainer(Long trainerId, Long memberId,
       LocalDate startDate, LocalDate endDate, Pageable pageable) {
     log.info(trainerId + ", " + memberId + ", " + startDate + ", " + endDate + ", " + pageable);
     trainerService.findById(trainerId);
@@ -184,6 +178,11 @@ public class FileService {
         memberId, ImagePurpose.BODY, startDate, endDate, pageable);
 
     return userFilesPage.map(FileResponse::from);
+  }*/
+  public Page<UserFile> findBodyImagesByMember(Long memberId, LocalDate startDate,
+      LocalDate endDate, Pageable pageable) {
+    return fileRepository.findByMemberIdAndPurposeAndRecordDateBetweenOrderByRecordDateDesc(
+        memberId, ImagePurpose.BODY, startDate, endDate, pageable);
   }
 
   // 파일 검증
