@@ -59,10 +59,18 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          # 4. 스크립트에서 환경 변수를 설정하여 docker-compose가 새 이미지 태그를 사용하도록 합니다.
           script: |
+            # 1. CI 잡에서 전달받은 이미지 태그로 환경 변수를 설정합니다.
             export APP_IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ needs.build-and-push.outputs.IMAGE_TAG }}"
+
+            # 2. 프로젝트 폴더로 이동합니다.
             cd ~/Documents/GitHub/workout_backend
+            
+            # 3. docker-compose.yml 등 최신 설정 파일을 받아옵니다.
             git pull origin main
-            /usr/local/bin/docker-compose up -d
+            
+            # 4. (변경) --force-recreate 옵션을 추가하여 모든 컨테이너를 강제로 다시 만듭니다.
+            /usr/local/bin/docker-compose up -d --force-recreate
+            
+            # 5. 사용하지 않는 이전 버전의 이미지를 정리합니다.
             /usr/local/bin/docker image prune -f

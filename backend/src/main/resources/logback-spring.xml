@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
+  <conversionRule conversionWord="traceId" converterClass="org.springframework.cloud.sleuth.instrument.logging.TraceIdConverter" />
+
   <property name="LOG_DIR" value="/app/logs" />
 
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <timestampPattern>yyyy-MM-dd HH:mm:ss.SSS</timestampPattern>
+      <includeVersion>false</includeVersion>
+    </encoder>
   </appender>
 
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -13,7 +18,10 @@
       <fileNamePattern>${LOG_DIR}/app.%d{yyyy-MM-dd}.log</fileNamePattern>
       <maxHistory>30</maxHistory>
     </rollingPolicy>
-    <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <timestampPattern>yyyy-MM-dd HH:mm:ss.SSS</timestampPattern>
+      <includeVersion>false</includeVersion>
+    </encoder>
   </appender>
 
   <root level="INFO">

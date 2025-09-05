@@ -25,6 +25,16 @@ public interface TrainerRepository extends JpaRepository<Trainer, Long> {
       "WHERE t.id = :trainerId")
   Optional<Trainer> findByIdWithDetails(@Param("trainerId") Long trainerId);
 
+  @Query("SELECT DISTINCT t FROM Trainer t " +
+      "LEFT JOIN FETCH t.awards " +
+      "LEFT JOIN FETCH t.certifications " +
+      "LEFT JOIN FETCH t.educations " +
+      "LEFT JOIN FETCH t.workexperiences " +
+      "LEFT JOIN FETCH t.trainerSpecialties ts " +
+      "LEFT JOIN FETCH ts.specialty " +
+      "WHERE t.id IN :trainerIds")
+  List<Trainer> findByIdInWithDetails(@Param("trainerIds") List<Long> trainerIds);
+
 
   Page<Trainer> findAllByGymId(Long gymId, Pageable pageable);
 }
