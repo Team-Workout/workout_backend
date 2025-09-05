@@ -1,8 +1,15 @@
 package com.workout.trainer.service;
 
 import com.workout.global.exception.RestApiException;
+import com.workout.global.exception.errorcode.FileErrorCode;
 import com.workout.global.exception.errorcode.MemberErrorCode;
 import com.workout.global.exception.errorcode.ProfileErrorCode;
+import com.workout.member.domain.Member;
+import com.workout.member.service.MemberService;
+import com.workout.pt.domain.contract.PTContract;
+import com.workout.pt.domain.contract.PTContractStatus;
+import com.workout.pt.dto.response.ClientListResponse.MemberResponse;
+import com.workout.pt.repository.PTContractRepository;
 import com.workout.trainer.domain.Award;
 import com.workout.trainer.domain.Certification;
 import com.workout.trainer.domain.Education;
@@ -20,9 +27,11 @@ import com.workout.trainer.repository.TrainerRepository;
 import com.workout.trainer.repository.TrainerSpecialtyRepository;
 import com.workout.trainer.repository.WorkexperiencesRepository;
 import com.workout.utils.domain.UserFile;
+import com.workout.utils.dto.FileResponse;
 import com.workout.utils.service.FileService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,13 +52,16 @@ public class TrainerService {
   private final SpecialtyRepository specialtyRepository;
   private final TrainerSpecialtyRepository trainerSpecialtyRepository;
   private final FileService fileService;
+  private final MemberService memberService;
+  private final PTContractRepository ptContractRepository;
+
 
   public TrainerService(
       TrainerRepository trainerRepository, AwardRepository awardRepository,
       CertificationRepository certificationRepository, EducationRepository educationRepository,
       WorkexperiencesRepository workexperiencesRepository, SpecialtyRepository specialtyRepository,
-      TrainerSpecialtyRepository trainerSpecialtyRepository, FileService fileService
-  ) {
+      TrainerSpecialtyRepository trainerSpecialtyRepository, FileService fileService,
+      MemberService memberService, PTContractRepository ptContractRepository) {
     this.trainerRepository = trainerRepository;
     this.awardRepository = awardRepository;
     this.certificationRepository = certificationRepository;
@@ -58,6 +70,8 @@ public class TrainerService {
     this.specialtyRepository = specialtyRepository;
     this.trainerSpecialtyRepository = trainerSpecialtyRepository;
     this.fileService = fileService;
+    this.memberService = memberService;
+    this.ptContractRepository = ptContractRepository;
   }
 
   public ProfileResponseDto getProfile(Long trainerId) {
@@ -235,7 +249,8 @@ public class TrainerService {
     String profileImageUri = trainer.getProfileImageUri();
 
     // 3. URI가 유효하고, 기본 이미지가 아닐 경우에만 물리적 파일 삭제
-    if (profileImageUri != null && !profileImageUri.equals(fileService.getDefaultProfileImageUrl())) {
+    if (profileImageUri != null && !profileImageUri.equals(
+        fileService.getDefaultProfileImageUrl())) {
       fileService.deleteProfileImageFile(profileImageUri);
     }
 
@@ -329,5 +344,43 @@ public class TrainerService {
   public Trainer findById(Long userId) {
     return trainerRepository.findById(userId)
         .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
+  }
+
+
+  public Page<FileResponse> findMemberBodyImagesByTrainer(Long trainerId, Long memberId,
+      LocalDate startDate, LocalDate endDate, Pageable pageable) {
+
+    findById(trainerId);
+
+    if (!this.isMyClient(trainerId, memberId)) { // isMyClient는 PTTrainerService 자신의 메소드
+      throw new RestApiException(FileErrorCode.NOT_AUTHORITY);
+    }
+
+    Member member = memberService.findById(memberId);
+
+    if (!member.getIsOpenWorkoutRecord()) {
+      throw new RestApiException(FileErrorCode.NOT_AUTHORITY);
+    }
+
+    // 2. 데이터 조회 위임
+    Page<UserFile> userFilesPage = fileService.findBodyImagesByMember(
+        memberId, startDate, endDate, pageable);
+
+    return userFilesPage.map(FileResponse::from);
+  }
+
+  public Page<MemberResponse> findMyClients(Long trainerId, Pageable pageable) {
+
+    findById(trainerId);
+
+    Page<PTContract> contractsPage = ptContractRepository
+        .findByTrainerIdAndStatus(trainerId, PTContractStatus.ACTIVE, pageable);
+
+    return contractsPage.map(contract -> MemberResponse.from(contract.getMember()));
+  }
+
+  public boolean isMyClient(Long trainerId, Long memberId) {
+    return ptContractRepository.existsByTrainerIdAndMemberIdAndStatus(trainerId, memberId,
+        PTContractStatus.ACTIVE);
   }
 }
