@@ -4,11 +4,11 @@ import com.workout.auth.domain.UserPrincipal;
 import com.workout.body.dto.BodyCompositionResponse;
 import com.workout.body.service.BodyCompositionService;
 import com.workout.global.dto.ApiResponse;
+import com.workout.pt.service.contract.PTTrainerService;
 import com.workout.trainer.dto.ProfileCreateDto;
 import com.workout.trainer.dto.ProfileResponseDto;
 import com.workout.trainer.service.TrainerService;
 import com.workout.utils.dto.FileResponse;
-import com.workout.utils.service.FileService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
@@ -31,14 +31,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class TrainerController {
 
   private final TrainerService trainerService;
-  private final FileService fileService;
   private final BodyCompositionService bodyCompositionService;
+  private final PTTrainerService ptTrainerService; // <-- PTTrainerService 주입 추가
 
-  public TrainerController(TrainerService trainerService,
-      FileService fileService, BodyCompositionService bodyCompositionService) {
+  public TrainerController(TrainerService trainerService, PTTrainerService ptTrainerService,
+      BodyCompositionService bodyCompositionService) {
     this.trainerService = trainerService;
-    this.fileService = fileService;
     this.bodyCompositionService = bodyCompositionService;
+    this.ptTrainerService = ptTrainerService;
   }
 
   /**
@@ -89,7 +89,8 @@ public class TrainerController {
       Pageable pageable) {
 
     Long trainerId = userPrincipal.getUserId();
-    Page<FileResponse> bodyImagesPage = trainerService.findMemberBodyImagesByTrainer(trainerId, memberId, startDate, endDate, pageable);
+    Page<FileResponse> bodyImagesPage = ptTrainerService.findMemberBodyImagesByTrainer(trainerId,
+        memberId, startDate, endDate, pageable);
 
     return ResponseEntity.ok(ApiResponse.of(bodyImagesPage));
   }
@@ -103,7 +104,8 @@ public class TrainerController {
       Pageable pageable) {
 
     Long trainerId = userPrincipal.getUserId();
-    Page<BodyCompositionResponse> bodyInfoPage = bodyCompositionService.findDataByTrainer(trainerId, memberId, startDate, endDate, pageable);
+    Page<BodyCompositionResponse> bodyInfoPage = bodyCompositionService.findDataByTrainer(trainerId,
+        memberId, startDate, endDate, pageable);
 
     return ResponseEntity.ok(ApiResponse.of(bodyInfoPage));
   }
