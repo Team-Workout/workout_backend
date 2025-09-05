@@ -4,7 +4,6 @@ import com.workout.auth.domain.UserPrincipal;
 import com.workout.body.dto.BodyCompositionResponse;
 import com.workout.body.service.BodyCompositionService;
 import com.workout.global.dto.ApiResponse;
-import com.workout.pt.service.contract.PTTrainerService;
 import com.workout.trainer.dto.ProfileCreateDto;
 import com.workout.trainer.dto.ProfileResponseDto;
 import com.workout.trainer.service.TrainerService;
@@ -32,13 +31,11 @@ public class TrainerController {
 
   private final TrainerService trainerService;
   private final BodyCompositionService bodyCompositionService;
-  private final PTTrainerService ptTrainerService; // <-- PTTrainerService 주입 추가
 
-  public TrainerController(TrainerService trainerService, PTTrainerService ptTrainerService,
+  public TrainerController(TrainerService trainerService,
       BodyCompositionService bodyCompositionService) {
     this.trainerService = trainerService;
     this.bodyCompositionService = bodyCompositionService;
-    this.ptTrainerService = ptTrainerService;
   }
 
   /**
@@ -89,7 +86,7 @@ public class TrainerController {
       Pageable pageable) {
 
     Long trainerId = userPrincipal.getUserId();
-    Page<FileResponse> bodyImagesPage = ptTrainerService.findMemberBodyImagesByTrainer(trainerId,
+    Page<FileResponse> bodyImagesPage = trainerService.findMemberBodyImagesByTrainer(trainerId,
         memberId, startDate, endDate, pageable);
 
     return ResponseEntity.ok(ApiResponse.of(bodyImagesPage));

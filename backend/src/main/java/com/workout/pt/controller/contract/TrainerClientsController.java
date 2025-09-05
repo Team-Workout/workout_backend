@@ -3,7 +3,7 @@ package com.workout.pt.controller.contract;
 import com.workout.auth.domain.UserPrincipal;
 import com.workout.global.dto.ApiResponse;
 import com.workout.pt.dto.response.ClientListResponse.MemberResponse;
-import com.workout.pt.service.contract.PTTrainerService;
+import com.workout.trainer.service.TrainerService;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/trainer/clients")
 public class TrainerClientsController {
 
-  private final PTTrainerService ptTrainerService;
+  private final TrainerService trainerService;
 
-  public TrainerClientsController(PTTrainerService ptTrainerService) {
-    this.ptTrainerService = ptTrainerService;
+  public TrainerClientsController(TrainerService trainerService) {
+    this.trainerService = trainerService;
   }
 
   /**
@@ -32,7 +32,7 @@ public class TrainerClientsController {
       Pageable pageable
   ) {
     Long trainerId = trainerUser.getUserId();
-    Page<MemberResponse> clientsPage = ptTrainerService.findMyClients(trainerId, pageable);
+    Page<MemberResponse> clientsPage = trainerService.findMyClients(trainerId, pageable);
 
     return ResponseEntity.ok(ApiResponse.of(clientsPage));
   }

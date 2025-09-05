@@ -10,7 +10,6 @@ import com.workout.global.exception.errorcode.FileErrorCode;
 import com.workout.global.exception.errorcode.MemberErrorCode;
 import com.workout.member.domain.Member;
 import com.workout.member.service.MemberService;
-import com.workout.pt.service.contract.PTTrainerService;
 import com.workout.trainer.service.TrainerService;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
@@ -25,15 +24,12 @@ import org.springframework.stereotype.Service;
 public class BodyCompositionService {
 
   private final BodyCompositionRepository bodyCompositionRepository;
-  private final PTTrainerService ptTrainerService;
   private final TrainerService trainerService;
   private final MemberService memberService;
 
   public BodyCompositionService(BodyCompositionRepository bodyCompositionRepository,
-      PTTrainerService ptTrainerService, TrainerService trainerService,
-      MemberService memberService) {
+      TrainerService trainerService, MemberService memberService) {
     this.bodyCompositionRepository = bodyCompositionRepository;
-    this.ptTrainerService = ptTrainerService;
     this.trainerService = trainerService;
     this.memberService = memberService;
   }
@@ -101,7 +97,7 @@ public class BodyCompositionService {
       LocalDate startDate, LocalDate endDate, Pageable pageable) {
     trainerService.findById(trainerId);
 
-    if (!ptTrainerService.isMyClient(trainerId, memberId)) {
+    if (!trainerService.isMyClient(trainerId, memberId)) {
       throw new RestApiException(MemberErrorCode.NOT_YOUR_CLIENT); // 더 명확한 에러 코드를 사용
     }
 
