@@ -352,7 +352,7 @@ public class TrainerService {
 
     findById(trainerId);
 
-    if (!this.isMyClient(trainerId, memberId)) { // isMyClient는 PTTrainerService 자신의 메소드
+    if (!this.isMyClient(trainerId, memberId)) {
       throw new RestApiException(FileErrorCode.NOT_AUTHORITY);
     }
 
