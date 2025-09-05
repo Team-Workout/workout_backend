@@ -11,10 +11,10 @@ import java.util.Set;
 
 public record ProfileCreateDto(
     String introduction,
-    List<AwardDto> awards,
-    List<CertificationDto> certifications,
-    List<EducationDto> educations,
-    List<WorkExperienceDto> workExperiences,
+    Set<AwardDto> awards,
+    Set<CertificationDto> certifications,
+    Set<EducationDto> educations,
+    Set<WorkExperienceDto> workExperiences,
     Set<String> specialties // 누락된 필드 추가
 ) {
 
