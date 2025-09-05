@@ -107,7 +107,7 @@ public class TrainerService {
     handleSpecialties(trainer, requestDto.specialties());
   }
 
-  private void updateAwards(Trainer trainer, List<ProfileCreateDto.AwardDto> awardDtos) {
+  private void updateAwards(Trainer trainer, Set<ProfileCreateDto.AwardDto> awardDtos) {
     // 1. [기존 데이터 조회]
     List<Award> existingAwards = awardRepository.findAllByTrainerId(trainer.getId());
 
@@ -144,7 +144,7 @@ public class TrainerService {
   }
 
   private void updateCertifications(Trainer trainer,
-      List<ProfileCreateDto.CertificationDto> certificationDtos) {
+      Set<ProfileCreateDto.CertificationDto> certificationDtos) {
     // 1. [기존 데이터 조회]
     List<Certification> existingCertifications = certificationRepository.findAllByTrainerId(
         trainer.getId());
@@ -176,7 +176,7 @@ public class TrainerService {
     }
   }
 
-  public void updateEducations(Trainer trainer, List<ProfileCreateDto.EducationDto> educationDtos) {
+  public void updateEducations(Trainer trainer, Set<ProfileCreateDto.EducationDto> educationDtos) {
     // 1. [기존 데이터 조회]
     List<Education> existingEducations = educationRepository.findAllByTrainerId(trainer.getId());
 
@@ -208,7 +208,7 @@ public class TrainerService {
   }
 
   public void updateWorkexperiences(Trainer trainer,
-      List<ProfileCreateDto.WorkExperienceDto> workExperienceDtos) {
+      Set<ProfileCreateDto.WorkExperienceDto> workExperienceDtos) {
     // 1. [기존 데이터 조회]
     List<Workexperience> existingWorkexperiences = workexperiencesRepository.findAllByTrainerId(
         trainer.getId());
