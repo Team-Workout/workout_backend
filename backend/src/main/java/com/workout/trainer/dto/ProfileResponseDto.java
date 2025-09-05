@@ -16,15 +16,18 @@ public record ProfileResponseDto(
     String name,
     String email,
     String introduction,
+    String profileImageUrl,
     Set<AwardDto> awards,
     Set<CertificationDto> certifications,
     Set<EducationDto> educations,
     Set<WorkExperienceDto> workExperiences,
     Set<String> specialties
 ) {
+/*
 
   public static ProfileResponseDto from(
       Trainer trainer,
+      String profileImageUrl,
       Set<Award> awards,
       Set<Certification> certifications,
       Set<Education> educations,
@@ -36,6 +39,7 @@ public record ProfileResponseDto(
         trainer.getName(),
         trainer.getEmail(),
         trainer.getIntroduction(),
+        profileImageUrl,
         awards.stream().map(AwardDto::from).collect(Collectors.toSet()),
         certifications.stream().map(CertificationDto::from).collect(Collectors.toSet()),
         educations.stream().map(EducationDto::from).collect(Collectors.toSet()),
@@ -45,8 +49,9 @@ public record ProfileResponseDto(
             .collect(Collectors.toSet())
     );
   }
+*/
 
-  public static ProfileResponseDto fromEntity(Trainer trainer) {
+  public static ProfileResponseDto fromEntity(Trainer trainer, String profileImageUrl) {
     if (trainer == null) {
       return null;
     }
@@ -76,6 +81,7 @@ public record ProfileResponseDto(
         trainer.getName(),
         trainer.getEmail(),
         trainer.getIntroduction(),
+        profileImageUrl,
         awardDtos,
         certificationDtos,
         educationDtos,

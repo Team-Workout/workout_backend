@@ -7,14 +7,17 @@ public record SigninResponse(
     Long id,
     String name,
     Long gymId,
-    Role role
+    Role role,
+    String profileImageUrl
 ) {
 
-  public static SigninResponse from(Member member) {
+  public static SigninResponse from(Member member, String profileImageUrl) {
     return new SigninResponse(
         member.getId(),
         member.getName(),
         member.getGym().getId(),
-        member.getRole());
+        member.getRole(),
+        profileImageUrl
+    );
   }
 }
