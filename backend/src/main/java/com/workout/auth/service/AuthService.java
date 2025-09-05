@@ -73,6 +73,7 @@ public class AuthService {
     if (role == Role.MEMBER) {
       Member member = signupRequest.toMemberEntity(gym, encodedPassword);
       member.setIsOpenWorkoutRecord(false);
+      member.setIsOpenBodyImg(false);
       return memberRepository.save(member).getId();
     } else if (role == Role.TRAINER) {
       Trainer trainer = signupRequest.toTrainerEntity(gym, encodedPassword);

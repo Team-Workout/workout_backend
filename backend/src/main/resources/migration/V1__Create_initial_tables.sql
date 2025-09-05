@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS member
     account_status          VARCHAR(255)                             NOT NULL,
     role                    VARCHAR(31)                              NOT NULL,
     is_open_workout_record  BOOLEAN                                  DEFAULT FALSE,
+    is_open_body_img  BOOLEAN                                  DEFAULT FALSE,
     -- Trainer 전용 필드
     phone_number            VARCHAR(255),
     introduction            TEXT,

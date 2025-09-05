@@ -89,7 +89,7 @@ public class TrainerController {
       Pageable pageable) {
 
     Long trainerId = userPrincipal.getUserId();
-    Page<FileResponse> bodyImagesPage = fileService.findMemberBodyImagesByTrainer(trainerId, memberId, startDate, endDate, pageable);
+    Page<FileResponse> bodyImagesPage = trainerService.findMemberBodyImagesByTrainer(trainerId, memberId, startDate, endDate, pageable);
 
     return ResponseEntity.ok(ApiResponse.of(bodyImagesPage));
   }

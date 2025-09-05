@@ -40,6 +40,22 @@ public class MemberController {
     return ResponseEntity.noContent().build();
   }
 
+  @PutMapping("/me/settings/body-img-access") // 리소스 경로를 더 명확하게 지정
+  public ResponseEntity<Void> updateBodyImgAccessSettings(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @Valid @RequestBody WorkoutLogSettingsDto settingsDto) {
+
+    Long currentUserId = userPrincipal.getUserId();
+
+    if (settingsDto.isOpenWorkoutRecord()) {
+      memberService.allowAccessBodyImg(currentUserId);
+    } else {
+      memberService.forbidAccessBodyImg(currentUserId);
+    }
+
+    return ResponseEntity.noContent().build();
+  }
+
   @GetMapping("/me")
   public ResponseEntity<ProfileResponse> getMyInfo(@AuthenticationPrincipal UserPrincipal userPrincipal) {
     Long userId = userPrincipal.getUserId();
