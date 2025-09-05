@@ -76,6 +76,8 @@ public class Member extends BaseEntity {
 
   private Boolean isOpenWorkoutRecord = false;
 
+  private Boolean isOpenBodyImg = false;
+
   public void setProfileImage(UserFile profileImage) {
     this.profileImage = profileImage;
   }

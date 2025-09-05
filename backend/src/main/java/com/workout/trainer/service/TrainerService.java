@@ -1,10 +1,12 @@
 package com.workout.trainer.service;
 
 import com.workout.global.exception.RestApiException;
+import com.workout.global.exception.errorcode.FileErrorCode;
 import com.workout.global.exception.errorcode.MemberErrorCode;
 import com.workout.global.exception.errorcode.ProfileErrorCode;
-import com.workout.gym.service.GymService;
+import com.workout.member.domain.Member;
 import com.workout.member.service.MemberService;
+import com.workout.pt.service.contract.PTTrainerService;
 import com.workout.trainer.domain.Award;
 import com.workout.trainer.domain.Certification;
 import com.workout.trainer.domain.Education;
@@ -21,9 +23,12 @@ import com.workout.trainer.repository.SpecialtyRepository;
 import com.workout.trainer.repository.TrainerRepository;
 import com.workout.trainer.repository.TrainerSpecialtyRepository;
 import com.workout.trainer.repository.WorkexperiencesRepository;
+import com.workout.utils.domain.UserFile;
+import com.workout.utils.dto.FileResponse;
 import com.workout.utils.service.FileService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,7 +36,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -44,18 +48,15 @@ public class TrainerService {
   private final WorkexperiencesRepository workexperiencesRepository;
   private final SpecialtyRepository specialtyRepository;
   private final TrainerSpecialtyRepository trainerSpecialtyRepository;
-  private final GymService gymService;
-  private final PasswordEncoder passwordEncoder;
-  private final MemberService memberService;
+  private final PTTrainerService ptTrainerService;
   private final FileService fileService;
-
+  private final MemberService memberService;
   public TrainerService(
       TrainerRepository trainerRepository, AwardRepository awardRepository,
       CertificationRepository certificationRepository, EducationRepository educationRepository,
       WorkexperiencesRepository workexperiencesRepository, SpecialtyRepository specialtyRepository,
-      TrainerSpecialtyRepository trainerSpecialtyRepository, GymService gymService,
-      PasswordEncoder passwordEncoder, MemberService memberService,
-      FileService fileService) {
+      TrainerSpecialtyRepository trainerSpecialtyRepository, PTTrainerService ptTrainerService,
+      FileService fileService, MemberService memberService) {
     this.trainerRepository = trainerRepository;
     this.awardRepository = awardRepository;
     this.certificationRepository = certificationRepository;
@@ -63,10 +64,9 @@ public class TrainerService {
     this.workexperiencesRepository = workexperiencesRepository;
     this.specialtyRepository = specialtyRepository;
     this.trainerSpecialtyRepository = trainerSpecialtyRepository;
-    this.gymService = gymService;
-    this.passwordEncoder = passwordEncoder;
-    this.memberService = memberService;
     this.fileService = fileService;
+    this.ptTrainerService = ptTrainerService;
+    this.memberService = memberService;
   }
 
   public ProfileResponseDto getProfile(Long trainerId) {
@@ -336,5 +336,27 @@ public class TrainerService {
   public Trainer findById(Long userId) {
     return trainerRepository.findById(userId)
         .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
+  }
+
+  public Page<FileResponse> findMemberBodyImagesByTrainer(Long trainerId, Long memberId,
+      LocalDate startDate, LocalDate endDate, Pageable pageable) {
+
+    // 1. 권한 검증 로직을 여기서 수행합니다.
+    findById(trainerId); // 트레이너 존재 여부 확인
+
+    if (!ptTrainerService.isMyClient(trainerId, memberId)) {
+      throw new RestApiException(FileErrorCode.NOT_AUTHORITY);
+    }
+
+    Member member = memberService.findById(memberId);
+    if (!member.getIsOpenBodyImg()) {
+      throw new RestApiException(FileErrorCode.NOT_AUTHORITY);
+    }
+
+    // 2. 검증이 끝나면, 순수 데이터 조회 역할을 하는 FileService의 메소드를 호출합니다.
+    Page<UserFile> userFilesPage = fileService.findBodyImagesByMember(
+        memberId, startDate, endDate, pageable);
+
+    return userFilesPage.map(FileResponse::from);
   }
 }
