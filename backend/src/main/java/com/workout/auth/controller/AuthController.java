@@ -40,11 +40,7 @@ public class AuthController {
     // 2. AuthService를 통해 로그인 처리 및 Member 엔티티 획득
     Member member = authService.login(request.email(), request.password(), httpRequest, httpResponse);
 
-    // 3. FileService를 통해 프로필 이미지 URL 획득
-    String profileImageUrl = member.getProfileImage().getStoredFileName();
-
-    // 4. Member와 profileImageUrl을 함께 DTO로 변환
-    SigninResponse responseDto = SigninResponse.from(member, profileImageUrl);
+    SigninResponse responseDto = SigninResponse.from(member);
 
     return ResponseEntity.ok(ApiResponse.of(responseDto));
   }

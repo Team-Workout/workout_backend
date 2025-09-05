@@ -13,6 +13,7 @@ import com.workout.member.repository.MemberRepository;
 import com.workout.member.service.MemberService;
 import com.workout.trainer.domain.Trainer;
 import com.workout.trainer.repository.TrainerRepository;
+import com.workout.utils.service.FileService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -33,17 +34,19 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
   private final GymService gymService;
   private final TrainerRepository trainerRepository;
+  private final FileService fileService;
 
   public AuthService(SecurityContextRepository securityContextRepository,
       MemberService memberService, MemberRepository memberRepository,
       PasswordEncoder passwordEncoder, GymService gymService,
-      TrainerRepository trainerRepository) {
+      TrainerRepository trainerRepository, FileService fileService) {
     this.securityContextRepository = securityContextRepository;
     this.memberService = memberService;
     this.memberRepository = memberRepository;
     this.passwordEncoder = passwordEncoder;
     this.gymService = gymService;
     this.trainerRepository = trainerRepository;
+    this.fileService = fileService;
   }
 
   // 로그인
@@ -74,9 +77,11 @@ public class AuthService {
       Member member = signupRequest.toMemberEntity(gym, encodedPassword);
       member.setIsOpenWorkoutRecord(false);
       member.setIsOpenBodyImg(false);
+      member.setProfileImageUri(fileService.getDefaultProfileImageUrl());
       return memberRepository.save(member).getId();
     } else if (role == Role.TRAINER) {
       Trainer trainer = signupRequest.toTrainerEntity(gym, encodedPassword);
+      trainer.setProfileImageUri(fileService.getDefaultProfileImageUrl());
       return trainerRepository.save(trainer).getId();
     } else {
       throw new IllegalArgumentException("지원하지 않는 사용자 역할입니다.");

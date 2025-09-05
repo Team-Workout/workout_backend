@@ -32,6 +32,7 @@ public class FileController {
     this.fileService = fileService;
     this.memberService = memberService;
   }
+
   /**
    * 복수 파일 업로드
    */
@@ -57,14 +58,6 @@ public class FileController {
   /**
    * 이미지 조회
    */
-  @GetMapping("/members/me/profile-image")
-  public ResponseEntity<Map<String, String>> getMyProfileImage(
-      @AuthenticationPrincipal UserPrincipal userPrincipal) {
-    Long userId = userPrincipal.getUserId();
-    String profileImageUrl = fileService.findProfileUrl(memberService.findById(userId));
-    return ResponseEntity.ok(Map.of("profileImageUrl", profileImageUrl));
-  }
-
   @GetMapping("/members/me/body-images")
   public ResponseEntity<List<FileResponse>> getMyBodyImages(
       @AuthenticationPrincipal UserPrincipal userPrincipal,
