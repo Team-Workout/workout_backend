@@ -282,9 +282,25 @@ public class TrainerService {
   }
 
   public Page<ProfileResponseDto> getTrainerProfilesByGym(Long gymId, Pageable pageable) {
+    // 1단계: 페이징을 적용하여 Trainer ID 목록만 조회합니다.
     Page<Trainer> trainerPage = trainerRepository.findAllByGymId(gymId, pageable);
+    List<Long> trainerIds = trainerPage.getContent().stream()
+        .map(Trainer::getId)
+        .toList();
 
-    return trainerPage.map(ProfileResponseDto::fromEntity);
+    if (trainerIds.isEmpty()) {
+      return Page.empty(pageable);
+    }
+
+    // 2단계: 조회된 ID 목록으로, 모든 연관관계를 Fetch Join하여 Trainer 엔티티들을 한번에 조회합니다.
+    List<Trainer> trainersWithDetails = trainerRepository.findByIdInWithDetails(trainerIds);
+
+    // 조회된 엔티티들을 ID를 key로 하는 Map으로 변환하여 DTO 변환 시 쉽게 찾을 수 있도록 합니다.
+    Map<Long, Trainer> trainerMap = trainersWithDetails.stream()
+        .collect(Collectors.toMap(Trainer::getId, Function.identity()));
+
+    // Page 객체의 내용물(content)만 조회된 상세 정보로 교체하여 반환합니다.
+    return trainerPage.map(trainer -> ProfileResponseDto.fromEntity(trainerMap.get(trainer.getId())));
   }
 
   private void handleSpecialties(Trainer trainer, Set<String> specialtyNames) {
