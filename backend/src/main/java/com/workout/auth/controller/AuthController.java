@@ -7,6 +7,7 @@ import com.workout.auth.service.AuthService;
 import com.workout.global.dto.ApiResponse;
 import com.workout.member.domain.Member;
 import com.workout.member.domain.Role;
+import com.workout.member.service.MemberService;
 import com.workout.utils.service.FileService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,12 +26,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
   private final AuthService authService;
-  private final FileService fileService;
 
-  public AuthController(AuthService authService,
-      FileService fileService) {
+  public AuthController(AuthService authService) {
     this.authService = authService;
-    this.fileService = fileService;
   }
 
   @PostMapping("/signin")
@@ -43,7 +41,7 @@ public class AuthController {
     Member member = authService.login(request.email(), request.password(), httpRequest, httpResponse);
 
     // 3. FileService를 통해 프로필 이미지 URL 획득
-    String profileImageUrl = fileService.findProfile(member.getId());
+    String profileImageUrl = member.getProfileImage().getStoredFileName();
 
     // 4. Member와 profileImageUrl을 함께 DTO로 변환
     SigninResponse responseDto = SigninResponse.from(member, profileImageUrl);
