@@ -9,6 +9,7 @@ import com.workout.member.domain.Role;
 import com.workout.member.repository.MemberRepository;
 import com.workout.utils.dto.FileResponse;
 import com.workout.utils.repository.FileRepository;
+import com.workout.utils.service.FileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
