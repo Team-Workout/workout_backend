@@ -1,14 +1,10 @@
 package com.workout.trainer.service;
 
-import com.workout.auth.dto.SignupRequest;
 import com.workout.global.exception.RestApiException;
 import com.workout.global.exception.errorcode.MemberErrorCode;
 import com.workout.global.exception.errorcode.ProfileErrorCode;
-import com.workout.gym.domain.Gym;
 import com.workout.gym.service.GymService;
-import com.workout.member.domain.Member;
 import com.workout.member.service.MemberService;
-import com.workout.pt.service.contract.PTContractService;
 import com.workout.trainer.domain.Award;
 import com.workout.trainer.domain.Certification;
 import com.workout.trainer.domain.Education;
@@ -18,8 +14,6 @@ import com.workout.trainer.domain.TrainerSpecialty;
 import com.workout.trainer.domain.Workexperience;
 import com.workout.trainer.dto.ProfileCreateDto;
 import com.workout.trainer.dto.ProfileResponseDto;
-import com.workout.trainer.dto.TrainerProfileDto;
-import com.workout.trainer.dto.TrainerSpecialtyDto;
 import com.workout.trainer.repository.AwardRepository;
 import com.workout.trainer.repository.CertificationRepository;
 import com.workout.trainer.repository.EducationRepository;
@@ -27,10 +21,9 @@ import com.workout.trainer.repository.SpecialtyRepository;
 import com.workout.trainer.repository.TrainerRepository;
 import com.workout.trainer.repository.TrainerSpecialtyRepository;
 import com.workout.trainer.repository.WorkexperiencesRepository;
+import com.workout.utils.service.FileService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,7 +31,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -55,14 +47,15 @@ public class TrainerService {
   private final GymService gymService;
   private final PasswordEncoder passwordEncoder;
   private final MemberService memberService;
+  private final FileService fileService;
 
   public TrainerService(
       TrainerRepository trainerRepository, AwardRepository awardRepository,
       CertificationRepository certificationRepository, EducationRepository educationRepository,
       WorkexperiencesRepository workexperiencesRepository, SpecialtyRepository specialtyRepository,
       TrainerSpecialtyRepository trainerSpecialtyRepository, GymService gymService,
-      PasswordEncoder passwordEncoder, MemberService memberService)
-  {
+      PasswordEncoder passwordEncoder, MemberService memberService,
+      FileService fileService) {
     this.trainerRepository = trainerRepository;
     this.awardRepository = awardRepository;
     this.certificationRepository = certificationRepository;
@@ -73,13 +66,18 @@ public class TrainerService {
     this.gymService = gymService;
     this.passwordEncoder = passwordEncoder;
     this.memberService = memberService;
+    this.fileService = fileService;
   }
 
   public ProfileResponseDto getProfile(Long trainerId) {
     Trainer trainer = trainerRepository.findByIdWithDetails(trainerId)
         .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-    return ProfileResponseDto.fromEntity(trainer);
+    // 1. FileService를 통해 URL 조회
+    String profileImageUrl = fileService.findProfile(trainer.getId());
+
+    // 2. Trainer와 URL을 함께 DTO로 변환
+    return ProfileResponseDto.fromEntity(trainer, profileImageUrl);
   }
 
   @Transactional
@@ -282,26 +280,29 @@ public class TrainerService {
   }
 
   public Page<ProfileResponseDto> getTrainerProfilesByGym(Long gymId, Pageable pageable) {
-    // 1단계: 페이징을 적용하여 Trainer ID 목록만 조회합니다.
     Page<Trainer> trainerPage = trainerRepository.findAllByGymId(gymId, pageable);
-    List<Long> trainerIds = trainerPage.getContent().stream()
-        .map(Trainer::getId)
-        .toList();
+    List<Long> trainerIds = trainerPage.getContent().stream().map(Trainer::getId).toList();
 
     if (trainerIds.isEmpty()) {
       return Page.empty(pageable);
     }
 
-    // 2단계: 조회된 ID 목록으로, 모든 연관관계를 Fetch Join하여 Trainer 엔티티들을 한번에 조회합니다.
     List<Trainer> trainersWithDetails = trainerRepository.findByIdInWithDetails(trainerIds);
 
-    // 조회된 엔티티들을 ID를 key로 하는 Map으로 변환하여 DTO 변환 시 쉽게 찾을 수 있도록 합니다.
-    Map<Long, Trainer> trainerMap = trainersWithDetails.stream()
+    // 3. FileService의 대량 조회 메소드를 호출하여 URL Map을 가져옴
+    Map<Long, String> profileUrlMap = fileService.findProfileUrlsByMemberIds(trainerIds);
+
+    Map<Long, Trainer> trainerDetailMap = trainersWithDetails.stream()
         .collect(Collectors.toMap(Trainer::getId, Function.identity()));
 
-    // Page 객체의 내용물(content)만 조회된 상세 정보로 교체하여 반환합니다.
-    return trainerPage.map(trainer -> ProfileResponseDto.fromEntity(trainerMap.get(trainer.getId())));
+    return trainerPage.map(trainer -> {
+      // 4. Map에서 해당 트레이너의 URL을 찾아 DTO로 변환
+      String profileImageUrl = profileUrlMap.getOrDefault(trainer.getId(),
+          fileService.getDefaultProfileImageUrl()); // 안전하게 기본값 처리
+      return ProfileResponseDto.fromEntity(trainerDetailMap.get(trainer.getId()), profileImageUrl);
+    });
   }
+
 
   private void handleSpecialties(Trainer trainer, Set<String> specialtyNames) {
     if (specialtyNames == null || specialtyNames.isEmpty()) {
@@ -333,6 +334,7 @@ public class TrainerService {
   }
 
   public Trainer findById(Long userId) {
-    return trainerRepository.findById(userId).orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
+    return trainerRepository.findById(userId)
+        .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
   }
 }

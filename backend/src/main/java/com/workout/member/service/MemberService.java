@@ -7,6 +7,7 @@ import com.workout.gym.domain.Gym;
 import com.workout.gym.service.GymService;
 import com.workout.member.domain.Member;
 import com.workout.member.repository.MemberRepository;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -62,5 +63,9 @@ public class MemberService {
 
     member.setIsOpenWorkoutRecord(false);
     memberRepository.save(member);
+  }
+
+  public List<Member> findByIdIn(List<Long> ids) {
+    return memberRepository.findByIdIn(ids);
   }
 }

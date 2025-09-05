@@ -4,8 +4,10 @@ import com.workout.auth.dto.SigninRequest;
 import com.workout.auth.dto.SigninResponse;
 import com.workout.auth.dto.SignupRequest;
 import com.workout.auth.service.AuthService;
+import com.workout.global.dto.ApiResponse;
 import com.workout.member.domain.Member;
 import com.workout.member.domain.Role;
+import com.workout.utils.service.FileService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -23,22 +25,30 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
   private final AuthService authService;
+  private final FileService fileService;
 
-  public AuthController(AuthService authService) {
+  public AuthController(AuthService authService,
+      FileService fileService) {
     this.authService = authService;
+    this.fileService = fileService;
   }
 
   @PostMapping("/signin")
-  public ResponseEntity<SigninResponse> signin(
-      @Valid @RequestBody SigninRequest signinRequest,
-      HttpServletRequest request,
-      HttpServletResponse response) {
+  public ResponseEntity<ApiResponse<SigninResponse>> signin(
+      @RequestBody @Valid SigninRequest request,
+      HttpServletRequest httpRequest,
+      HttpServletResponse httpResponse
+  ) {
+    // 2. AuthService를 통해 로그인 처리 및 Member 엔티티 획득
+    Member member = authService.login(request.email(), request.password(), httpRequest, httpResponse);
 
-    //1 회원가입
-    Member member = authService.login(signinRequest.email(), signinRequest.password(), request,
-        response);
-    SigninResponse signinResponse = SigninResponse.from(member);
-    return ResponseEntity.ok(signinResponse);
+    // 3. FileService를 통해 프로필 이미지 URL 획득
+    String profileImageUrl = fileService.findProfile(member.getId());
+
+    // 4. Member와 profileImageUrl을 함께 DTO로 변환
+    SigninResponse responseDto = SigninResponse.from(member, profileImageUrl);
+
+    return ResponseEntity.ok(ApiResponse.of(responseDto));
   }
 
   @PostMapping("/signup/user")

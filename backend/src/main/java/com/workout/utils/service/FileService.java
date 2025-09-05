@@ -14,7 +14,9 @@ import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -146,6 +148,24 @@ public class FileService {
         .orElse(defaultProfileImageUrl);
   }
 
+  public Map<Long, String> findProfileUrlsByMemberIds(List<Long> memberIds) {
+    if (memberIds == null || memberIds.isEmpty()) {
+      return Collections.emptyMap();
+    }
+
+    // 1. ID 목록으로 Member들을 한번에 조회 (N+1 방지)
+    List<Member> members = memberService.findByIdIn(memberIds);
+
+    // 2. Member 목록을 순회하며 Map<memberId, profileImageUrl>을 생성
+    return members.stream()
+        .collect(Collectors.toMap(
+            Member::getId, // Key: 멤버 ID
+            member -> Optional.ofNullable(member.getProfileImage()) // Value: 프로필 이미지 URL
+                .map(userFile -> "/images/" + userFile.getStoredFileName())
+                .orElse(defaultProfileImageUrl)
+        ));
+  }
+
   public Page<FileResponse> findMemberBodyImagesByTrainer(Long trainerId, Long memberId,
       LocalDate startDate, LocalDate endDate, Pageable pageable) {
     log.info(trainerId + ", " + memberId + ", " + startDate + ", " + endDate + ", " + pageable);
@@ -249,5 +269,9 @@ public class FileService {
     } catch (Exception e) {
       log.error("Error deleting physical file: {}", storedFileName, e);
     }
+  }
+
+  public String getDefaultProfileImageUrl() {
+    return defaultProfileImageUrl;
   }
 }
