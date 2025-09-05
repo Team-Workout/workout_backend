@@ -19,7 +19,7 @@ public interface TrainerRepository extends JpaRepository<Trainer, Long> {
       "LEFT JOIN FETCH t.awards " +
       "LEFT JOIN FETCH t.certifications " +
       "LEFT JOIN FETCH t.educations " +
-      "LEFT JOIN FETCH t.workexperiences " +
+      "LEFT JOIN FETCH t.workExperiences " +
       "LEFT JOIN FETCH t.trainerSpecialties ts " +
       "LEFT JOIN FETCH ts.specialty " +
       "WHERE t.id = :trainerId")
@@ -29,7 +29,7 @@ public interface TrainerRepository extends JpaRepository<Trainer, Long> {
       "LEFT JOIN FETCH t.awards " +
       "LEFT JOIN FETCH t.certifications " +
       "LEFT JOIN FETCH t.educations " +
-      "LEFT JOIN FETCH t.workexperiences " +
+      "LEFT JOIN FETCH t.workExperiences " +
       "LEFT JOIN FETCH t.trainerSpecialties ts " +
       "LEFT JOIN FETCH ts.specialty " +
       "WHERE t.id IN :trainerIds")
