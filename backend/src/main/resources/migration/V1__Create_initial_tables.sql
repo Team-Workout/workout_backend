@@ -1,4 +1,4 @@
--- V1__Create_initial_tables.sql
+-- V1__Create_initial_tables.sql (수정된 버전)
 
 -- 헬스장 정보 테이블
 CREATE TABLE IF NOT EXISTS gym
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS member
 (
     id                      BIGINT AUTO_INCREMENT PRIMARY KEY,
     gym_id                  BIGINT                                   NOT NULL,
-    profile_image_id        BIGINT UNIQUE,
+    profile_image_uri       VARCHAR(255),                            -- [수정] profile_image_id를 대체
     name                    VARCHAR(255)                             NOT NULL,
     email                   VARCHAR(255)                             NOT NULL UNIQUE,
     password                VARCHAR(255)                             NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS member
     account_status          VARCHAR(255)                             NOT NULL,
     role                    VARCHAR(31)                              NOT NULL,
     is_open_workout_record  BOOLEAN                                  DEFAULT FALSE,
-    is_open_body_img  BOOLEAN                                  DEFAULT FALSE,
+    is_open_body_img        BOOLEAN                                  DEFAULT FALSE,
     -- Trainer 전용 필드
     phone_number            VARCHAR(255),
     introduction            TEXT,
@@ -325,6 +325,7 @@ CREATE TABLE IF NOT EXISTS routine_set
     CONSTRAINT fk_rs_routine_exercise FOREIGN KEY (routine_exercise_id) REFERENCES routine_exercise (id) ON DELETE CASCADE
 );
 
+-- 사용자 파일 테이블 (프로필 이미지 외 다른 용도로 사용)
 CREATE TABLE IF NOT EXISTS user_file
 (
     id                   BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -339,10 +340,6 @@ CREATE TABLE IF NOT EXISTS user_file
     updated_at           TIMESTAMP                                NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_user_file_member FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
 );
-
-ALTER TABLE member
-    ADD CONSTRAINT fk_member_profile_image
-        FOREIGN KEY (profile_image_id) REFERENCES user_file (id);
 
 -- 마스터 데이터 버전 관리 테이블
 CREATE TABLE IF NOT EXISTS master_data_version

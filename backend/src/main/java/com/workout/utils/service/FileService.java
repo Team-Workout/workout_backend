@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
@@ -87,14 +88,14 @@ public class FileService {
     if (member == null) {
       throw new RestApiException(FileErrorCode.INVALID_FILE_NAME);
     }
-    UserFile oldProfileImage = member.getProfileImage();
-    if (oldProfileImage != null) {
-      fileRepository.delete(oldProfileImage);
-      deletePhysicalFile(oldProfileImage.getStoredFileName());
+
+    String oldFileUri = member.getProfileImageUri();
+    if (StringUtils.hasText(oldFileUri) && !oldFileUri.equals(defaultProfileImageUrl)) {
+      deletePhysicalFile(oldFileUri);
     }
 
     UserFile newProfileImage = storeAndCreateUserFile(file, member, ImagePurpose.PROFILE, null);
-    member.setProfileImage(newProfileImage);
+    member.setProfileImageUri(newProfileImage.getStoredFileName());
     fileRepository.save(newProfileImage);
     return FileResponse.from(newProfileImage);
   }
@@ -134,26 +135,6 @@ public class FileService {
     return userFiles.stream()
         .map(FileResponse::from)
         .toList();
-  }
-
-  public String findProfileUrl(Member member) {
-    if (member == null) {
-      return defaultProfileImageUrl;
-    }
-    return Optional.ofNullable(member.getProfileImage())
-        .map(userFile -> "/images/" + userFile.getStoredFileName())
-        .orElse(defaultProfileImageUrl);
-  }
-
-  public Map<Long, String> findProfileUrlsByMembers(List<? extends Member> members) {
-    if (members == null || members.isEmpty()) {
-      return Collections.emptyMap();
-    }
-    return members.stream()
-        .collect(Collectors.toMap(
-            Member::getId,
-            this::findProfileUrl // member.getId()와 findProfileUrl(member) 모두 Member의 메소드이므로 안전함
-        ));
   }
 
   public Page<UserFile> findBodyImagesByMember(Long memberId, LocalDate startDate,
@@ -227,6 +208,11 @@ public class FileService {
 
     fileRepository.delete(userFile);
     deletePhysicalFile(userFile.getStoredFileName());
+  }
+
+  public void deleteProfileImageFile(String storedFileName) {
+    // 내부적으로 사용하는 물리적 파일 삭제 메소드를 호출합니다.
+    deletePhysicalFile(storedFileName);
   }
 
   private void deletePhysicalFile(String storedFileName) {

@@ -1,4 +1,4 @@
--- Flyway V2: 초기 마스터 데이터 및 샘플 데이터 삽입 (DML)
+-- Flyway V2: 초기 마스터 데이터 및 샘플 데이터 삽입 (DML) (수정된 버전)
 
 -- ########## 1. 헬스장 마스터 데이터 (gym) ##########
 INSERT INTO gym (id, name, address, phone_number)
@@ -45,17 +45,17 @@ ON DUPLICATE KEY UPDATE muscle_role = VALUES(muscle_role);
 
 
 -- ########## 5. 사용자/트레이너 통합 샘플 데이터 (member) ##########
--- [수정] V1 스키마에 맞게 is_open_workout_record 컬럼 추가
-INSERT INTO member (id, gym_id, email, password, name, gender, account_status, role, is_open_workout_record, introduction, phone_number)
+-- [수정] profile_image_uri 컬럼 추가 및 샘플 데이터 삽입
+INSERT INTO member (id, gym_id, email, password, name, gender, account_status, role, is_open_workout_record, profile_image_uri, introduction, phone_number)
 VALUES
-    (1, 1, 'chulsoo.kim@example.com', '$2a$10$M2dz9c9du4niNsMGQFqGZ.tFM3YIGhLqjAnZbzo7Yx7/xqVPZu26i', '김철수', 'MALE', 'ACTIVE', 'MEMBER', true, NULL, NULL),
-    (3, 1, 'minsu.park@example.com', '$2a$10$M2dz9c9du4niNsMGQFqGZ.tFM3YIGhLqjAnZbzo7Yx7/xqVPZu26i', '박민수', 'MALE', 'ACTIVE', 'ADMIN', false, NULL, NULL),
-    (4, 2, 'jisoo.seo@example.com', '$$2a$10$M2dz9c9du4niNsMGQFqGZ.tFM3YIGhLqjAnZbzo7Yx7/xqVPZu26i', '서지수', 'FEMALE', 'ACTIVE', 'MEMBER', false, NULL, NULL),
-    (5, 2, 'jihye.choi@example.com', '$$2a$10$M2dz9c9du4niNsMGQFqGZ.tFM3YIGhLqjAnZbzo7Yx7/xqVPZu26i', '최지혜', 'FEMALE', 'SUSPENDED', 'MEMBER', false, NULL, NULL),
-    (2, 1, 'younghee.lee@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '이영희', 'FEMALE', 'ACTIVE', 'TRAINER', true, '10년 경력의 베테랑 트레이너입니다. 함께 건강한 몸을 만들어봐요!', '010-1234-5678'),
-    (6, 1, 'seojun.park@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '박서준', 'MALE', 'ACTIVE', 'TRAINER', true, '웨이트 트레이닝 전문가 박서준입니다. 여러분의 잠재력을 끌어올려 드립니다.', '010-9876-5432'),
-    (7, 2, 'yuri.choi@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '최유리', 'FEMALE', 'ACTIVE', 'TRAINER', true, '여성 전문 트레이너 최유리입니다. 아름다운 바디 라인을 만들어 드립니다.', '010-5555-4444')
-ON DUPLICATE KEY UPDATE email = VALUES(email), password = VALUES(password), name = VALUES(name), account_status = VALUES(account_status), is_open_workout_record = VALUES(is_open_workout_record), introduction = VALUES(introduction), phone_number = VALUES(phone_number);
+    (1, 1, 'chulsoo.kim@example.com', '$2a$10$M2dz9c9du4niNsMGQFqGZ.tFM3YIGhLqjAnZbzo7Yx7/xqVPZu26i', '김철수', 'MALE', 'ACTIVE', 'MEMBER', true, 'default-profile.png', NULL, NULL),
+    (3, 1, 'minsu.park@example.com', '$2a$10$M2dz9c9du4niNsMGQFqGZ.tFM3YIGhLqjAnZbzo7Yx7/xqVPZu26i', '박민수', 'MALE', 'ACTIVE', 'ADMIN', false, 'default-profile.png', NULL, NULL),
+    (4, 2, 'jisoo.seo@example.com', '$2a$10$M2dz9c9du4niNsMGQFqGZ.tFM3YIGhLqjAnZbzo7Yx7/xqVPZu26i', '서지수', 'FEMALE', 'ACTIVE', 'MEMBER', false, 'default-profile.png', NULL, NULL),
+    (5, 2, 'jihye.choi@example.com', '$2a$10$M2dz9c9du4niNsMGQFqGZ.tFM3YIGhLqjAnZbzo7Yx7/xqVPZu26i', '최지혜', 'FEMALE', 'SUSPENDED', 'MEMBER', false, 'default-profile.png', NULL, NULL),
+    (2, 1, 'younghee.lee@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '이영희', 'FEMALE', 'ACTIVE', 'TRAINER', true, 'trainer-yh-lee.png', '10년 경력의 베테랑 트레이너입니다. 함께 건강한 몸을 만들어봐요!', '010-1234-5678'),
+    (6, 1, 'seojun.park@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '박서준', 'MALE', 'ACTIVE', 'TRAINER', true, 'trainer-sj-park.png', '웨이트 트레이닝 전문가 박서준입니다. 여러분의 잠재력을 끌어올려 드립니다.', '010-9876-5432'),
+    (7, 2, 'yuri.choi@example.com', '$2a$10$yS.tJ2a.AXsOM2wD19356uYkS/Fl2i4O12s5lR5h7OJGnNn4AAt/S', '최유리', 'FEMALE', 'ACTIVE', 'TRAINER', true, 'trainer-yr-choi.png', '여성 전문 트레이너 최유리입니다. 아름다운 바디 라인을 만들어 드립니다.', '010-5555-4444')
+ON DUPLICATE KEY UPDATE email = VALUES(email), password = VALUES(password), name = VALUES(name), account_status = VALUES(account_status), is_open_workout_record = VALUES(is_open_workout_record), profile_image_uri = VALUES(profile_image_uri), introduction = VALUES(introduction), phone_number = VALUES(phone_number);
 
 
 -- ########## 6. 프로필 및 체성분 샘플 데이터 ##########
@@ -88,7 +88,6 @@ VALUES (1, 2, 1, '12주 바디프로필 완성반', '12주 동안 주 2회씩 �
 ON DUPLICATE KEY UPDATE title = VALUES(title), price = VALUES(price);
 
 -- 회원 '김철수'(id=1)가 위 PT 상품을 신청하여 바로 '승인'된 상태로 생성
--- [수정] PENDING 후 UPDATE 하는 대신, 바로 APPROVED 상태로 INSERT하여 스크립트 간소화
 INSERT INTO pt_application (id, offering_id, member_id, pt_application_status, total_sessions)
 VALUES (1, 1, 1, 'APPROVED', 24)
 ON DUPLICATE KEY UPDATE pt_application_status = VALUES(pt_application_status);
@@ -116,5 +115,5 @@ INSERT INTO pt_session (id, workout_log_id, appointment_id) VALUES (1, 1, 1) ON 
 INSERT INTO master_data_version (data_type, version, updated_at)
 VALUES ('EXERCISE', 1, NOW()),
        ('MUSCLE', 1, NOW()),
-       ('EXERCISE_TARGET_MUSCLE', 1, NOW()) -- [추가] 다른 마스터 데이터에 대한 버전도 초기화해주는 것이 좋습니다.
+       ('EXERCISE_TARGET_MUSCLE', 1, NOW())
 ON DUPLICATE KEY UPDATE version = VALUES(version), updated_at = VALUES(updated_at);
