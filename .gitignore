@@ -124,3 +124,4 @@ uploads/
 .env
 .env.*
 !.env.sample
+docker-compose.override.yml
