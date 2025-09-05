@@ -19,7 +19,6 @@ import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.util.Objects;
 import lombok.AccessLevel;
@@ -45,9 +44,7 @@ public class Member extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-  @JoinColumn(name = "profile_image_id")
-  private UserFile profileImage;
+  private String profileImageUri;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "gym_id", nullable = false)
@@ -77,10 +74,6 @@ public class Member extends BaseEntity {
   private Boolean isOpenWorkoutRecord = false;
 
   private Boolean isOpenBodyImg = false;
-
-  public void setProfileImage(UserFile profileImage) {
-    this.profileImage = profileImage;
-  }
 
   @Override
   public boolean equals(Object o) {

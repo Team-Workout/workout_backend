@@ -64,11 +64,8 @@ public class TrainerService {
     Trainer trainer = trainerRepository.findByIdWithDetails(trainerId)
         .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-    // 1. FileService를 통해 URL 조회
-    String profileImageUrl = fileService.findProfileUrl(trainer);
-
     // 2. Trainer와 URL을 함께 DTO로 변환
-    return ProfileResponseDto.fromEntity(trainer, profileImageUrl);
+    return ProfileResponseDto.fromEntity(trainer);
   }
 
   @Transactional
@@ -234,10 +231,12 @@ public class TrainerService {
     Trainer trainer = trainerRepository.findById(trainerId)
         .orElseThrow(() -> new EntityNotFoundException("삭제할 트레이너를 찾을 수 없습니다. ID: " + trainerId));
 
+    // 2. 프로필 이미지 URI(파일명)를 가져옴
+    String profileImageUri = trainer.getProfileImageUri();
 
-    UserFile profileImage = trainer.getProfileImage();
-    if (profileImage != null) {
-      fileService.deleteFileById(profileImage.getId(), trainerId);
+    // 3. URI가 유효하고, 기본 이미지가 아닐 경우에만 물리적 파일 삭제
+    if (profileImageUri != null && !profileImageUri.equals(fileService.getDefaultProfileImageUrl())) {
+      fileService.deleteProfileImageFile(profileImageUri);
     }
 
     // 하위 엔티티들 먼저 삭제
@@ -277,25 +276,23 @@ public class TrainerService {
 
   public Page<ProfileResponseDto> getTrainerProfilesByGym(Long gymId, Pageable pageable) {
     Page<Trainer> trainerPage = trainerRepository.findAllByGymId(gymId, pageable);
-    List<Long> trainerIds = trainerPage.getContent().stream().map(Trainer::getId).toList();
+    List<Trainer> trainersOnPage = trainerPage.getContent();
 
-    if (trainerIds.isEmpty()) {
+    if (trainersOnPage.isEmpty()) {
       return Page.empty(pageable);
     }
 
-    List<Trainer> trainersWithDetails = trainerRepository.findByIdInWithDetails(trainerIds);
+    List<Long> trainerIds = trainersOnPage.stream().map(Trainer::getId).toList();
 
-    // 3. FileService의 대량 조회 메소드를 호출하여 URL Map을 가져옴
-    Map<Long, String> profileUrlMap = fileService.findProfileUrlsByMembers(trainersWithDetails);
+    List<Trainer> trainersWithDetails = trainerRepository.findByIdInWithDetails(trainerIds);
 
     Map<Long, Trainer> trainerDetailMap = trainersWithDetails.stream()
         .collect(Collectors.toMap(Trainer::getId, Function.identity()));
 
     return trainerPage.map(trainer -> {
-      // 4. Map에서 해당 트레이너의 URL을 찾아 DTO로 변환
-      String profileImageUrl = profileUrlMap.getOrDefault(trainer.getId(),
-          fileService.getDefaultProfileImageUrl()); // 안전하게 기본값 처리
-      return ProfileResponseDto.fromEntity(trainerDetailMap.get(trainer.getId()), profileImageUrl);
+      Trainer detailedTrainer = trainerDetailMap.get(trainer.getId());
+
+      return ProfileResponseDto.fromEntity(detailedTrainer);
     });
   }
 

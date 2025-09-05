@@ -51,7 +51,7 @@ public record ProfileResponseDto(
   }
 */
 
-  public static ProfileResponseDto fromEntity(Trainer trainer, String profileImageUrl) {
+  public static ProfileResponseDto fromEntity(Trainer trainer) {
     if (trainer == null) {
       return null;
     }
@@ -81,7 +81,7 @@ public record ProfileResponseDto(
         trainer.getName(),
         trainer.getEmail(),
         trainer.getIntroduction(),
-        profileImageUrl,
+        trainer.getProfileImageUri(),
         awardDtos,
         certificationDtos,
         educationDtos,

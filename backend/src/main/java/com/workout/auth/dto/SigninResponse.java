@@ -11,13 +11,13 @@ public record SigninResponse(
     String profileImageUrl
 ) {
 
-  public static SigninResponse from(Member member, String profileImageUrl) {
+  public static SigninResponse from(Member member) {
     return new SigninResponse(
         member.getId(),
         member.getName(),
         member.getGym().getId(),
         member.getRole(),
-        profileImageUrl
+        member.getProfileImageUri()
     );
   }
 }
