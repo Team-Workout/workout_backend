@@ -2,7 +2,6 @@ package com.workout.body.repository;
 
 import com.workout.body.domain.BodyComposition;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,5 +16,4 @@ public interface BodyCompositionRepository extends JpaRepository<BodyComposition
 
   Optional<BodyComposition> findByIdAndMemberId(Long id, Long memberId);
   Optional<BodyComposition> findByMemberIdAndMeasurementDate(Long memberId, LocalDate measurementDate);
-
 }

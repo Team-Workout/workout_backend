@@ -3,7 +3,6 @@ package com.workout.utils.service;
 import com.workout.global.exception.RestApiException;
 import com.workout.global.exception.errorcode.FileErrorCode;
 import com.workout.member.domain.Member;
-import com.workout.member.service.MemberService;
 import com.workout.utils.domain.ImagePurpose;
 import com.workout.utils.domain.UserFile;
 import com.workout.utils.dto.FileResponse;
@@ -31,7 +30,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileService {
 
   private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-  private final MemberService memberService;
   private final FileRepository fileRepository;
 
   @Value("${upload.local.dir}")
@@ -39,8 +37,7 @@ public class FileService {
   @Value("${default.profile.image.url}")
   private String defaultProfileImageUrl;
 
-  public FileService(MemberService memberService, FileRepository fileRepository) {
-    this.memberService = memberService;
+  public FileService(FileRepository fileRepository) {
     this.fileRepository = fileRepository;
   }
 
@@ -68,9 +65,10 @@ public class FileService {
 
   @Transactional
   public List<FileResponse> uploadBodyImages(final MultipartFile[] files, final LocalDate dates,
-      Long userId) {
-    Member member = memberService.findById(userId);
-
+      Member member) {
+    if (files == null || files.length == 0) {
+      throw new RestApiException(FileErrorCode.INVALID_FILE_NAME);
+    }
     List<UserFile> userFilesToSave = new java.util.ArrayList<>();
     for (int i = 0; i < files.length; i++) {
       userFilesToSave.add(storeAndCreateUserFile(files[i], member, ImagePurpose.BODY, dates));
@@ -84,10 +82,11 @@ public class FileService {
   }
 
   @Transactional
-  public FileResponse uploadProfileImage(MultipartFile file, Long userId) {
-    Member member = memberService.findById(userId);
-
+  public FileResponse uploadProfileImage(MultipartFile file, Member member) {
     // 기존 프로필 이미지 처리
+    if (member == null) {
+      throw new RestApiException(FileErrorCode.INVALID_FILE_NAME);
+    }
     UserFile oldProfileImage = member.getProfileImage();
     if (oldProfileImage != null) {
       fileRepository.delete(oldProfileImage);
@@ -122,9 +121,11 @@ public class FileService {
   }
 
   // 파일 조회
-  public List<FileResponse> findBodyImagesByRecordDate(Long userId, LocalDate startDate,
+  public List<FileResponse> findBodyImagesByRecordDate(Member member, LocalDate startDate,
       LocalDate endDate) {
-    Member member = memberService.findById(userId);
+    if (member == null) {
+      return Collections.emptyList();
+    }
 
     // 새로운 Repository 메소드 호출
     List<UserFile> userFiles = fileRepository.findByMemberIdAndPurposeAndRecordDateBetweenOrderByRecordDateDesc(
@@ -135,50 +136,26 @@ public class FileService {
         .toList();
   }
 
-  public String findProfile(Long userId) {
-    Member member = memberService.findById(userId);
+  public String findProfileUrl(Member member) {
+    if (member == null) {
+      return defaultProfileImageUrl;
+    }
     return Optional.ofNullable(member.getProfileImage())
-        .map(userFile -> "/images/" + userFile.getStoredFileName()) // 프로필 이미지가 있으면 해당 URL 생성
+        .map(userFile -> "/images/" + userFile.getStoredFileName())
         .orElse(defaultProfileImageUrl);
   }
 
-  public Map<Long, String> findProfileUrlsByMemberIds(List<Long> memberIds) {
-    if (memberIds == null || memberIds.isEmpty()) {
+  public Map<Long, String> findProfileUrlsByMembers(List<? extends Member> members) {
+    if (members == null || members.isEmpty()) {
       return Collections.emptyMap();
     }
-
-    // 1. ID 목록으로 Member들을 한번에 조회 (N+1 방지)
-    List<Member> members = memberService.findByIdIn(memberIds);
-
-    // 2. Member 목록을 순회하며 Map<memberId, profileImageUrl>을 생성
     return members.stream()
         .collect(Collectors.toMap(
-            Member::getId, // Key: 멤버 ID
-            member -> Optional.ofNullable(member.getProfileImage()) // Value: 프로필 이미지 URL
-                .map(userFile -> "/images/" + userFile.getStoredFileName())
-                .orElse(defaultProfileImageUrl)
+            Member::getId,
+            this::findProfileUrl // member.getId()와 findProfileUrl(member) 모두 Member의 메소드이므로 안전함
         ));
   }
 
-  /*public Page<FileResponse> findMemberBodyImagesByTrainer(Long trainerId, Long memberId,
-      LocalDate startDate, LocalDate endDate, Pageable pageable) {
-    log.info(trainerId + ", " + memberId + ", " + startDate + ", " + endDate + ", " + pageable);
-    trainerService.findById(trainerId);
-
-    if (!ptTrainerService.isMyClient(trainerId, memberId)) {
-      throw new RestApiException(FileErrorCode.NOT_AUTHORITY);
-    }
-
-    Member member = memberService.findById(memberId);
-    if (!member.getIsOpenWorkoutRecord()) {
-      throw new RestApiException(FileErrorCode.NOT_AUTHORITY);
-    }
-
-    Page<UserFile> userFilesPage = fileRepository.findByMemberIdAndPurposeAndRecordDateBetweenOrderByRecordDateDesc(
-        memberId, ImagePurpose.BODY, startDate, endDate, pageable);
-
-    return userFilesPage.map(FileResponse::from);
-  }*/
   public Page<UserFile> findBodyImagesByMember(Long memberId, LocalDate startDate,
       LocalDate endDate, Pageable pageable) {
     return fileRepository.findByMemberIdAndPurposeAndRecordDateBetweenOrderByRecordDateDesc(

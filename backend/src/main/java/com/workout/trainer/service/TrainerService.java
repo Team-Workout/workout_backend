@@ -1,11 +1,8 @@
 package com.workout.trainer.service;
 
 import com.workout.global.exception.RestApiException;
-import com.workout.global.exception.errorcode.FileErrorCode;
 import com.workout.global.exception.errorcode.MemberErrorCode;
 import com.workout.global.exception.errorcode.ProfileErrorCode;
-import com.workout.member.domain.Member;
-import com.workout.member.service.MemberService;
 import com.workout.trainer.domain.Award;
 import com.workout.trainer.domain.Certification;
 import com.workout.trainer.domain.Education;
@@ -23,11 +20,9 @@ import com.workout.trainer.repository.TrainerRepository;
 import com.workout.trainer.repository.TrainerSpecialtyRepository;
 import com.workout.trainer.repository.WorkexperiencesRepository;
 import com.workout.utils.domain.UserFile;
-import com.workout.utils.dto.FileResponse;
 import com.workout.utils.service.FileService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,14 +43,13 @@ public class TrainerService {
   private final SpecialtyRepository specialtyRepository;
   private final TrainerSpecialtyRepository trainerSpecialtyRepository;
   private final FileService fileService;
-  private final MemberService memberService;
 
   public TrainerService(
       TrainerRepository trainerRepository, AwardRepository awardRepository,
       CertificationRepository certificationRepository, EducationRepository educationRepository,
       WorkexperiencesRepository workexperiencesRepository, SpecialtyRepository specialtyRepository,
-      TrainerSpecialtyRepository trainerSpecialtyRepository, FileService fileService,
-      MemberService memberService) {
+      TrainerSpecialtyRepository trainerSpecialtyRepository, FileService fileService
+  ) {
     this.trainerRepository = trainerRepository;
     this.awardRepository = awardRepository;
     this.certificationRepository = certificationRepository;
@@ -64,7 +58,6 @@ public class TrainerService {
     this.specialtyRepository = specialtyRepository;
     this.trainerSpecialtyRepository = trainerSpecialtyRepository;
     this.fileService = fileService;
-    this.memberService = memberService;
   }
 
   public ProfileResponseDto getProfile(Long trainerId) {
@@ -72,7 +65,7 @@ public class TrainerService {
         .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
 
     // 1. FileService를 통해 URL 조회
-    String profileImageUrl = fileService.findProfile(trainer.getId());
+    String profileImageUrl = fileService.findProfileUrl(trainer);
 
     // 2. Trainer와 URL을 함께 DTO로 변환
     return ProfileResponseDto.fromEntity(trainer, profileImageUrl);
@@ -238,8 +231,13 @@ public class TrainerService {
 
   @Transactional
   public void deleteProfile(Long trainerId) {
-    if (!trainerRepository.existsById(trainerId)) {
-      throw new EntityNotFoundException("삭제할 트레이너를 찾을 수 없습니다. ID: " + trainerId);
+    Trainer trainer = trainerRepository.findById(trainerId)
+        .orElseThrow(() -> new EntityNotFoundException("삭제할 트레이너를 찾을 수 없습니다. ID: " + trainerId));
+
+
+    UserFile profileImage = trainer.getProfileImage();
+    if (profileImage != null) {
+      fileService.deleteFileById(profileImage.getId(), trainerId);
     }
 
     // 하위 엔티티들 먼저 삭제
@@ -288,7 +286,7 @@ public class TrainerService {
     List<Trainer> trainersWithDetails = trainerRepository.findByIdInWithDetails(trainerIds);
 
     // 3. FileService의 대량 조회 메소드를 호출하여 URL Map을 가져옴
-    Map<Long, String> profileUrlMap = fileService.findProfileUrlsByMemberIds(trainerIds);
+    Map<Long, String> profileUrlMap = fileService.findProfileUrlsByMembers(trainersWithDetails);
 
     Map<Long, Trainer> trainerDetailMap = trainersWithDetails.stream()
         .collect(Collectors.toMap(Trainer::getId, Function.identity()));
