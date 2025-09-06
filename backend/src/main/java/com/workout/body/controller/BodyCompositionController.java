@@ -34,11 +34,8 @@ public class BodyCompositionController {
 
   private final BodyCompositionService bodyCompositionService;
 
-  /**
-   * 새 체성분 데이터 생성
-   */
   @PostMapping("/info")
-  public ResponseEntity<Long> createBodyComposition(
+  public ResponseEntity<ApiResponse<Long>> createBodyComposition(
       @Valid @RequestBody BodyCompositionDto bodyCompositionDto,
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
@@ -46,13 +43,12 @@ public class BodyCompositionController {
     Long bodyCompositionId = bodyCompositionService.saveOrUpdateBodyComposition(bodyCompositionDto,
         userId);
 
-    return ResponseEntity.created(URI.create("/api/body/info/" + bodyCompositionId))
-        .body(bodyCompositionId);
+    URI location = URI.create("/api/body/info/" + bodyCompositionId);
+
+    return ResponseEntity.created(location)
+        .body(ApiResponse.of(bodyCompositionId));
   }
 
-  /**
-   * 특정 기간 동안의 체성분 내역을 페이지네이션으로 조회
-   */
   @GetMapping("/info")
   public ResponseEntity<ApiResponse<List<BodyCompositionResponse>>> getBodyCompositions(
       @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -71,26 +67,29 @@ public class BodyCompositionController {
    * 체성분 데이터 삭제
    */
   @DeleteMapping("/info/{id}")
-  public ResponseEntity<Void> deleteBodyInfo(
+  public ResponseEntity<ApiResponse<Void>> deleteBodyInfo(
       @PathVariable("id") Long id,
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
     Long userId = userPrincipal.getUserId();
     bodyCompositionService.deleteBodyInfo(id, userId);
-    return ResponseEntity.ok().build();
+
+    return ResponseEntity.ok(ApiResponse.empty());
   }
+
 
   /**
    * 체성분 데이터 수정
    */
   @PutMapping("/info/{id}")
-  public ResponseEntity<Long> updateBodyComposition(
+  public ResponseEntity<ApiResponse<Long>> updateBodyComposition(
       @PathVariable Long id,
       @RequestBody @Valid BodyCompositionDto dto,
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
     Long userId = userPrincipal.getUserId();
     bodyCompositionService.updateBodyComposition(id, userId, dto);
-    return ResponseEntity.ok(id);
+
+    return ResponseEntity.ok(ApiResponse.of(id));
   }
 }

@@ -6,11 +6,9 @@ import com.workout.body.dto.BodyCompositionResponse;
 import com.workout.body.repository.BodyCompositionRepository;
 import com.workout.global.exception.RestApiException;
 import com.workout.global.exception.errorcode.BodyErrorCode;
-import com.workout.global.exception.errorcode.FileErrorCode;
-import com.workout.global.exception.errorcode.MemberErrorCode;
 import com.workout.member.domain.Member;
 import com.workout.member.service.MemberService;
-import com.workout.trainer.service.TrainerService;
+import com.workout.pt.service.contract.PTContractService;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.Optional;
@@ -24,14 +22,14 @@ import org.springframework.stereotype.Service;
 public class BodyCompositionService {
 
   private final BodyCompositionRepository bodyCompositionRepository;
-  private final TrainerService trainerService;
   private final MemberService memberService;
+  private final PTContractService pTContractService;
 
   public BodyCompositionService(BodyCompositionRepository bodyCompositionRepository,
-      TrainerService trainerService, MemberService memberService) {
+      MemberService memberService, PTContractService pTContractService) {
     this.bodyCompositionRepository = bodyCompositionRepository;
-    this.trainerService = trainerService;
     this.memberService = memberService;
+    this.pTContractService = pTContractService;
   }
 
   public Page<BodyCompositionResponse> findByUserIdAndDateRange(Long memberId, LocalDate startDate,
@@ -55,8 +53,6 @@ public class BodyCompositionService {
         memberId, bodyCompositionDto.getMeasurementDate());
 
     if (existingData.isPresent()) {
-      log.info("기존 체성분 데이터 업데이트 - 사용자 ID: {}, 날짜: {}", memberId,
-          bodyCompositionDto.getMeasurementDate());
       BodyComposition bodyCompositionToUpdate = existingData.get();
 
       bodyCompositionToUpdate.setWeightKg(bodyCompositionDto.getWeightKg());
@@ -66,12 +62,10 @@ public class BodyCompositionService {
       return bodyCompositionToUpdate.getId();
 
     } else {
-      log.info("새로운 체성분 데이터 생성 - 사용자 ID: {}, 날짜: {}", memberId,
-          bodyCompositionDto.getMeasurementDate());
-      Member member = memberService.findById(memberId);
+      Member memberReference = memberService.getMemberReferenceById(memberId); // [변경]
 
       BodyComposition newBodyComposition = BodyComposition.builder()
-          .member(member)
+          .member(memberReference)
           .measurementDate(bodyCompositionDto.getMeasurementDate())
           .weightKg(bodyCompositionDto.getWeightKg())
           .fatKg(bodyCompositionDto.getFatKg())
@@ -85,7 +79,7 @@ public class BodyCompositionService {
   @Transactional
   public void updateBodyComposition(Long id, Long memberId, BodyCompositionDto dto) {
     BodyComposition bodyComposition = bodyCompositionRepository.findByIdAndMemberId(id, memberId)
-        .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
+        .orElseThrow(() -> new RestApiException(BodyErrorCode.BODY_COMPOSITION_NOT_FOUND));
 
     bodyComposition.setMeasurementDate(dto.getMeasurementDate());
     bodyComposition.setFatKg(dto.getFatKg());
@@ -95,16 +89,7 @@ public class BodyCompositionService {
 
   public Page<BodyCompositionResponse> findDataByTrainer(Long trainerId, Long memberId,
       LocalDate startDate, LocalDate endDate, Pageable pageable) {
-    trainerService.findById(trainerId);
-
-    if (!trainerService.isMyClient(trainerId, memberId)) {
-      throw new RestApiException(MemberErrorCode.NOT_YOUR_CLIENT); // 더 명확한 에러 코드를 사용
-    }
-
-    Member member = memberService.findById(memberId);
-    if (!member.getIsOpenWorkoutRecord()) {
-      throw new RestApiException(FileErrorCode.NOT_AUTHORITY);
-    }
+    pTContractService.validateClientBodyDataAccess(trainerId, memberId);
 
     Page<BodyComposition> bodyCompositions = bodyCompositionRepository
         .findByMemberIdAndMeasurementDateBetweenOrderByMeasurementDateDesc(memberId, startDate,

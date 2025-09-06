@@ -12,6 +12,7 @@ import com.workout.trainer.service.TrainerService;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PTOfferingService {
@@ -25,6 +26,7 @@ public class PTOfferingService {
     this.trainerService = trainerService;
   }
 
+  @Transactional
   public void register(OfferingCreateRequest request, Long userId) {
     Trainer trainer = trainerService.findById(userId);
 
@@ -41,6 +43,7 @@ public class PTOfferingService {
     ptOfferingRepository.save(offering);
   }
 
+  @Transactional
   public void delete(Long offeringId, Long userId) {
     Trainer trainer = trainerService.findById(userId);
     PTOffering ptOffering = ptOfferingRepository.findById(offeringId).orElseThrow(

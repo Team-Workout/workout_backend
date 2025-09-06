@@ -266,4 +266,65 @@ public class WorkoutLogService {
       throw new RestApiException(WorkoutErrorCode.NOT_ALLOWED_ACCESS);
     }
   }
+
+  @Transactional(readOnly = true)
+  public Map<Long, WorkoutLogResponse> getWorkoutLogResponseMapByLogs(
+      List<WorkoutLog> workoutLogs) {
+    if (workoutLogs == null || workoutLogs.isEmpty()) {
+      return Collections.emptyMap();
+    }
+
+    List<Long> workoutLogIds = workoutLogs.stream().map(WorkoutLog::getId).toList();
+
+    List<WorkoutExercise> exercises = workoutExerciseRepository.findAllByWorkoutLogIdInOrderByOrderAsc(
+        workoutLogIds);
+    List<Long> exerciseIds = exercises.stream().map(WorkoutExercise::getId).toList();
+
+    List<WorkoutSet> sets = exerciseIds.isEmpty() ? Collections.emptyList()
+        : workoutSetRepository.findAllByWorkoutExerciseIdInOrderByOrderAsc(exerciseIds);
+    List<Long> setIds = sets.stream().map(WorkoutSet::getId).toList();
+
+    List<Feedback> feedbacks = feedbackRepository.findByWorkoutElements(workoutLogIds, exerciseIds,
+        setIds);
+
+    Map<Long, List<WorkoutExercise>> exercisesByLogId = exercises.stream()
+        .collect(Collectors.groupingBy(ex -> ex.getWorkoutLog().getId()));
+
+    Map<Long, List<WorkoutSet>> setsByExerciseId = sets.stream()
+        .collect(Collectors.groupingBy(set -> set.getWorkoutExercise().getId()));
+
+    Map<Long, List<Feedback>> feedbacksByLogId = feedbacks.stream()
+        .filter(f -> f.getWorkoutLog() != null)
+        .collect(Collectors.groupingBy(f -> f.getWorkoutLog().getId()));
+    Map<Long, List<Feedback>> feedbacksByExerciseId = feedbacks.stream()
+        .filter(f -> f.getWorkoutExercise() != null)
+        .collect(Collectors.groupingBy(f -> f.getWorkoutExercise().getId()));
+    Map<Long, List<Feedback>> feedbacksBySetId = feedbacks.stream()
+        .filter(f -> f.getWorkoutSet() != null)
+        .collect(Collectors.groupingBy(f -> f.getWorkoutSet().getId()));
+
+
+    return workoutLogs.stream()
+        .collect(Collectors.toMap(
+            WorkoutLog::getId,
+            log -> {
+              List<WorkoutExercise> exercisesForLog = exercisesByLogId.getOrDefault(log.getId(),
+                  Collections.emptyList());
+              List<WorkoutSet> setsForLog = exercisesForLog.stream()
+                  .flatMap(ex -> setsByExerciseId.getOrDefault(ex.getId(), Collections.emptyList())
+                      .stream())
+                  .toList();
+
+              List<Feedback> feedbacksForLog = new ArrayList<>(
+                  feedbacksByLogId.getOrDefault(log.getId(), Collections.emptyList()));
+              exercisesForLog.forEach(ex -> feedbacksForLog.addAll(
+                  feedbacksByExerciseId.getOrDefault(ex.getId(), Collections.emptyList())));
+              setsForLog.forEach(set -> feedbacksForLog.addAll(
+                  feedbacksBySetId.getOrDefault(set.getId(), Collections.emptyList())));
+
+              return WorkoutLogResponse.from(log, exercisesForLog, setsForLog,
+                  feedbacksForLog); // [수정] 필터링된 리스트 전달
+            }
+        ));
+  }
 }

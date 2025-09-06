@@ -33,23 +33,26 @@ public class PTSessionController {
   }
 
   @PostMapping
-  public ResponseEntity<Void> createPTSession(
+  public ResponseEntity<ApiResponse<Long>> createPTSession(
       @AuthenticationPrincipal UserPrincipal user,
       @Valid @RequestBody PTSessionCreateRequest request) {
 
     Long userId = user.getUserId();
     Long ptSessionId = ptSessionService.createPTSessionAndWorkoutLog(request, userId);
-    return ResponseEntity.created(URI.create("/api/pt-sessions/" + ptSessionId)).build();
+    URI location = URI.create("/api/pt-sessions/" + ptSessionId);
+
+    return ResponseEntity.created(location).body(ApiResponse.of(ptSessionId));
   }
 
   @DeleteMapping("/{ptSessionId}")
-  public ResponseEntity<Void> deletePTSession(
+  public ResponseEntity<ApiResponse<Void>> deletePTSession(
       @AuthenticationPrincipal UserPrincipal user,
       @PathVariable Long ptSessionId) {
 
     Long userId = user.getUserId();
     ptSessionService.deletePTSession(ptSessionId, userId);
-    return ResponseEntity.noContent().build();
+
+    return ResponseEntity.ok(ApiResponse.empty());
   }
 
   @GetMapping("/me")

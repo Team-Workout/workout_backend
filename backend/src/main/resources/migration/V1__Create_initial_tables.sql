@@ -14,23 +14,24 @@ CREATE TABLE IF NOT EXISTS gym
 -- 사용자/트레이너 통합 테이블 (Single-Table Inheritance Strategy)
 CREATE TABLE IF NOT EXISTS member
 (
-    id                      BIGINT AUTO_INCREMENT PRIMARY KEY,
-    gym_id                  BIGINT                                   NOT NULL,
-    profile_image_uri       VARCHAR(255),                            -- [수정] profile_image_id를 대체
-    name                    VARCHAR(255)                             NOT NULL,
-    email                   VARCHAR(255)                             NOT NULL UNIQUE,
-    password                VARCHAR(255)                             NOT NULL,
-    gender                  VARCHAR(10)                              NOT NULL,
-    account_status          VARCHAR(255)                             NOT NULL,
-    role                    VARCHAR(31)                              NOT NULL,
-    is_open_workout_record  BOOLEAN                                  DEFAULT FALSE,
-    is_open_body_img        BOOLEAN                                  DEFAULT FALSE,
+    id                       BIGINT AUTO_INCREMENT PRIMARY KEY,
+    gym_id                   BIGINT       NOT NULL,
+    profile_image_uri        VARCHAR(255), -- [수정] profile_image_id를 대체
+    name                     VARCHAR(255) NOT NULL,
+    email                    VARCHAR(255) NOT NULL UNIQUE,
+    password                 VARCHAR(255) NOT NULL,
+    gender                   VARCHAR(10)  NOT NULL,
+    account_status           VARCHAR(255) NOT NULL,
+    role                     VARCHAR(31)  NOT NULL,
+    is_open_workout_record   BOOLEAN               DEFAULT FALSE,
+    is_open_body_img         BOOLEAN               DEFAULT FALSE,
+    is_open_body_composition BOOLEAN               DEFAULT FALSE,
     -- Trainer 전용 필드
-    phone_number            VARCHAR(255),
-    introduction            TEXT,
+    phone_number             VARCHAR(255),
+    introduction             TEXT,
     -- BaseEntity 필드
-    created_at              TIMESTAMP                                NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at              TIMESTAMP                                NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at               TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at               TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_member_gym FOREIGN KEY (gym_id) REFERENCES gym (id)
 );
 
@@ -115,16 +116,16 @@ CREATE TABLE IF NOT EXISTS trainer_specialty
 -- PT 상품(Offering) 테이블
 CREATE TABLE IF NOT EXISTS pt_offering
 (
-    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
-    trainer_id      BIGINT       NOT NULL,
-    gym_id          BIGINT       NOT NULL,
-    title           VARCHAR(255) NOT NULL,
-    description     LONGTEXT,
-    price           BIGINT       NOT NULL,
-    total_sessions  BIGINT       NOT NULL,
-    status          VARCHAR(255) NOT NULL,
-    created_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id             BIGINT AUTO_INCREMENT PRIMARY KEY,
+    trainer_id     BIGINT       NOT NULL,
+    gym_id         BIGINT       NOT NULL,
+    title          VARCHAR(255) NOT NULL,
+    description    LONGTEXT,
+    price          BIGINT       NOT NULL,
+    total_sessions BIGINT       NOT NULL,
+    status         VARCHAR(255) NOT NULL,
+    created_at     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_offering_trainer FOREIGN KEY (trainer_id) REFERENCES member (id) ON DELETE CASCADE,
     CONSTRAINT fk_offering_gym FOREIGN KEY (gym_id) REFERENCES gym (id) ON DELETE CASCADE
 );
@@ -132,13 +133,13 @@ CREATE TABLE IF NOT EXISTS pt_offering
 -- PT 신청 정보 테이블
 CREATE TABLE IF NOT EXISTS pt_application
 (
-    id                      BIGINT AUTO_INCREMENT PRIMARY KEY,
-    offering_id             BIGINT       NOT NULL,
-    member_id               BIGINT       NOT NULL,
-    pt_application_status   VARCHAR(255) NOT NULL,
-    total_sessions          BIGINT,
-    created_at              TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at              TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id                    BIGINT AUTO_INCREMENT PRIMARY KEY,
+    offering_id           BIGINT       NOT NULL,
+    member_id             BIGINT       NOT NULL,
+    pt_application_status VARCHAR(255) NOT NULL,
+    total_sessions        BIGINT,
+    created_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_application_offering FOREIGN KEY (offering_id) REFERENCES pt_offering (id) ON DELETE CASCADE,
     CONSTRAINT fk_application_member FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
 );
@@ -169,16 +170,16 @@ CREATE TABLE IF NOT EXISTS pt_contract
 -- PT 예약(수업) 테이블
 CREATE TABLE IF NOT EXISTS pt_appointment
 (
-    id                   BIGINT AUTO_INCREMENT PRIMARY KEY,
-    contract_id          BIGINT       NOT NULL,
-    status               VARCHAR(255),
-    cancellation_reason  VARCHAR(500),
-    start_time           DATETIME,
-    end_time             DATETIME,
-    proposed_start_time  DATETIME,
-    proposed_end_time    DATETIME,
-    created_at           TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at           TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    contract_id         BIGINT    NOT NULL,
+    status              VARCHAR(255),
+    cancellation_reason VARCHAR(500),
+    start_time          DATETIME,
+    end_time            DATETIME,
+    proposed_start_time DATETIME,
+    proposed_end_time   DATETIME,
+    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_appointment_contract FOREIGN KEY (contract_id) REFERENCES pt_contract (id) ON DELETE CASCADE,
     UNIQUE uk_appointment_contract_starttime (contract_id, start_time)
 );
@@ -189,9 +190,9 @@ CREATE TABLE IF NOT EXISTS pt_appointment_change_request
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     appointment_id      BIGINT       NOT NULL,
     member_id           BIGINT       NOT NULL,
-    original_start_time DATETIME    NOT NULL,
-    proposed_start_time DATETIME    NOT NULL,
-    proposed_end_time   DATETIME    NOT NULL,
+    original_start_time DATETIME     NOT NULL,
+    proposed_start_time DATETIME     NOT NULL,
+    proposed_end_time   DATETIME     NOT NULL,
     reason              VARCHAR(255),
     status              VARCHAR(255) NOT NULL,
     created_at          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -203,8 +204,9 @@ CREATE TABLE IF NOT EXISTS pt_appointment_change_request
 -- 운동 정보 마스터 테이블
 CREATE TABLE IF NOT EXISTS exercise
 (
-    id   BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL UNIQUE
+    id         BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name       VARCHAR(255) NOT NULL UNIQUE,
+    deleted_at TIMESTAMP    NULL DEFAULT NULL -- [수정] Exercise.java의 Soft Delete를 위해 추가
 );
 
 -- 운동 일지 테이블
@@ -328,16 +330,16 @@ CREATE TABLE IF NOT EXISTS routine_set
 -- 사용자 파일 테이블 (프로필 이미지 외 다른 용도로 사용)
 CREATE TABLE IF NOT EXISTS user_file
 (
-    id                   BIGINT AUTO_INCREMENT PRIMARY KEY,
-    member_id            BIGINT                                   NOT NULL,
-    stored_file_name     VARCHAR(255)                             NOT NULL UNIQUE,
-    original_file_name   VARCHAR(255),
-    file_size            BIGINT,
-    file_type            VARCHAR(255),
-    purpose              VARCHAR(255)                             NOT NULL,
-    record_date          DATE,
-    created_at           TIMESTAMP                                NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at           TIMESTAMP                                NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id                 BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id          BIGINT       NOT NULL,
+    stored_file_name   VARCHAR(255) NOT NULL UNIQUE,
+    original_file_name VARCHAR(255),
+    file_size          BIGINT,
+    file_type          VARCHAR(255),
+    purpose            VARCHAR(255) NOT NULL,
+    record_date        DATE,
+    created_at         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_user_file_member FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
 );
 
@@ -345,8 +347,8 @@ CREATE TABLE IF NOT EXISTS user_file
 CREATE TABLE IF NOT EXISTS master_data_version
 (
     data_type  VARCHAR(255) PRIMARY KEY,
-    version    BIGINT       NOT NULL,
-    updated_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    version    BIGINT    NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 
@@ -354,6 +356,6 @@ CREATE TABLE IF NOT EXISTS master_data_version
 CREATE INDEX idx_workout_log_member_date ON workout_log (member_id, workout_date);
 CREATE INDEX idx_routine_member_id ON routine (member_id);
 CREATE INDEX idx_body_composition_member_date ON body_composition (member_id, measurement_date);
-CREATE INDEX idx_pt_contract_member_id ON pt_contract(member_id);
-CREATE INDEX idx_pt_contract_trainer_id ON pt_contract(trainer_id);
-CREATE INDEX idx_pt_appointment_start_time ON pt_appointment(start_time);
+CREATE INDEX idx_pt_contract_member_id ON pt_contract (member_id);
+CREATE INDEX idx_pt_contract_trainer_id ON pt_contract (trainer_id);
+CREATE INDEX idx_pt_appointment_start_time ON pt_appointment (start_time);
