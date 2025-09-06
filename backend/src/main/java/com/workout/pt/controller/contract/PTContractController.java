@@ -26,15 +26,15 @@ public class PTContractController {
   }
 
   @DeleteMapping("/{contractId}")
-  public ResponseEntity<Void> cancelContract(
+  public ResponseEntity<ApiResponse<Void>> cancelContract( // [변경]
       @AuthenticationPrincipal UserPrincipal user,
       @PathVariable Long contractId) {
     Long userId = user.getUserId();
     ptContractService.cancelContract(userId, contractId);
-    return ResponseEntity.noContent().build();
+    return ResponseEntity.ok(ApiResponse.empty());
   }
 
-  @GetMapping("/me")
+    @GetMapping("/me")
   public ResponseEntity<ApiResponse<List<ContractResponse>>> getMyContracts(
       @AuthenticationPrincipal UserPrincipal user,
       Pageable pageable

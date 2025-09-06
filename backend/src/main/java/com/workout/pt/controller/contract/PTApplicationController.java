@@ -1,6 +1,7 @@
 package com.workout.pt.controller.contract;
 
 import com.workout.auth.domain.UserPrincipal;
+import com.workout.global.dto.ApiResponse;
 import com.workout.pt.dto.request.PtApplicationRequest;
 import com.workout.pt.dto.response.PendingApplicationResponse;
 import com.workout.pt.service.contract.PTApplicationService;
@@ -25,67 +26,62 @@ public class PTApplicationController {
     this.ptApplicationService = ptApplicationService;
   }
 
-  /**
-   * PT 신청 조회 (트레이너, 회원)
-   */
   @GetMapping
-  public ResponseEntity<PendingApplicationResponse> findPendingApplications(
+  public ResponseEntity<ApiResponse<PendingApplicationResponse>> findPendingApplications( // [변경]
       @AuthenticationPrincipal UserPrincipal userPrincipal
   ) {
     Long userId = userPrincipal.getUserId();
-    return ResponseEntity.ok(ptApplicationService.findPendingApplicationsForUser(userId));
+    PendingApplicationResponse response = ptApplicationService.findPendingApplicationsForUser(userId);
+    return ResponseEntity.ok(ApiResponse.of(response));
   }
 
-  /**
-   * PT 신청
-   */
   @PostMapping
-  public ResponseEntity<Void> createApplication(
+  public ResponseEntity<ApiResponse<Void>> createApplication( // [변경]
       @AuthenticationPrincipal UserPrincipal user,
       @Valid @RequestBody PtApplicationRequest request
   ) {
     Long userId = user.getUserId();
     ptApplicationService.createApplication(request, userId);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.ok(ApiResponse.empty());
   }
 
   /**
    * PT 신청 수락 (트레이너)
    */
   @PatchMapping("/{applicationId}/acceptance")
-  public ResponseEntity<Void> acceptApplication(
+  public ResponseEntity<ApiResponse<Void>> acceptApplication(
       @AuthenticationPrincipal UserPrincipal trainer,
       @PathVariable Long applicationId
   ) {
     Long userId = trainer.getUserId();
     ptApplicationService.acceptApplication(applicationId, userId);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.ok(ApiResponse.empty());
   }
 
   /**
    * PT 신청 거절 (트레이너)
    */
   @PatchMapping("/{applicationId}/rejection")
-  public ResponseEntity<Void> rejectApplication(
+  public ResponseEntity<ApiResponse<Void>> rejectApplication(
       @AuthenticationPrincipal UserPrincipal trainer,
       @PathVariable Long applicationId
   ) {
     Long userId = trainer.getUserId();
     ptApplicationService.rejectApplication(applicationId, userId);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.ok(ApiResponse.empty());
   }
 
   /**
    * PT 신청 취소 (유저)
    */
   @PatchMapping("/{applicationId}/cancellation")
-  public ResponseEntity<Void> cancelApplication(
+  public ResponseEntity<ApiResponse<Void>> cancelApplication(
       @AuthenticationPrincipal UserPrincipal user,
       @PathVariable Long applicationId
   ) {
     Long userId = user.getUserId();
     ptApplicationService.cancelApplication(applicationId, userId);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.ok(ApiResponse.empty());
   }
 
 }

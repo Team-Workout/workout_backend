@@ -48,7 +48,8 @@ public class SecurityConfig {
         .securityContext(context -> context.securityContextRepository(securityContextRepository))
 
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/auth/**", "api/sync/**").permitAll()
+            .requestMatchers("/api/auth/**", "/api/sync/**")
+            .permitAll()
             .anyRequest().authenticated()
         )
         .exceptionHandling(e -> e

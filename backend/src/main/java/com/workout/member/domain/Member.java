@@ -75,6 +75,8 @@ public class Member extends BaseEntity {
 
   private Boolean isOpenBodyImg = false;
 
+  private Boolean isOpenBodyComposition = false;
+
   @Override
   public boolean equals(Object o) {
       if (this == o) {

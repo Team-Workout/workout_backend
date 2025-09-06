@@ -23,4 +23,13 @@ public record ApiResponse<T>(
   public static <T> ApiResponse<List<T>> of(Page<T> page) {
     return new ApiResponse<>(page.getContent(), PageInfo.from(page));
   }
+
+  /**
+   * Creates an empty ApiResponse with no data and no pagination information.
+   *
+   * @return an ApiResponse instance with both data and pageInfo set to null
+   */
+  public static ApiResponse<Void> empty() {
+    return new ApiResponse<>(null, null);
+  }
 }

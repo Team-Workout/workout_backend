@@ -9,7 +9,7 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 scrape_configs:
-  - job_name: spring-app # 이 로그 스트림에 붙일 작업 이름(라벨)
+  - job_name: spring-app
     static_configs:
       - targets:
           - localhost

@@ -7,17 +7,10 @@
 
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
     <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+
       <timestampPattern>yyyy-MM-dd HH:mm:ss.SSS</timestampPattern>
-      <jsonProviders>
-        <timestamp>
-          <pattern>${timestampPattern}</pattern>
-        </timestamp>
-        <logLevel/>
-        <loggerName/>
-        <threadName/>
-        <mdc/> <message/>
-        <stackTrace/>
-      </jsonProviders>
+      <includeVersion>false</includeVersion>
+
     </encoder>
   </appender>
 
@@ -28,18 +21,10 @@
       <maxHistory>30</maxHistory>
     </rollingPolicy>
     <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+
       <timestampPattern>yyyy-MM-dd HH:mm:ss.SSS</timestampPattern>
-      <jsonProviders>
-        <timestamp>
-          <pattern>${timestampPattern}</pattern>
-        </timestamp>
-        <logLevel/>
-        <loggerName/>
-        <threadName/>
-        <mdc/>
-        <message/>
-        <stackTrace/>
-      </jsonProviders>
+      <includeVersion>false</includeVersion>
+
     </encoder>
   </appender>
 

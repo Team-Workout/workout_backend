@@ -1,6 +1,7 @@
 package com.workout.pt.controller.contract;
 
 import com.workout.auth.domain.UserPrincipal;
+import com.workout.global.dto.ApiResponse;
 import com.workout.pt.dto.request.OfferingCreateRequest;
 import com.workout.pt.dto.response.PtOfferingResponse;
 import com.workout.pt.service.contract.PTOfferingService;
@@ -27,27 +28,27 @@ public class PTOfferingController {
   }
 
   @PostMapping
-  public ResponseEntity<Void> createOffering(
+  public ResponseEntity<ApiResponse<Void>> createOffering( // [변경]
       @AuthenticationPrincipal UserPrincipal trainer,
       @RequestBody OfferingCreateRequest request) {
     Long userId = trainer.getUserId();
     offeringService.register(request, userId);
-    return ResponseEntity.status(HttpStatus.CREATED).build();
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.empty());
   }
 
   @GetMapping("/trainer/{trainerId}")
-  public ResponseEntity<List<PtOfferingResponse>> getOfferingsByTrainer(
+  public ResponseEntity<ApiResponse<List<PtOfferingResponse>>> getOfferingsByTrainer( // [변경]
       @PathVariable Long trainerId) {
-    return ResponseEntity.ok(offeringService.findByTrainerId(trainerId));
+    List<PtOfferingResponse> offerings = offeringService.findByTrainerId(trainerId);
+    return ResponseEntity.ok(ApiResponse.of(offerings));
   }
 
   @DeleteMapping("/{offeringId}")
-  public ResponseEntity<Void> deleteOffering(
+  public ResponseEntity<ApiResponse<Void>> deleteOffering( // [변경]
       @AuthenticationPrincipal UserPrincipal trainer,
-      @PathVariable Long offeringId
-  ) {
+      @PathVariable Long offeringId) {
     Long userId = trainer.getUserId();
     offeringService.delete(offeringId, userId);
-    return ResponseEntity.noContent().build();
+    return ResponseEntity.ok(ApiResponse.empty());
   }
 }

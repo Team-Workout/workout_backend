@@ -82,28 +82,17 @@ public class PTAppointmentService {
     PTContract contract = ptContractRepository.findById(request.contractId())
         .orElseThrow(() -> new RestApiException(PTErrorCode.NOT_FOUND_PT_APPOINTMENT));
 
-    log.info("contract: {}", contract);
-    log.info("getTrainer: {}", contract.getTrainer().getId());
-    log.info("userId: {}", userId);
     if (!contract.getTrainer().getId().equals(userId)) {
       throw new RestApiException(PTErrorCode.NOT_ALLOWED_ACCESS);
     }
 
-    if (contract.getStatus() != PTContractStatus.ACTIVE) {
-      throw new RestApiException(PTErrorCode.INVALID_STATUS_REQUEST);
-    }
-    if (contract.getRemainingSessions() <= 0) {
-      throw new RestApiException(PTErrorCode.NO_REMAIN_SESSION);
-    }
-
-    checkTrainerScheduleOverlap(contract.getTrainer().getId(), request.startTime(),
-        request.endTime());
+    validateNewAppointmentRequest(contract, request.startTime(), request.endTime());
 
     PTAppointment appointment = PTAppointment.builder()
         .contract(contract)
         .startTime(request.startTime())
         .endTime(request.endTime())
-        .status(PTAppointmentStatus.SCHEDULED)
+        .status(PTAppointmentStatus.SCHEDULED) // 3. 고유 상태
         .build();
 
     try {
@@ -137,32 +126,22 @@ public class PTAppointmentService {
     }
   }
 
+  @Transactional
   public Long propose(Long userId, AppointmentRequest request) {
     PTContract contract = ptContractRepository.findById(request.contractId())
         .orElseThrow(() -> new RestApiException(PTErrorCode.NOT_FOUND_PT_APPOINTMENT));
 
-    // 권한 확인 (요청자가 계약의 회원인지)
     if (!contract.getMember().getId().equals(userId)) {
       throw new RestApiException(PTErrorCode.NOT_ALLOWED_ACCESS);
     }
 
-    // 계약 상태 및 남은 세션 확인
-    if (contract.getStatus() != PTContractStatus.ACTIVE) {
-      throw new RestApiException(PTErrorCode.INVALID_STATUS_REQUEST);
-    }
-    if (contract.getRemainingSessions() <= 0) {
-      throw new RestApiException(PTErrorCode.NO_REMAIN_SESSION);
-    }
-
-    // 트레이너의 스케줄 중복 확인
-    checkTrainerScheduleOverlap(contract.getTrainer().getId(), request.startTime(),
-        request.endTime());
+    validateNewAppointmentRequest(contract, request.startTime(), request.endTime());
 
     PTAppointment appointment = PTAppointment.builder()
         .contract(contract)
         .startTime(request.startTime())
         .endTime(request.endTime())
-        .status(PTAppointmentStatus.MEMBER_REQUESTED) // '회원 요청' 상태로 생성
+        .status(PTAppointmentStatus.MEMBER_REQUESTED)
         .build();
 
     try {
@@ -170,6 +149,24 @@ public class PTAppointmentService {
     } catch (DataIntegrityViolationException e) {
       throw new RestApiException(PTErrorCode.ALREADY_PRESENT_APPOINTMENT);
     }
+  }
+
+  private void applyAppointmentChange(PTAppointment appointment) {
+    appointment.setStartTime(appointment.getProposedStartTime());
+    appointment.setEndTime(appointment.getProposedEndTime());
+    appointment.setProposedStartTime(null);
+    appointment.setProposedEndTime(null);
+    appointment.setStatus(PTAppointmentStatus.SCHEDULED);
+  }
+
+  private void validateNewAppointmentRequest(PTContract contract, LocalDateTime startTime, LocalDateTime endTime) {
+    if (contract.getStatus() != PTContractStatus.ACTIVE) {
+      throw new RestApiException(PTErrorCode.INVALID_STATUS_REQUEST);
+    }
+    if (contract.getRemainingSessions() <= 0) {
+      throw new RestApiException(PTErrorCode.NO_REMAIN_SESSION);
+    }
+    checkTrainerScheduleOverlap(contract.getTrainer().getId(), startTime, endTime);
   }
 
   @Transactional
@@ -188,9 +185,9 @@ public class PTAppointmentService {
     }
 
     appointment.setStatus(PTAppointmentStatus.SCHEDULED);
-    ptAppointmentRepository.save(appointment);
   }
 
+  @Transactional
   public void requestChange(Long userId, Long appointmentId,
       AppointmentUpdateRequest request) {
     PTAppointment appointment = findAppointmentById(appointmentId);
@@ -213,9 +210,7 @@ public class PTAppointmentService {
     appointment.setStatus(PTAppointmentStatus.CHANGE_REQUESTED);
   }
 
-  /**
-   * 트레이너가 PT 스케줄 변경을 요청합니다.
-   */
+  @Transactional
   public void requestChangeByTrainer(Long userId, Long appointmentId,
       AppointmentUpdateRequest request) {
     PTAppointment appointment = findAppointmentById(appointmentId);
@@ -238,9 +233,7 @@ public class PTAppointmentService {
     appointment.setStatus(PTAppointmentStatus.TRAINER_CHANGE_REQUESTED);
   }
 
-  /**
-   * 트레이너가 회원의 변경 요청을 수락합니다.
-   */
+  @Transactional
   public void approveChange(Long userId, Long appointmentId) {
     PTAppointment appointment = findAppointmentById(appointmentId);
 
@@ -253,19 +246,10 @@ public class PTAppointmentService {
       throw new RestApiException(PTErrorCode.INVALID_STATUS_REQUEST);
     }
 
-    // 제안된 시간으로 실제 예약 시간을 업데이트
-    appointment.setStartTime(appointment.getProposedStartTime());
-    appointment.setEndTime(appointment.getProposedEndTime());
-
-    // 제안 시간 필드는 초기화
-    appointment.setProposedStartTime(null);
-    appointment.setProposedEndTime(null);
-    appointment.setStatus(PTAppointmentStatus.SCHEDULED); // 다시 '확정' 상태로 변경
+    applyAppointmentChange(appointment);
   }
 
-  /**
-   * 회원이 트레이너의 변경 요청을 수락합니다.
-   */
+  @Transactional
   public void approveChangeByMember(Long userId, Long appointmentId) {
     PTAppointment appointment = findAppointmentById(appointmentId);
 
@@ -278,18 +262,10 @@ public class PTAppointmentService {
       throw new RestApiException(PTErrorCode.INVALID_STATUS_REQUEST);
     }
 
-    // 제안된 시간으로 실제 예약 시간을 업데이트
-    appointment.setStartTime(appointment.getProposedStartTime());
-    appointment.setEndTime(appointment.getProposedEndTime());
-
-    appointment.setProposedStartTime(null);
-    appointment.setProposedEndTime(null);
-    appointment.setStatus(PTAppointmentStatus.SCHEDULED); // 다시 '확정' 상태로 변경
+    applyAppointmentChange(appointment);
   }
 
-  /**
-   * PT 스케줄 변경 요청을 거절합니다.
-   */
+  @Transactional
   public void rejectChange(Long userId, Long appointmentId) {
     PTAppointment appointment = findAppointmentById(appointmentId);
 
@@ -308,7 +284,7 @@ public class PTAppointmentService {
     // 제안 시간 필드만 초기화하고 원래 시간으로 되돌림
     appointment.setProposedStartTime(null);
     appointment.setProposedEndTime(null);
-    appointment.setStatus(PTAppointmentStatus.SCHEDULED); // 다시 '확정' 상태로 변경
+    appointment.setStatus(PTAppointmentStatus.SCHEDULED);
   }
 
   private PTAppointment findAppointmentById(Long appointmentId) {
