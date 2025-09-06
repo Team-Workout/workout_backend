@@ -4,8 +4,10 @@ import com.workout.auth.domain.UserPrincipal;
 import com.workout.body.dto.BodyCompositionResponse;
 import com.workout.body.service.BodyCompositionService;
 import com.workout.global.dto.ApiResponse;
+import com.workout.pt.service.contract.PTContractService;
 import com.workout.trainer.dto.ProfileCreateDto;
 import com.workout.trainer.dto.ProfileResponseDto;
+import com.workout.trainer.service.TrainerProfileService;
 import com.workout.trainer.service.TrainerService;
 import com.workout.utils.dto.FileResponse;
 import jakarta.validation.Valid;
@@ -13,6 +15,7 @@ import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,53 +33,62 @@ import org.springframework.web.bind.annotation.RestController;
 public class TrainerController {
 
   private final TrainerService trainerService;
+  private final TrainerProfileService trainerProfileService;
+  private final PTContractService ptContractService;
   private final BodyCompositionService bodyCompositionService;
 
   public TrainerController(TrainerService trainerService,
+      TrainerProfileService trainerProfileService, PTContractService ptContractService,
       BodyCompositionService bodyCompositionService) {
     this.trainerService = trainerService;
+    this.trainerProfileService = trainerProfileService;
+    this.ptContractService = ptContractService;
     this.bodyCompositionService = bodyCompositionService;
   }
 
-  /**
-   * 본인 프로필 생성 및 수정
-   */
+  @GetMapping
+  public ResponseEntity<ApiResponse<List<ProfileResponseDto>>> getTrainerProfilesByGym(
+      @RequestParam Long gymId,
+      @PageableDefault(size = 10, sort = "name") Pageable pageable) {
+
+    Page<ProfileResponseDto> trainerProfilePage = trainerService.getTrainerProfilesByGym(gymId,
+        pageable);
+
+    return ResponseEntity.ok(ApiResponse.of(trainerProfilePage));
+  }
+
   @PutMapping("/profile")
-  public ResponseEntity<Void> createOrUpdateProfile(
+  public ResponseEntity<ApiResponse<Void>> createOrUpdateProfile(
       @AuthenticationPrincipal UserPrincipal userPrincipal,
       @Valid @RequestBody ProfileCreateDto profileCreateDto) {
 
     Long currentTrainerId = userPrincipal.getUserId();
-    trainerService.updateProfile(currentTrainerId, profileCreateDto);
-    return ResponseEntity.ok().build();
+
+    trainerProfileService.updateProfile(currentTrainerId, profileCreateDto);
+
+    return ResponseEntity.ok(ApiResponse.empty());
   }
 
-  /**
-   * 특정 트레이너 프로필 조회
-   */
   @GetMapping("/{trainerId}/profile")
-  public ResponseEntity<ProfileResponseDto> getTrainerProfile(
+  public ResponseEntity<ApiResponse<ProfileResponseDto>> getTrainerProfile(
       @PathVariable Long trainerId) {
 
-    ProfileResponseDto profile = trainerService.getProfile(trainerId);
-    return ResponseEntity.ok(profile);
+    ProfileResponseDto profile = trainerProfileService.getProfile(trainerId);
+
+    return ResponseEntity.ok(ApiResponse.of(profile));
   }
 
-  /**
-   * 프로필 삭제
-   */
   @DeleteMapping("/profile")
-  public ResponseEntity<Void> deleteProfile(
+  public ResponseEntity<ApiResponse<Void>> deleteProfile(
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
     Long currentTrainerId = userPrincipal.getUserId();
-    trainerService.deleteProfile(currentTrainerId);
-    return ResponseEntity.noContent().build();
+
+    trainerService.deleteTrainerAccount(currentTrainerId);
+
+    return ResponseEntity.ok(ApiResponse.empty());
   }
 
-  /**
-   * 회원 몸 사진 조회
-   */
   @GetMapping("/members/{memberId}/body-images")
   public ResponseEntity<ApiResponse<List<FileResponse>>> getMemberBodyImages(
       @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -86,7 +98,8 @@ public class TrainerController {
       Pageable pageable) {
 
     Long trainerId = userPrincipal.getUserId();
-    Page<FileResponse> bodyImagesPage = trainerService.findMemberBodyImagesByTrainer(trainerId,
+
+    Page<FileResponse> bodyImagesPage = ptContractService.findMemberBodyImagesByTrainer(trainerId,
         memberId, startDate, endDate, pageable);
 
     return ResponseEntity.ok(ApiResponse.of(bodyImagesPage));
@@ -101,7 +114,10 @@ public class TrainerController {
       Pageable pageable) {
 
     Long trainerId = userPrincipal.getUserId();
-    Page<BodyCompositionResponse> bodyInfoPage = bodyCompositionService.findDataByTrainer(trainerId,
+
+    ptContractService.validateClientBodyDataAccess(trainerId, memberId);
+
+    Page<BodyCompositionResponse> bodyInfoPage = bodyCompositionService.findByUserIdAndDateRange(
         memberId, startDate, endDate, pageable);
 
     return ResponseEntity.ok(ApiResponse.of(bodyInfoPage));

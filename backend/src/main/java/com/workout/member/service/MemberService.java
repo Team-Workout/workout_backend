@@ -4,9 +4,11 @@ import com.workout.auth.dto.SignupRequest;
 import com.workout.global.exception.RestApiException;
 import com.workout.global.exception.errorcode.MemberErrorCode;
 import com.workout.gym.domain.Gym;
-import com.workout.gym.service.GymService;
 import com.workout.member.domain.Member;
+import com.workout.member.dto.MemberSettingsDto;
 import com.workout.member.repository.MemberRepository;
+import com.workout.utils.service.FileService;
+import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,25 +19,37 @@ import org.springframework.stereotype.Service;
 public class MemberService {
 
   private final MemberRepository memberRepository;
-  private final GymService gymService;
   private final PasswordEncoder passwordEncoder;
+  private final FileService fileService;
 
-  public MemberService(MemberRepository memberRepository, GymService gymService,
-      PasswordEncoder passwordEncoder) {
+  public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder,
+      FileService fileService) {
     this.memberRepository = memberRepository;
-    this.gymService = gymService;
     this.passwordEncoder = passwordEncoder;
+    this.fileService = fileService;
   }
 
   public Member authenticate(String email, String password) {
     Member member = memberRepository.findByEmail(email)
         .orElseThrow(() -> new RestApiException(MemberErrorCode.AUTHENTICATION_FAILED));
 
-    /*if (!passwordEncoder.matches(password, member.getPassword())) {
+    if (!passwordEncoder.matches(password, member.getPassword())) {
       throw new RestApiException(MemberErrorCode.AUTHENTICATION_FAILED);
-    }*/
+    }
 
     return member;
+  }
+
+  public Long createMember(SignupRequest request, Gym gym) {
+    String encodedPassword = passwordEncoder.encode(request.password());
+    Member member = request.toMemberEntity(gym, encodedPassword);
+
+    member.setIsOpenWorkoutRecord(false);
+    member.setIsOpenBodyImg(false);
+    member.setIsOpenBodyComposition(false);
+    member.setProfileImageUri(fileService.getDefaultProfileImageUrl());
+
+    return memberRepository.save(member).getId();
   }
 
   public void ensureEmailIsUnique(String email) {
@@ -49,40 +63,22 @@ public class MemberService {
         .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
   }
 
-  public void allowAccessWorkoutLog(Long userId) {
-    Member member = memberRepository.findById(userId)
-        .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
-
-    member.setIsOpenWorkoutRecord(true);
-    memberRepository.save(member);
+  public Member getMemberReferenceById(Long id) {
+    try {
+      return memberRepository.getReferenceById(id);
+    } catch (EntityNotFoundException e) {
+      throw new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND);
+    }
   }
 
 
-  public void allowAccessBodyImg(Long userId) {
-    Member member = memberRepository.findById(userId)
-        .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
+  public void updatePrivacySettings(Long userId, MemberSettingsDto settingsDto) {
+    Member member = findById(userId);
 
-    member.setIsOpenBodyImg(true);
+    member.setIsOpenWorkoutRecord(settingsDto.isOpenWorkoutRecord());
+    member.setIsOpenBodyImg(settingsDto.isOpenBodyImg());
+    member.setIsOpenBodyComposition(settingsDto.isOpenBodyComposition());
+
     memberRepository.save(member);
-  }
-
-  public void forbidAccessWorkoutLog(Long userId) {
-    Member member = memberRepository.findById(userId)
-        .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
-
-    member.setIsOpenWorkoutRecord(false);
-    memberRepository.save(member);
-  }
-
-  public void forbidAccessBodyImg(Long userId) {
-    Member member = memberRepository.findById(userId)
-        .orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
-
-    member.setIsOpenBodyImg(false);
-    memberRepository.save(member);
-  }
-
-  public List<Member> findByIdIn(List<Long> ids) {
-    return memberRepository.findByIdIn(ids);
   }
 }

@@ -1,7 +1,7 @@
 package com.workout.gym.service;
 
 import com.workout.global.exception.RestApiException;
-import com.workout.global.exception.errorcode.MemberErrorCode;
+import com.workout.global.exception.errorcode.GymErrorCode;
 import com.workout.gym.domain.Gym;
 import com.workout.gym.repository.GymRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +19,6 @@ public class GymService {
 
   public Gym findById(Long id) {
     return gymRepository.findById(id)
-        .orElseThrow(() -> new RestApiException(MemberErrorCode.AUTHENTICATION_FAILED));
+        .orElseThrow(() -> new RestApiException(GymErrorCode.GYM_NOT_FOUND));
   }
 }

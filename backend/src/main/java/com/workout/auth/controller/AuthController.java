@@ -7,8 +7,6 @@ import com.workout.auth.service.AuthService;
 import com.workout.global.dto.ApiResponse;
 import com.workout.member.domain.Member;
 import com.workout.member.domain.Role;
-import com.workout.member.service.MemberService;
-import com.workout.utils.service.FileService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -37,8 +35,8 @@ public class AuthController {
       HttpServletRequest httpRequest,
       HttpServletResponse httpResponse
   ) {
-    // 2. AuthService를 통해 로그인 처리 및 Member 엔티티 획득
-    Member member = authService.login(request.email(), request.password(), httpRequest, httpResponse);
+    Member member = authService.login(request.email(), request.password(), httpRequest,
+        httpResponse);
 
     SigninResponse responseDto = SigninResponse.from(member);
 
@@ -46,14 +44,14 @@ public class AuthController {
   }
 
   @PostMapping("/signup/user")
-  public ResponseEntity<Long> signupUser(@Valid @RequestBody SignupRequest signupRequest) {
-    Long memberId = authService.signup(signupRequest, Role.MEMBER); // AuthService에 위임
-    return ResponseEntity.status(HttpStatus.CREATED).body(memberId);
+  public ResponseEntity<ApiResponse<Long>> signupUser(@Valid @RequestBody SignupRequest signupRequest) {
+    Long memberId = authService.signup(signupRequest, Role.MEMBER);
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(memberId));
   }
 
   @PostMapping("/signup/trainer")
-  public ResponseEntity<Long> signupTrainer(@Valid @RequestBody SignupRequest signupRequest) {
-    Long trainerId = authService.signup(signupRequest, Role.TRAINER); // AuthService에 위임
-    return ResponseEntity.status(HttpStatus.CREATED).body(trainerId);
+  public ResponseEntity<ApiResponse<Long>> signupTrainer(@Valid @RequestBody SignupRequest signupRequest) {
+    Long trainerId = authService.signup(signupRequest, Role.TRAINER);
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(trainerId));
   }
 }

@@ -7,6 +7,7 @@ public record ProfileResponse(
     String email,
     boolean isOpenWorkoutRecord,
     boolean isOpenBodyImg,
+    boolean IsOpenBodyComposition,
     String GymName
 ) {
   public static ProfileResponse from(Member member) {
@@ -15,6 +16,7 @@ public record ProfileResponse(
         member.getEmail(),
         member.getIsOpenWorkoutRecord(),
         member.getIsOpenBodyImg(),
+        member.getIsOpenBodyComposition(),
         member.getGym().getName()
     );
   }
