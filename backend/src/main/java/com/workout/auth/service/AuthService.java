@@ -11,11 +11,13 @@ import com.workout.trainer.service.TrainerService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -28,7 +30,8 @@ public class AuthService {
 
 
   public AuthService(SecurityContextRepository securityContextRepository,
-      MemberService memberService, TrainerService trainerService, GymService gymService) {
+      MemberService memberService, TrainerService trainerService,
+      GymService gymService) {
     this.securityContextRepository = securityContextRepository;
     this.memberService = memberService;
     this.gymService = gymService;
@@ -50,17 +53,21 @@ public class AuthService {
     return member;
   }
 
+  @Transactional
   public Long signup(SignupRequest signupRequest, Role role) {
     memberService.ensureEmailIsUnique(signupRequest.email());
 
     Gym gym = gymService.findById(signupRequest.gymId());
 
+    Long newMemberId;
     if (role == Role.MEMBER) {
-      return memberService.createMember(signupRequest, gym);
+      newMemberId = memberService.createMember(signupRequest, gym);
     } else if (role == Role.TRAINER) {
-      return trainerService.createTrainer(signupRequest, gym);
+      newMemberId = trainerService.createTrainer(signupRequest, gym);
     } else {
       throw new IllegalArgumentException("지원하지 않는 사용자 역할입니다.");
     }
+
+    return newMemberId;
   }
 }
