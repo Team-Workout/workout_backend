@@ -24,3 +24,6 @@ default:
   profile:
     image:
       url: ${DEFAULT_PROFILE_IMAGE_URL}
+
+fcm:
+  service-account-key-path: "file:/app/config/fcm-key.json"

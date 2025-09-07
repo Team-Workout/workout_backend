@@ -81,4 +81,10 @@ public class MemberService {
 
     memberRepository.save(member);
   }
+
+  public void updateFcmToken(Long userId, String fcmToken) {
+    Member member = findById(userId);
+    member.setFcmToken(fcmToken);
+    memberRepository.save(member);
+  }
 }

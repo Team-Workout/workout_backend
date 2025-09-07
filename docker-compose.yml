@@ -29,6 +29,7 @@ services:
     volumes:
       - ./uploads:/uploads
       - ./logs:/app/logs
+      - ./config/fcm-key.json:/app/config/fcm-key.json:ro
     networks:
       - my-network
     depends_on:
