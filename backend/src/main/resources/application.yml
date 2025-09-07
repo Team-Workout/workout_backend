@@ -24,3 +24,6 @@ logging:
 upload:
   local:
     dir: ${UPLOAD_DIR:./uploads/}
+
+fcm:
+  service-account-key-path: "classpath:config/fcm-key.json"

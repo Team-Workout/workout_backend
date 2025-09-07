@@ -71,11 +71,18 @@ public class Member extends BaseEntity {
   @Column(name = "role", insertable = false, updatable = false)
   private Role role;
 
+  @Column(name = "fcm_token")
+  private String fcmToken;
+
   private Boolean isOpenWorkoutRecord = false;
 
   private Boolean isOpenBodyImg = false;
 
   private Boolean isOpenBodyComposition = false;
+
+  public void updateFcmToken(String fcmToken) {
+    this.fcmToken = fcmToken;
+  }
 
   @Override
   public boolean equals(Object o) {
