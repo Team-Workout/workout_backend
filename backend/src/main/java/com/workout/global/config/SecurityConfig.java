@@ -48,7 +48,12 @@ public class SecurityConfig {
         .securityContext(context -> context.securityContextRepository(securityContextRepository))
 
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/auth/**", "/api/sync/**")
+            .requestMatchers(
+                "/api/auth/**",
+                "/api/sync/**",
+                "/v3/api-docs/**",       // OpenAPI 3.0 스펙 JSON/YAML 파일
+                "/swagger-ui.html",      // Swagger UI 메인 HTML 페이지
+                "/swagger-ui/**")
             .permitAll()
             .anyRequest().authenticated()
         )
