@@ -7,12 +7,16 @@ import com.workout.gym.domain.Gym;
 import com.workout.member.domain.Member;
 import com.workout.member.dto.MemberSettingsDto;
 import com.workout.member.repository.MemberRepository;
+import com.workout.notification.event.TokenCleanupEvent;
 import com.workout.utils.service.FileService;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -86,5 +90,29 @@ public class MemberService {
     Member member = findById(userId);
     member.setFcmToken(fcmToken);
     memberRepository.save(member);
+  }
+
+  @Async
+  @EventListener
+  @Transactional
+  public void handleTokenCleanup(TokenCleanupEvent event) {
+    String invalidToken = event.invalidToken();
+    log.info("비동기 리스너 수신: FCM 토큰 삭제 작업 시작. Token={}", invalidToken);
+
+    try {
+      // 해당 토큰을 가진 회원을 찾아 토큰 값만 null로 업데이트합니다.
+      // (회원을 삭제하는 것이 아님에 유의)
+      Member member = memberRepository.findByFcmToken(invalidToken).orElseThrow(() -> new RestApiException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+      if (member != null) {
+        member.setFcmToken(null);
+        memberRepository.save(member);
+        log.info("토큰 삭제 완료. MemberId={}", member.getId());
+      } else {
+        log.warn("삭제할 토큰을 찾았으나, DB에 해당 토큰을 가진 회원이 없습니다. Token={}", invalidToken);
+      }
+    } catch (Exception e) {
+      log.error("FCM 토큰 비동기 삭제 중 오류 발생. Token={}", invalidToken, e);
+    }
   }
 }

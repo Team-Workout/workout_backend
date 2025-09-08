@@ -16,6 +16,9 @@ spring:
       port: 6379
   flyway:
     locations: classpath:/migration
+  batch:
+    job:
+      enabled: false
 
 encryption:
   key: ${ENCRYPTION_KEY}
