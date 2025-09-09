@@ -2,8 +2,6 @@ package com.workout.member.domain;
 
 import com.workout.global.BaseEntity;
 import com.workout.gym.domain.Gym;
-import com.workout.utils.domain.UserFile;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
@@ -86,18 +84,18 @@ public class Member extends BaseEntity {
 
   @Override
   public boolean equals(Object o) {
-      if (this == o) {
-          return true;
-      }
-      if (o == null) {
-          return false;
-      }
+    if (this == o) {
+      return true;
+    }
+    if (o == null) {
+      return false;
+    }
 
     Class<?> thisClass = org.hibernate.Hibernate.getClass(this);
     Class<?> thatClass = org.hibernate.Hibernate.getClass(o);
-      if (thisClass != thatClass) {
-          return false;
-      }
+    if (thisClass != thatClass) {
+      return false;
+    }
 
     Member that = (Member) o;
     return Objects.equals(getId(), that.getId());

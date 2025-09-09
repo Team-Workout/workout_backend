@@ -1,7 +1,6 @@
 package com.workout.member.repository;
 
 import com.workout.member.domain.Member;
-import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,4 +18,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
   @Query("SELECT m.fcmToken FROM Member m WHERE m.id = :memberId")
   String findFcmTokenById(@Param("memberId") Long memberId);
+
+  Optional<Member> findByFcmToken(String invalidToken);
 }
