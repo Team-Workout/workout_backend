@@ -54,6 +54,8 @@ public class PTContractService {
         .remainingSessions(ptOffering.getTotalSessions())
         .status(PTContractStatus.ACTIVE)
         .build();
+
+    ptContractRepository.save(contract);
   }
 
   @Transactional
