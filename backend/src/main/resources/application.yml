@@ -10,6 +10,9 @@ spring:
     time-zone: UTC
   flyway:
     enabled: true
+  batch:
+    job:
+      enabled: false
 
 logging:
   level:

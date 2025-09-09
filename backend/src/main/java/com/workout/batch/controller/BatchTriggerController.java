@@ -1,0 +1,66 @@
+package com.workout.batch.controller;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@Slf4j
+@RestController
+@RequestMapping("/api/test/batch")
+public class BatchTriggerController {
+
+  private final JobLauncher jobLauncher;
+
+  private final Job sendPtReminderJob;
+
+  public BatchTriggerController(JobLauncher jobLauncher,
+      @Qualifier("sendPtReminderJob") Job sendPtReminderJob) {
+    this.jobLauncher = jobLauncher;
+    this.sendPtReminderJob = sendPtReminderJob;
+  }
+
+  @PostMapping("/pt-reminder")
+  public ResponseEntity<String> runPtReminderJobManually(
+      @RequestParam(required = false) String date) {
+
+    LocalDate targetDate;
+    try {
+      // 파라미터로 날짜가 들어오면 그 날짜를 targetDate로 사용
+      targetDate = (date != null) ? LocalDate.parse(date) : LocalDate.now().plusDays(1);
+    } catch (DateTimeParseException e) {
+      return ResponseEntity.badRequest().body("잘못된 날짜 형식입니다. (YYYY-MM-DD)");
+    }
+
+    try {
+      // 스케줄러가 하는 일과 완벽히 동일한 JobParameters를 생성합니다.
+      // (UUID로 매번 고유 ID를 줘야 재실행이 가능합니다)
+      JobParameters jobParameters = new JobParametersBuilder()
+          .addString("runId", UUID.randomUUID().toString()) // 매번 새로운 JobInstance를 생성
+          .addString("targetDate", targetDate.toString()) // "yyyy-MM-dd" 형식
+          .toJobParameters();
+
+      log.info("수동 배치 작업을 시작합니다. 대상 날짜: {}", targetDate);
+
+      // Job 실행
+      jobLauncher.run(sendPtReminderJob, jobParameters);
+
+      return ResponseEntity.ok(targetDate + " 대상 배치 작업 시작됨.");
+
+    } catch (Exception e) {
+      log.error("수동 배치 작업 실행 중 오류 발생", e);
+      return ResponseEntity.internalServerError().body("배치 실행 실패: " + e.getMessage());
+    }
+  }
+}
