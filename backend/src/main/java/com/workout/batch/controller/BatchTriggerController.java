@@ -23,7 +23,6 @@ public class BatchTriggerController {
 
   private final JobLauncher jobLauncher;
 
-  // 2. [기존] 운영용 알림 Job 주입
   private final Job sendPtReminderJob;
 
   public BatchTriggerController(JobLauncher jobLauncher,
@@ -32,7 +31,6 @@ public class BatchTriggerController {
     this.sendPtReminderJob = sendPtReminderJob;
   }
 
-  // 5. [기존] PT 알림 배치 수동 실행 API (그대로 둠)
   @PostMapping("/pt-reminder")
   public ResponseEntity<String> runPtReminderJobManually(
       @RequestParam(required = false) String date) {
