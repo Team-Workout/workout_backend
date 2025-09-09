@@ -58,6 +58,17 @@ dependencies {
 
 	// SMTP
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+	// Logging
+	implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+	// Swagger
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.10'
+
+	// FCM
+	implementation 'com.google.firebase:firebase-admin:9.4.3'
+
 }
 
 tasks.withType(Test) {

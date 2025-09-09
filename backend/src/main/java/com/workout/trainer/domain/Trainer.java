@@ -27,23 +27,26 @@ import org.hibernate.annotations.BatchSize;
 public class Trainer extends Member {
   @BatchSize(size = 100)
   @OneToMany(mappedBy = "trainer", fetch = FetchType.LAZY)
-  private List<Award> awards;
+  private Set<Award> awards;
 
   @BatchSize(size = 100)
   @OneToMany(mappedBy = "trainer", fetch = FetchType.LAZY)
-  private List<Certification> certifications;
+  private Set<Certification> certifications = new ArrayList<>();
 
   @BatchSize(size = 100)
   @OneToMany(mappedBy = "trainer", fetch = FetchType.LAZY)
-  private List<Education> educations;
+  private Set<Education> educations = new ArrayList<>();
 
   @BatchSize(size = 100)
   @OneToMany(mappedBy = "trainer", fetch = FetchType.LAZY)
-  private List<Workexperience> workexperiences;
+  private Set<Workexperience> workexpExperiences = new ArrayList<>();
 
+  // TrainerSpecialty는 다대다 관계이므로 별도 처리가 필요할 수 있습니다.
+  // 여기서는 간단히 OneToMany로 표현합니다.
   @BatchSize(size = 100)
   @OneToMany(mappedBy = "trainer", fetch = FetchType.LAZY)
-  private Set<TrainerSpecialty> trainerSpecialties;
+  private Set<TrainerSpecialty> trainerSpecialties = new HashSet<>();
+
 
   private String phoneNumber;
   private String introduction;

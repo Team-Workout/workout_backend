@@ -1,0 +1,18 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: spring-app
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: spring-app # job 라벨을 spring-app으로 지정
+          __path__: /app/logs/*.log # 컨테이너 내부의 /app/logs 폴더 아래 모든 .log 파일을 감시

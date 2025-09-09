@@ -15,6 +15,7 @@ import com.workout.pt.repository.PTOfferingRepository;
 import java.util.Collections;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PTApplicationService {
@@ -33,6 +34,7 @@ public class PTApplicationService {
     this.memberService = memberService;
   }
 
+  @Transactional
   public void createApplication(PtApplicationRequest ptApplicationRequest,
       Long userId) {
     Member member = memberService.findById(userId);
@@ -64,6 +66,7 @@ public class PTApplicationService {
     return PendingApplicationResponse.from(pendingApplications);
   }
 
+  @Transactional
   public void acceptApplication(Long applicationId, Long userId) {
     Member trainer = memberService.findById(userId);
     PTApplication ptApplication = findApplicationById(applicationId);
@@ -81,6 +84,7 @@ public class PTApplicationService {
     ptContractService.createContractFromApplication(ptApplication);
   }
 
+  @Transactional
   public void rejectApplication(Long applicationId, Long userId) {
     Member trainer = memberService.findById(userId);
     PTApplication ptApplication = findApplicationById(applicationId);
@@ -92,10 +96,9 @@ public class PTApplicationService {
     }
 
     ptApplication.setStatus(PTApplicationStatus.REJECTED);
-
-    ptApplicationRepository.save(ptApplication);
   }
 
+  @Transactional
   public void cancelApplication(Long applicationId, Long userId) {
     Member member = memberService.findById(userId);
     PTApplication ptApplication = findApplicationById(applicationId);
@@ -109,8 +112,6 @@ public class PTApplicationService {
     }
 
     ptApplication.setStatus(PTApplicationStatus.CANCELLED);
-
-    ptApplicationRepository.save(ptApplication);
   }
 
 

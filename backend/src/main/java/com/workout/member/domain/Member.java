@@ -22,8 +22,11 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.util.Objects;
-
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @Entity
@@ -42,9 +45,7 @@ public class Member extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-  @JoinColumn(name = "profile_image_id")
-  private UserFile profileImage;
+  private String profileImageUri;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "gym_id", nullable = false)
@@ -71,11 +72,19 @@ public class Member extends BaseEntity {
   @Column(name = "role", insertable = false, updatable = false)
   private Role role;
 
+  @Column(name = "fcm_token")
+  private String fcmToken;
+
   @Builder.Default
   private Boolean isOpenWorkoutRecord = false;
+    @Builder.Default
+  private Boolean isOpenBodyImg = false;
 
-  public void setProfileImage(UserFile profileImage) {
-    this.profileImage = profileImage;
+    @Builder.Default
+  private Boolean isOpenBodyComposition = false;
+
+  public void updateFcmToken(String fcmToken) {
+    this.fcmToken = fcmToken;
   }
 
   @Override

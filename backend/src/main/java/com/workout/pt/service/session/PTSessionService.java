@@ -1,6 +1,5 @@
 package com.workout.pt.service.session;
 
-import com.workout.auth.domain.UserPrincipal;
 import com.workout.global.exception.RestApiException;
 import com.workout.global.exception.errorcode.PTErrorCode;
 import com.workout.member.domain.Member;
@@ -14,19 +13,11 @@ import com.workout.pt.repository.PTSessionRepository;
 import com.workout.pt.service.contract.PTContractService;
 import com.workout.trainer.domain.Trainer;
 import com.workout.trainer.service.TrainerService;
-import com.workout.workout.domain.log.Feedback;
-import com.workout.workout.domain.log.WorkoutExercise;
 import com.workout.workout.domain.log.WorkoutLog;
-import com.workout.workout.domain.log.WorkoutSet;
 import com.workout.workout.dto.log.WorkoutLogResponse;
-import com.workout.workout.repository.log.FeedbackRepository;
-import com.workout.workout.repository.log.WorkoutExerciseRepository;
-import com.workout.workout.repository.log.WorkoutSetRepository;
 import com.workout.workout.service.WorkoutLogService;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -40,23 +31,15 @@ public class PTSessionService {
   private final PTAppointmentRepository ptAppointmentRepository;
   private final PTContractService ptContractService;
   private final TrainerService trainerService;
-  private final WorkoutExerciseRepository workoutExerciseRepository;
-  private final WorkoutSetRepository workoutSetRepository;
-  private final FeedbackRepository feedbackRepository;
 
   public PTSessionService(PTSessionRepository ptSessionRepository,
       WorkoutLogService workoutLogService, PTAppointmentRepository ptAppointmentRepository,
-      PTContractService ptContractService, TrainerService trainerService,
-      WorkoutExerciseRepository workoutExerciseRepository, WorkoutSetRepository workoutSetRepository,
-      FeedbackRepository feedbackRepository) {
+      PTContractService ptContractService, TrainerService trainerService) {
     this.ptSessionRepository = ptSessionRepository;
     this.ptAppointmentRepository = ptAppointmentRepository;
     this.workoutLogService = workoutLogService;
     this.ptContractService = ptContractService;
     this.trainerService = trainerService;
-    this.workoutExerciseRepository = workoutExerciseRepository;
-    this.workoutSetRepository = workoutSetRepository;
-    this.feedbackRepository = feedbackRepository;
   }
 
   @Transactional
@@ -123,37 +106,13 @@ public class PTSessionService {
         .map(PTSession::getWorkoutLog)
         .toList();
 
-    List<Long> workoutLogIds = ptSessionPage.getContent().stream()
-        .map(PTSession::getWorkoutLog)
-        .map(WorkoutLog::getId)
-        .toList();
-
-    List<WorkoutExercise> exercises = workoutExerciseRepository.findAllByWorkoutLogIdInOrderByOrderAsc(workoutLogIds);
-    List<Long> exerciseIds = exercises.stream().map(WorkoutExercise::getId).toList();
-
-    List<WorkoutSet> sets = exerciseIds.isEmpty() ? Collections.emptyList()
-        : workoutSetRepository.findAllByWorkoutExerciseIdInOrderByOrderAsc(exerciseIds);
-    List<Long> setIds = sets.stream().map(WorkoutSet::getId).toList();
-
-    List<Feedback> feedbacks = feedbackRepository.findByWorkoutElements(workoutLogIds, exerciseIds, setIds);
-
-
-    Map<Long, List<WorkoutExercise>> exercisesByLogId = exercises.stream()
-        .collect(Collectors.groupingBy(ex -> ex.getWorkoutLog().getId()));
-
-    Map<Long, List<WorkoutSet>> setsByExerciseId = sets.stream()
-        .collect(Collectors.groupingBy(set -> set.getWorkoutExercise().getId()));
+    Map<Long, WorkoutLogResponse> responseMap = workoutLogService.getWorkoutLogResponseMapByLogs(
+        workoutLogs);
 
     return ptSessionPage.map(ptSession -> {
       WorkoutLog log = ptSession.getWorkoutLog();
-
-      List<WorkoutExercise> exercisesForLog = exercisesByLogId.getOrDefault(log.getId(), Collections.emptyList());
-
-      List<WorkoutSet> setsForLog = exercisesForLog.stream()
-          .flatMap(ex -> setsByExerciseId.getOrDefault(ex.getId(), Collections.emptyList()).stream())
-          .toList();
-
-      WorkoutLogResponse workoutLogResponse = WorkoutLogResponse.from(log, exercisesForLog, setsForLog, feedbacks);
+      WorkoutLogResponse workoutLogResponse = responseMap.getOrDefault(log.getId(),
+          null); // 맵에서 DTO 조회
 
       return new PTSessionResponse(ptSession.getId(), workoutLogResponse);
     });

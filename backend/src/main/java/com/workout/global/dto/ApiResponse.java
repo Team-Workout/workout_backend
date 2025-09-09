@@ -1,13 +1,17 @@
 package com.workout.global.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.data.domain.Page;
 import java.util.List;
 
 
+@Schema(description = "API 공통 응답 래퍼")
 @JsonInclude(JsonInclude.Include.NON_NULL) // null인 필드는 JSON으로 변환하지 않음
 public record ApiResponse<T>(
+    @Schema(description = "실제 응답 데이터 (페이징 시 리스트)") // [수정]
     T data,
+    @Schema(description = "페이징 정보 (페이징 응답이 아닐 경우 null)") // [수정]
     PageInfo pageInfo // 페이징 정보 (페이징이 없는 경우 null)
 ) {
   /**
@@ -22,5 +26,14 @@ public record ApiResponse<T>(
    */
   public static <T> ApiResponse<List<T>> of(Page<T> page) {
     return new ApiResponse<>(page.getContent(), PageInfo.from(page));
+  }
+
+  /**
+   * Creates an empty ApiResponse with no data and no pagination information.
+   *
+   * @return an ApiResponse instance with both data and pageInfo set to null
+   */
+  public static ApiResponse<Void> empty() {
+    return new ApiResponse<>(null, null);
   }
 }

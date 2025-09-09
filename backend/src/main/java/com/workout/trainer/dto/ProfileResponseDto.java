@@ -16,19 +16,22 @@ public record ProfileResponseDto(
     String name,
     String email,
     String introduction,
-    List<AwardDto> awards,
-    List<CertificationDto> certifications,
-    List<EducationDto> educations,
-    List<WorkExperienceDto> workExperiences,
+    String profileImageUrl,
+    Set<AwardDto> awards,
+    Set<CertificationDto> certifications,
+    Set<EducationDto> educations,
+    Set<WorkExperienceDto> workExperiences,
     Set<String> specialties
 ) {
+/*
 
   public static ProfileResponseDto from(
       Trainer trainer,
-      List<Award> awards,
-      List<Certification> certifications,
-      List<Education> educations,
-      List<Workexperience> workExperiences,
+      String profileImageUrl,
+      Set<Award> awards,
+      Set<Certification> certifications,
+      Set<Education> educations,
+      Set<Workexperience> workExperiences,
       Set<Specialty> specialties
   ) {
     return new ProfileResponseDto(
@@ -36,36 +39,38 @@ public record ProfileResponseDto(
         trainer.getName(),
         trainer.getEmail(),
         trainer.getIntroduction(),
-        awards.stream().map(AwardDto::from).collect(Collectors.toList()),
-        certifications.stream().map(CertificationDto::from).collect(Collectors.toList()),
-        educations.stream().map(EducationDto::from).collect(Collectors.toList()),
-        workExperiences.stream().map(WorkExperienceDto::from).collect(Collectors.toList()),
+        profileImageUrl,
+        awards.stream().map(AwardDto::from).collect(Collectors.toSet()),
+        certifications.stream().map(CertificationDto::from).collect(Collectors.toSet()),
+        educations.stream().map(EducationDto::from).collect(Collectors.toSet()),
+        workExperiences.stream().map(WorkExperienceDto::from).collect(Collectors.toSet()),
         specialties.stream()
             .map(Specialty::getName)
             .collect(Collectors.toSet())
     );
   }
+*/
 
   public static ProfileResponseDto fromEntity(Trainer trainer) {
     if (trainer == null) {
       return null;
     }
 
-    List<AwardDto> awardDtos = trainer.getAwards().stream()
+    Set<AwardDto> awardDtos = trainer.getAwards().stream()
         .map(AwardDto::fromEntity)
-        .toList();
+        .collect(Collectors.toSet());
 
-    List<CertificationDto> certificationDtos = trainer.getCertifications().stream()
+    Set<CertificationDto> certificationDtos = trainer.getCertifications().stream()
         .map(CertificationDto::fromEntity)
-        .toList();
+        .collect(Collectors.toSet());
 
-    List<EducationDto> educationDtos = trainer.getEducations().stream()
+    Set<EducationDto> educationDtos = trainer.getEducations().stream()
         .map(EducationDto::fromEntity)
-        .toList();
+        .collect(Collectors.toSet());
 
-    List<WorkExperienceDto> workExperienceDtos = trainer.getWorkexperiences().stream()
+    Set<WorkExperienceDto> workExperienceDtos = trainer.getWorkExperiences().stream()
         .map(WorkExperienceDto::fromEntity)
-        .toList();
+        .collect(Collectors.toSet());
 
     Set<String> specialtyNames = trainer.getTrainerSpecialties().stream()
         .map(trainerSpecialty -> trainerSpecialty.getSpecialty().getName())
@@ -76,6 +81,7 @@ public record ProfileResponseDto(
         trainer.getName(),
         trainer.getEmail(),
         trainer.getIntroduction(),
+        trainer.getProfileImageUri(),
         awardDtos,
         certificationDtos,
         educationDtos,

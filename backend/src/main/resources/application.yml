@@ -2,10 +2,10 @@ spring:
   application:
     name: workout-backend
   jpa:
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        use_sql_comments: true
   jackson:
     time-zone: UTC
   flyway:
@@ -23,7 +23,19 @@ spring:
       mail.smtp.timeout: 5000
       mail.smtp.writetimeout: 5000
 
+logging:
+  level:
+    root: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+    com.zaxxer.hikari: WARN
+    com.workout: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
 upload:
   local:
     dir: ${UPLOAD_DIR:./uploads/}
 
+fcm:
+  service-account-key-path: "classpath:config/fcm-key.json"

@@ -3,9 +3,6 @@ package com.workout.utils.service;
 import com.workout.global.exception.RestApiException;
 import com.workout.global.exception.errorcode.FileErrorCode;
 import com.workout.member.domain.Member;
-import com.workout.member.service.MemberService;
-import com.workout.pt.service.contract.PTTrainerService;
-import com.workout.trainer.service.TrainerService;
 import com.workout.utils.domain.ImagePurpose;
 import com.workout.utils.domain.UserFile;
 import com.workout.utils.dto.FileResponse;
@@ -14,7 +11,9 @@ import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -24,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
@@ -31,21 +31,15 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileService {
 
   private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-  private final MemberService memberService;
   private final FileRepository fileRepository;
-  private final TrainerService trainerService;
-  private final PTTrainerService ptTrainerService;
+
   @Value("${upload.local.dir}")
   private String uploadDir;
   @Value("${default.profile.image.url}")
   private String defaultProfileImageUrl;
 
-  public FileService(MemberService memberService, FileRepository fileRepository,
-      TrainerService trainerService, PTTrainerService ptTrainerService) {
-    this.memberService = memberService;
+  public FileService(FileRepository fileRepository) {
     this.fileRepository = fileRepository;
-    this.trainerService = trainerService;
-    this.ptTrainerService = ptTrainerService;
   }
 
   private static String getExtension(String fileName) {
@@ -72,9 +66,10 @@ public class FileService {
 
   @Transactional
   public List<FileResponse> uploadBodyImages(final MultipartFile[] files, final LocalDate dates,
-      Long userId) {
-    Member member = memberService.findById(userId);
-
+      Member member) {
+    if (files == null || files.length == 0) {
+      throw new RestApiException(FileErrorCode.INVALID_FILE_NAME);
+    }
     List<UserFile> userFilesToSave = new java.util.ArrayList<>();
     for (int i = 0; i < files.length; i++) {
       userFilesToSave.add(storeAndCreateUserFile(files[i], member, ImagePurpose.BODY, dates));
@@ -88,18 +83,19 @@ public class FileService {
   }
 
   @Transactional
-  public FileResponse uploadProfileImage(MultipartFile file, Long userId) {
-    Member member = memberService.findById(userId);
-
+  public FileResponse uploadProfileImage(MultipartFile file, Member member) {
     // 기존 프로필 이미지 처리
-    UserFile oldProfileImage = member.getProfileImage();
-    if (oldProfileImage != null) {
-      fileRepository.delete(oldProfileImage);
-      deletePhysicalFile(oldProfileImage.getStoredFileName());
+    if (member == null) {
+      throw new RestApiException(FileErrorCode.INVALID_FILE_NAME);
+    }
+
+    String oldFileUri = member.getProfileImageUri();
+    if (StringUtils.hasText(oldFileUri) && !oldFileUri.equals(defaultProfileImageUrl)) {
+      deletePhysicalFile(oldFileUri);
     }
 
     UserFile newProfileImage = storeAndCreateUserFile(file, member, ImagePurpose.PROFILE, null);
-    member.setProfileImage(newProfileImage);
+    member.setProfileImageUri(newProfileImage.getStoredFileName());
     fileRepository.save(newProfileImage);
     return FileResponse.from(newProfileImage);
   }
@@ -126,9 +122,11 @@ public class FileService {
   }
 
   // 파일 조회
-  public List<FileResponse> findBodyImagesByRecordDate(Long userId, LocalDate startDate,
+  public List<FileResponse> findBodyImagesByRecordDate(Member member, LocalDate startDate,
       LocalDate endDate) {
-    Member member = memberService.findById(userId);
+    if (member == null) {
+      return Collections.emptyList();
+    }
 
     // 새로운 Repository 메소드 호출
     List<UserFile> userFiles = fileRepository.findByMemberIdAndPurposeAndRecordDateBetweenOrderByRecordDateDesc(
@@ -139,31 +137,10 @@ public class FileService {
         .toList();
   }
 
-  public String findProfile(Long userId) {
-    Member member = memberService.findById(userId);
-    return Optional.ofNullable(member.getProfileImage())
-        .map(userFile -> "/images/" + userFile.getStoredFileName()) // 프로필 이미지가 있으면 해당 URL 생성
-        .orElse(defaultProfileImageUrl);
-  }
-
-  public Page<FileResponse> findMemberBodyImagesByTrainer(Long trainerId, Long memberId,
-      LocalDate startDate, LocalDate endDate, Pageable pageable) {
-    log.info(trainerId + ", " + memberId + ", " + startDate + ", " + endDate + ", " + pageable);
-    trainerService.findById(trainerId);
-
-    if (!ptTrainerService.isMyClient(trainerId, memberId)) {
-      throw new RestApiException(FileErrorCode.NOT_AUTHORITY);
-    }
-
-    Member member = memberService.findById(memberId);
-    if (!member.getIsOpenWorkoutRecord()) {
-      throw new RestApiException(FileErrorCode.NOT_AUTHORITY);
-    }
-
-    Page<UserFile> userFilesPage = fileRepository.findByMemberIdAndPurposeAndRecordDateBetweenOrderByRecordDateDesc(
+  public Page<UserFile> findBodyImagesByMember(Long memberId, LocalDate startDate,
+      LocalDate endDate, Pageable pageable) {
+    return fileRepository.findByMemberIdAndPurposeAndRecordDateBetweenOrderByRecordDateDesc(
         memberId, ImagePurpose.BODY, startDate, endDate, pageable);
-
-    return userFilesPage.map(FileResponse::from);
   }
 
   // 파일 검증
@@ -233,6 +210,11 @@ public class FileService {
     deletePhysicalFile(userFile.getStoredFileName());
   }
 
+  public void deleteProfileImageFile(String storedFileName) {
+    // 내부적으로 사용하는 물리적 파일 삭제 메소드를 호출합니다.
+    deletePhysicalFile(storedFileName);
+  }
+
   private void deletePhysicalFile(String storedFileName) {
     try {
       String fullPath = getFullPath(storedFileName);
@@ -249,5 +231,9 @@ public class FileService {
     } catch (Exception e) {
       log.error("Error deleting physical file: {}", storedFileName, e);
     }
+  }
+
+  public String getDefaultProfileImageUrl() {
+    return defaultProfileImageUrl;
   }
 }

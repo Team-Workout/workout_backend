@@ -6,15 +6,14 @@ import com.workout.trainer.domain.Education;
 import com.workout.trainer.domain.Trainer;
 import com.workout.trainer.domain.Workexperience;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Set;
 
 public record ProfileCreateDto(
     String introduction,
-    List<AwardDto> awards,
-    List<CertificationDto> certifications,
-    List<EducationDto> educations,
-    List<WorkExperienceDto> workExperiences,
+    Set<AwardDto> awards,
+    Set<CertificationDto> certifications,
+    Set<EducationDto> educations,
+    Set<WorkExperienceDto> workExperiences,
     Set<String> specialties // 누락된 필드 추가
 ) {
 
