@@ -26,16 +26,10 @@ public class BatchTriggerController {
   // 2. [기존] 운영용 알림 Job 주입
   private final Job sendPtReminderJob;
 
-  // 3. [신규] 방금 만든 테스트용 Job을 이름으로(@Qualifier) 주입받습니다.
-  private final Job testUpdateMemberNameJob;
-
-
   public BatchTriggerController(JobLauncher jobLauncher,
-      @Qualifier("sendPtReminderJob") Job sendPtReminderJob,
-      @Qualifier("testUpdateMemberNameJob") Job testUpdateMemberNameJob) {
+      @Qualifier("sendPtReminderJob") Job sendPtReminderJob) {
     this.jobLauncher = jobLauncher;
     this.sendPtReminderJob = sendPtReminderJob;
-    this.testUpdateMemberNameJob = testUpdateMemberNameJob;
   }
 
   // 5. [기존] PT 알림 배치 수동 실행 API (그대로 둠)
@@ -68,31 +62,6 @@ public class BatchTriggerController {
 
     } catch (Exception e) {
       log.error("수동 배치 작업 실행 중 오류 발생", e);
-      return ResponseEntity.internalServerError().body("배치 실행 실패: " + e.getMessage());
-    }
-  }
-
-  /**
-   * 6. [신규] 회원 이름 변경 테스트 배치를 수동으로 실행하는 API
-   */
-  @PostMapping("/update-member-names")
-  public ResponseEntity<String> runUpdateMemberNamesJob() {
-    try {
-      // 이 Job은 별도 파라미터가 필요 없지만, JobInstance를 매번 새로 생성하기 위해
-      // 고유 ID (여기서는 현재 시간)를 파라미터로 넘겨야 합니다.
-      JobParameters jobParameters = new JobParametersBuilder()
-          .addLong("runAt", System.currentTimeMillis())
-          .toJobParameters();
-
-      log.info("수동 테스트 배치 (회원 이름 변경) 작업을 시작합니다.");
-
-      // "testUpdateMemberNameJob" Bean을 실행합니다.
-      jobLauncher.run(testUpdateMemberNameJob, jobParameters);
-
-      return ResponseEntity.ok("회원 이름 변경 배치 작업 시작됨.");
-
-    } catch (Exception e) {
-      log.error("수동 배치 작업 (회원 이름 변경) 실행 중 오류 발생", e);
       return ResponseEntity.internalServerError().body("배치 실행 실패: " + e.getMessage());
     }
   }
