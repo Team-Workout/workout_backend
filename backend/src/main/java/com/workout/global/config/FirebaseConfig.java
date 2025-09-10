@@ -33,7 +33,6 @@ public class FirebaseConfig {
 
       FirebaseOptions options = FirebaseOptions.builder()
           .setCredentials(GoogleCredentials.fromStream(resource.getInputStream()))
-          .setProjectId("workout-7e8f6")
           .build();
 
       this.firebaseApp = FirebaseApp.initializeApp(options);
