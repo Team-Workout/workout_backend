@@ -136,14 +136,16 @@ public class WorkoutController {
   /**
    * 루틴 생성 (트레이너가 회원에게 루틴 생성)
    */
-  @PostMapping("/routine")
-  public ResponseEntity<Void> createRoutine(
-      @RequestParam Long trainerId,
-      @RequestParam Long memberId,
+  @Operation(summary = "[트레이너] 회원을 위한 루틴 생성",
+      description = "트레이너가 특정 회원을 위해 운동 루틴을 생성하고 할당합니다.",
+      security = @SecurityRequirement(name = "cookieAuth"))
+  @PostMapping("/trainer/clients/{memberId}/routines")
+  public ResponseEntity<ApiResponse<Void>> createRoutineForMember(
+      @Parameter(description = "루틴을 생성해줄 회원의 ID") @PathVariable Long memberId,
+      @AuthenticationPrincipal UserPrincipal trainerPrincipal,
       @Valid @RequestBody RoutineCreateRequest request) {
-
+    Long trainerId = trainerPrincipal.getUserId();
     Long routineId = routineService.createRoutineForMember(request, trainerId, memberId);
-
     return ResponseEntity.created(URI.create("/api/workout/routine/" + routineId)).build();
   }
 
