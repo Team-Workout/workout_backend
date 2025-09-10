@@ -6,6 +6,7 @@ import com.workout.member.domain.Member;
 import com.workout.notification.dto.FcmRequest;
 import com.workout.notification.service.FcmService;
 import com.workout.pt.domain.contract.PTAppointment;
+import com.workout.pt.domain.contract.PTAppointmentStatus;
 import jakarta.persistence.EntityManagerFactory;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -88,8 +89,12 @@ public class SendPtReminderBatchConfig {
                 "JOIN FETCH p.contract c " +
                 "JOIN FETCH c.member m " +
                 "WHERE p.startTime BETWEEN :startOfDay AND :endOfDay " +
-                "AND p.status = 'SCHEDULED'")
-        .parameterValues(Map.of("startOfDay", startOfDay, "endOfDay", endOfDay))
+                "AND p.status = :status") // <- 파라미터로 변경
+        .parameterValues(Map.of(
+            "startOfDay", startOfDay,
+            "endOfDay", endOfDay,
+            "status", PTAppointmentStatus.SCHEDULED // <- Enum 객체를 직접 전달
+        ))
         .build();
   }
 
