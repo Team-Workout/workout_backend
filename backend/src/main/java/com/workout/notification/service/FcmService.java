@@ -51,51 +51,57 @@ public class FcmService {
     }
   }
 
-  public void sendAllNotifications(List<FcmRequest> requests) {
+  public void sendEachNotifications(List<FcmRequest> requests) {
     if (requests == null || requests.isEmpty()) {
       log.info("발송할 메시지가 없습니다.");
       return;
     }
 
-    List<Message> messagePayloads = requests.stream()
+    // 1. FcmRequest에서 Message 페이로드만 추출
+    List<Message> messages = requests.stream()
         .map(FcmRequest::messagePayload)
         .collect(Collectors.toList());
 
     try {
-
-      BatchResponse response = firebaseMessaging.sendAll(messagePayloads);
+      // 2. [핵심] sendAll() 대신 sendEach() 사용
+      BatchResponse response = firebaseMessaging.sendEach(messages);
 
       log.info("FCM 일괄 발송 완료: 총 요청={}, 성공={}, 실패={}",
-          messagePayloads.size(), response.getSuccessCount(), response.getFailureCount());
+          messages.size(), response.getSuccessCount(), response.getFailureCount());
 
+      // 3. 실패한 요청이 있다면, 상세 처리 로직 호출
       if (response.getFailureCount() > 0) {
-
         handleFailedTokens(response.getResponses(), requests);
       }
 
     } catch (FirebaseMessagingException e) {
-      log.error("FCM sendAll API 호출 자체 실패: {}", e.getMessage());
+      // sendEach API 호출 자체가 실패한 경우 (네트워크 문제 등)
+      log.error("FCM sendEach API 호출 자체 실패: {}", e.getMessage());
     }
   }
 
+  // [수정] sendEach의 응답(BatchResponse)을 처리하도록 로직 개선
   private void handleFailedTokens(List<SendResponse> responses, List<FcmRequest> originalRequests) {
     for (int i = 0; i < responses.size(); i++) {
       SendResponse sendResponse = responses.get(i);
 
-      if (!sendResponse.isSuccessful()) {
+      // 성공한 응답은 건너뜁니다.
+      if (sendResponse.isSuccessful()) {
+        continue;
+      }
 
-        String originalToken = originalRequests.get(i).targetToken();
+      // 실패한 경우, 원본 요청에서 토큰 정보를 가져옵니다.
+      String originalToken = originalRequests.get(i).targetToken();
+      String errorCode = sendResponse.getException().getMessagingErrorCode().name();
 
-        String errorCode = sendResponse.getException().getMessagingErrorCode().name();
+      log.warn("알림 발송 실패: Token={}, ErrorCode={}, Message={}",
+          originalToken, errorCode, sendResponse.getException().getMessage());
 
-        log.warn("알림 발송 실패: Token={}, ErrorCode={}, Message={}",
-            originalToken, errorCode, sendResponse.getException().getMessage());
-
-        if ("UNREGISTERED".equals(errorCode) || "INVALID_ARGUMENT".equals(errorCode)) {
-          log.info("DB 토큰 삭제 이벤트 발행: {}", originalToken);
-
-          eventPublisher.publishEvent(new TokenCleanupEvent(originalToken));
-        }
+      // 토큰이 유효하지 않거나(UNREGISTERED), 형식이 잘못된 경우(INVALID_ARGUMENT)
+      // 해당 토큰을 DB에서 삭제하도록 이벤트를 발행합니다.
+      if ("UNREGISTERED".equals(errorCode) || "INVALID_ARGUMENT".equals(errorCode)) {
+        log.info("DB 토큰 삭제 이벤트 발행: {}", originalToken);
+        eventPublisher.publishEvent(new TokenCleanupEvent(originalToken));
       }
     }
   }

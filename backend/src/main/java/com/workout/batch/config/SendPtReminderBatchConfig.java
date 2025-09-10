@@ -136,7 +136,7 @@ public class SendPtReminderBatchConfig {
     return chunk -> {
       log.info("FCM API 호출. {}건 일괄 발송 시도.", chunk.getItems().size());
       List<FcmRequest> requestList = new java.util.ArrayList<>(chunk.getItems());
-      fcmService.sendAllNotifications(requestList);
+      fcmService.sendEachNotifications(requestList);
     };
   }
 }
