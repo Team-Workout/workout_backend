@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "운동일지 및 루틴 (Workout)", description = "일반 운동일지(Workout Log) 및 루틴(Routine) CRUD API")
@@ -129,8 +130,21 @@ public class WorkoutController {
     Long userId = userPrincipal.getUserId();
     Long routineId = routineService.createRoutine(request, userId);
 
-    return ResponseEntity.created(URI.create("/api/workout/routine/" + routineId))
-        .body(ApiResponse.of(routineId));
+    return ResponseEntity.created(URI.create("/api/workout/routine/" + routineId)).build();
+  }
+
+  /**
+   * 루틴 생성 (트레이너가 회원에게 루틴 생성)
+   */
+  @PostMapping("/routine")
+  public ResponseEntity<Void> createRoutine(
+      @RequestParam Long trainerId,
+      @RequestParam Long memberId,
+      @Valid @RequestBody RoutineCreateRequest request) {
+
+    Long routineId = routineService.createRoutineForMember(request, trainerId, memberId);
+
+    return ResponseEntity.created(URI.create("/api/workout/routine/" + routineId)).build();
   }
 
   /**

@@ -4,6 +4,7 @@ import com.workout.global.exception.RestApiException;
 import com.workout.global.exception.errorcode.WorkoutErrorCode;
 import com.workout.member.domain.Member;
 import com.workout.member.service.MemberService;
+import com.workout.pt.service.contract.PTContractService;
 import com.workout.workout.domain.exercise.Exercise;
 import com.workout.workout.domain.routine.Routine;
 import com.workout.workout.domain.routine.RoutineExercise;
@@ -32,16 +33,18 @@ public class RoutineService {
   private final RoutineExerciseRepository routineExerciseRepository;
   private final RoutineSetRepository routineSetRepository;
   private final MemberService memberService;
+  private final PTContractService ptContractService;
 
   public RoutineService(
       RoutineRepository routineRepository,
       ExerciseRepository exerciseRepository, RoutineExerciseRepository routineExerciseRepository,
-      RoutineSetRepository routineSetRepository, MemberService memberService) {
+      RoutineSetRepository routineSetRepository, MemberService memberService, PTContractService ptContractService) {
     this.routineRepository = routineRepository;
     this.exerciseRepository = exerciseRepository;
     this.routineExerciseRepository = routineExerciseRepository;
     this.routineSetRepository = routineSetRepository;
     this.memberService = memberService;
+    this.ptContractService = ptContractService;
   }
 
   @Transactional
@@ -182,4 +185,16 @@ public class RoutineService {
         })
         .collect(Collectors.toList());
   }
+
+  @Transactional
+  public Long createRoutineForMember(@Valid RoutineCreateRequest request, Long trainerId, Long memberId) {
+    boolean myClient = ptContractService.isMyClient(trainerId, memberId);
+
+    if (myClient){
+      return createRoutine(request, memberId);
+    }
+
+    throw new RestApiException(WorkoutErrorCode.NOT_ALLOWED_ACCESS);
+  }
+
 }
