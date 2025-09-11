@@ -1,5 +1,6 @@
 package com.workout.workout.controller;
 
+import com.google.protobuf.Api;
 import com.workout.auth.domain.UserPrincipal;
 import com.workout.global.dto.ApiResponse;
 import com.workout.workout.domain.log.WorkoutLog;
@@ -180,6 +181,19 @@ public class WorkoutController {
       @AuthenticationPrincipal UserPrincipal userPrincipal) {
     Long userId = userPrincipal.getUserId();
     List<RoutineResponse> responses = routineService.findAllRoutinesByUserId(userId);
+    return ResponseEntity.ok(ApiResponse.of(responses));
+  }
+
+  @Operation(summary = "회원의 운동 루틴 조회",
+      description = "트레이너의 회원의 운동 루틴 조회합니다.",
+      security = @SecurityRequirement(name = "cookieAuth"))
+  @GetMapping("/trainer/clients/{memberId}/routines")
+  public ResponseEntity<ApiResponse<List<RoutineResponse>>> getMyClientRoutine(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @Parameter(description = "조회할 회원 ID", required = true) @PathVariable("memberId") Long userId
+  ) {
+    Long trainerId = userPrincipal.getUserId();
+    List<RoutineResponse> responses = routineService.findAllRoutinesByTrainerIdAndUserId(trainerId, userId);
     return ResponseEntity.ok(ApiResponse.of(responses));
   }
 
