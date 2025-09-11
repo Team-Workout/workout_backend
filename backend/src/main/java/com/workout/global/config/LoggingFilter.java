@@ -21,10 +21,7 @@ public class LoggingFilter implements Filter {
       throws IOException, ServletException {
 
     HttpServletRequest httpRequest = (HttpServletRequest) request;
-    String traceId = UUID.randomUUID().toString().substring(0, 8);
 
-    // MDC에 요청 컨텍스트 정보(traceId, URI, Method)를 설정합니다.
-    MDC.put("traceId", traceId);
     MDC.put("requestURI", httpRequest.getRequestURI());
     MDC.put("requestMethod", httpRequest.getMethod());
 
