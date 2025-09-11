@@ -5,6 +5,7 @@ import com.workout.global.exception.errorcode.WorkoutErrorCode;
 import com.workout.member.domain.Member;
 import com.workout.member.service.MemberService;
 import com.workout.pt.service.contract.PTContractService;
+import com.workout.trainer.domain.Trainer;
 import com.workout.trainer.service.TrainerService;
 import com.workout.workout.domain.exercise.Exercise;
 import com.workout.workout.domain.routine.Routine;
@@ -191,6 +192,11 @@ public class RoutineService {
           return RoutineResponse.from(routine, exercisesForRoutine, routineSetsMap);
         })
         .collect(Collectors.toList());
+  }
+
+  public List<RoutineResponse> findAllRoutinesByTrainerIdAndUserId(Long trainerId, Long userId) {
+    ptContractService.isMyClient(trainerId, userId);
+    return findAllRoutinesByUserId(userId);
   }
 
   @Transactional

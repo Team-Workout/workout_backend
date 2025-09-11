@@ -22,7 +22,8 @@ public record ClientListResponse(
       Long gymId,
       String gymName,
       String name,
-      Gender gender
+      Gender gender,
+      String profileUri
   ) {
     public static MemberResponse from(Member member) {
 
@@ -31,7 +32,8 @@ public record ClientListResponse(
           member.getGym().getId(),
           member.getGym().getName(),
           member.getName(),
-          member.getGender()
+          member.getGender(),
+          member.getProfileImageUri()
       );
     }
   }
