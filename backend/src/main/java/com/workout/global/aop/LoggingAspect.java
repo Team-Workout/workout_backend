@@ -22,7 +22,6 @@ public class LoggingAspect {
 
   @Around("controller()")
   public Object logRequestAndResponse(ProceedingJoinPoint pjp) throws Throwable {
-    // HttpServletRequest 정보는 여전히 유용하므로 유지합니다.
     HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(
         RequestContextHolder.getRequestAttributes())).getRequest();
 
@@ -31,7 +30,6 @@ public class LoggingAspect {
     long start = System.currentTimeMillis();
 
     try {
-      // MDC 정보 덕분에 이 로그에는 traceId, URI, Method가 자동으로 포함됩니다.
       log.info("[REQUEST] Controller Method: {}", controllerMethod);
 
       Object result = pjp.proceed();
