@@ -1,15 +1,31 @@
 spring:
-  application:
-    name: workout-backend
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3307/workout-db?useSSL=false&serverTimezone=Asia/Seoul
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
+        format_sql: true
         use_sql_comments: true
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+  application:
+    name: workout-backend
   jackson:
     time-zone: UTC
   flyway:
     enabled: true
+  spring:
+    security:
+      oauth2:
+        client:
+          registration:
+            google:
+              client-id: 1012957180571-v5d943laqe355d5k76erds9bspnp2tgv.apps.googleusercontent.com
+              client-secret: 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
 
 logging:
   level:
@@ -21,6 +37,17 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
 
+encryption:
+  key: 1234567890123456
+
 upload:
   local:
-    dir: ${UPLOAD_DIR:./uploads/}
+    dir: C:/Users/judi0/Desktop/Projects/workout/uploads
+
+default:
+  profile:
+    image:
+      url: /images/default-profile.png
+
+jwt:
+  secret: 9c1f$Pz7h!vXqL3jEwK@NmZqR^t8uYb#GdXsAvCq

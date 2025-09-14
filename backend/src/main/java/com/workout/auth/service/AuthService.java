@@ -1,8 +1,8 @@
 // AuthService.java
 package com.workout.auth.service;
 
-import com.workout.auth.domain.UserPrincipal;
 import com.workout.auth.dto.SignupRequest;
+import com.workout.global.config.JwtProvider;
 import com.workout.global.exception.RestApiException;
 import com.workout.global.exception.errorcode.MemberErrorCode;
 import com.workout.gym.domain.Gym;
@@ -14,57 +14,35 @@ import com.workout.member.service.MemberService;
 import com.workout.trainer.domain.Trainer;
 import com.workout.trainer.repository.TrainerRepository;
 import com.workout.utils.service.FileService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
-  private final SecurityContextRepository securityContextRepository; // SecurityContextRepository 주입
   private final MemberService memberService;
   private final MemberRepository memberRepository;
   private final PasswordEncoder passwordEncoder;
   private final GymService gymService;
   private final TrainerRepository trainerRepository;
   private final FileService fileService;
+  private final JwtProvider jwtProvider;
 
-  public AuthService(SecurityContextRepository securityContextRepository,
-      MemberService memberService, MemberRepository memberRepository,
-      PasswordEncoder passwordEncoder, GymService gymService,
-      TrainerRepository trainerRepository, FileService fileService) {
-    this.securityContextRepository = securityContextRepository;
-    this.memberService = memberService;
-    this.memberRepository = memberRepository;
-    this.passwordEncoder = passwordEncoder;
-    this.gymService = gymService;
-    this.trainerRepository = trainerRepository;
-    this.fileService = fileService;
-  }
-
-  // 로그인
-  public Member login(String email, String password, HttpServletRequest request,
-      HttpServletResponse response) {
+  /**
+   * 로그인 - JWT 방식
+   */
+  public String login(String email, String password) {
     Member member = memberService.authenticate(email, password);
-
-    UserPrincipal userPrincipal = new UserPrincipal(member);
-
-    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-        userPrincipal, null, userPrincipal.getAuthorities());
-
-    SecurityContext context = SecurityContextHolder.createEmptyContext();
-    context.setAuthentication(authentication);
-    securityContextRepository.saveContext(context, request, response);
-    return member;
+    return jwtProvider.generateToken(member.getEmail());
   }
 
+  /**
+   * 회원가입
+   */
   public Long signup(SignupRequest signupRequest, Role role) {
     if (memberRepository.existsByEmail(signupRequest.email())) {
       throw new RestApiException(MemberErrorCode.EMAIL_ALREADY_EXISTS);

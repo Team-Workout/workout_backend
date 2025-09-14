@@ -2,8 +2,6 @@ package com.workout.member.domain;
 
 import com.workout.global.BaseEntity;
 import com.workout.gym.domain.Gym;
-import com.workout.utils.domain.UserFile;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
@@ -23,6 +21,7 @@ import jakarta.persistence.Table;
 import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -71,8 +70,10 @@ public class Member extends BaseEntity {
   @Column(name = "role", insertable = false, updatable = false)
   private Role role;
 
+  @Builder.Default
   private Boolean isOpenWorkoutRecord = false;
 
+  @Builder.Default
   private Boolean isOpenBodyImg = false;
 
   @Override
@@ -97,5 +98,9 @@ public class Member extends BaseEntity {
   @Override
   public int hashCode() {
     return Objects.hashCode(id);
+  }
+
+  public void updateName(String name) {
+    this.name = name;
   }
 }
