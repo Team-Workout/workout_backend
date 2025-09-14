@@ -20,6 +20,20 @@ spring:
     job:
       enabled: false
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+  metrics:
+    tags:
+      application: my-workout-api
+    distribution:
+      slo:
+        "[http.server.requests]": 1ms, 5ms, 10ms, 50ms, 100ms, 500ms, 1s, 5s, 10s
+      percentiles-histogram:
+        "[http.server.requests]": true
+
 encryption:
   key: ${ENCRYPTION_KEY}
 

@@ -17,10 +17,11 @@ services:
 
   spring-app:
     # CI/CD 파이프라인이 APP_IMAGE 환경 변수를 주입합니다.
-    image: ${APP_IMAGE:-kkddong98/workout_backend:latest}
+    #image: ${APP_IMAGE:-kkddong98/workout_backend:latest}
+    #pull_policy: always
+    build: .
+
     container_name: my-spring-app
-    # 추가: 항상 Docker Hub에서 최신 이미지를 pull 하도록 정책 설정
-    pull_policy: always
     env_file: [ ".env" ]
     environment:
       - SPRING_PROFILES_ACTIVE=docker
@@ -94,6 +95,46 @@ services:
       - grafana-data:/var/lib/grafana
     networks:
       - my-network
+
+  prometheus: # 🔴 Prometheus 서버 추가
+    image: prom/prometheus:latest
+    container_name: my-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml # Prometheus 설정 파일 연결
+    command: --config.file=/etc/prometheus/prometheus.yml
+    networks:
+      - my-network
+    depends_on:
+      - spring-app
+      - node-exporter
+      - redis-exporter
+
+  node-exporter: # 🔴 Node Exporter 추가 (CPU, MEM)
+    image: prom/node-exporter:latest
+    container_name: my-node-exporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - my-network
+    restart: always
+
+  redis-exporter: # 🔴 Redis Exporter 추가 (Cache Hit Ratio)
+    image: oliver006/redis_exporter:latest
+    container_name: my-redis-exporter
+    environment:
+      - REDIS_ADDR=redis:6379 # docker-compose 내부의 redis 서비스 바라보도록 설정
+    networks:
+      - my-network
+    restart: always
 
 networks:
   my-network:
