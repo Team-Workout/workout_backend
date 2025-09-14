@@ -17,10 +17,9 @@ services:
 
   spring-app:
     # CI/CD 파이프라인이 APP_IMAGE 환경 변수를 주입합니다.
-    #image: ${APP_IMAGE:-kkddong98/workout_backend:latest}
-    #pull_policy: always
-    build: .
-
+    image: ${APP_IMAGE:-kkddong98/workout_backend:latest}
+    pull_policy: always
+    #build: .
     container_name: my-spring-app
     env_file: [ ".env" ]
     environment:
@@ -96,7 +95,7 @@ services:
     networks:
       - my-network
 
-  prometheus: # 🔴 Prometheus 서버 추가
+  prometheus:
     image: prom/prometheus:latest
     container_name: my-prometheus
     ports:
@@ -111,7 +110,7 @@ services:
       - node-exporter
       - redis-exporter
 
-  node-exporter: # 🔴 Node Exporter 추가 (CPU, MEM)
+  node-exporter:
     image: prom/node-exporter:latest
     container_name: my-node-exporter
     volumes:
@@ -127,7 +126,7 @@ services:
       - my-network
     restart: always
 
-  redis-exporter: # 🔴 Redis Exporter 추가 (Cache Hit Ratio)
+  redis-exporter:
     image: oliver006/redis_exporter:latest
     container_name: my-redis-exporter
     environment:
