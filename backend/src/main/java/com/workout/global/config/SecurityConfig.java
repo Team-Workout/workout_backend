@@ -49,6 +49,7 @@ public class SecurityConfig {
 
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
+                "/actuator/**",
                 "/api/auth/**",
                 "/api/sync/**",
                 "/v3/api-docs/**",       // OpenAPI 3.0 스펙 JSON/YAML 파일
