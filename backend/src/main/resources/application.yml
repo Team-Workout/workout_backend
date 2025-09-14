@@ -24,6 +24,7 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
 
+
 upload:
   local:
     dir: ${UPLOAD_DIR:./uploads/}
