@@ -1,6 +1,7 @@
 package com.workout.feed.domain;
 
 import com.workout.global.BaseEntity;
+import com.workout.gym.domain.Gym;
 import com.workout.member.domain.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -29,6 +30,10 @@ public class Feed extends BaseEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
+
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "gym_id", nullable = false)
+  private Gym gym;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "member_id", nullable = false, updatable = false)

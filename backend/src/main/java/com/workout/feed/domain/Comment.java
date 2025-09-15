@@ -10,15 +10,19 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import java.util.Objects;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
-@Setter // 연관관계 편의 메소드를 위해 추가
+@Setter
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class Comment extends BaseEntity {
 
   @Id
@@ -33,6 +37,42 @@ public class Comment extends BaseEntity {
   @JoinColumn(name = "member_id", nullable = false, updatable = false)
   private Member member;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "parent_comment_id")
+  private Comment parent;
+
   @Column(nullable = false)
   private String content;
+
+  @Builder
+  public Comment(Feed feed, Member member, String content, Comment parent) {
+    this.feed = feed;
+    this.member = member;
+    this.content = content;
+    this.parent = parent;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null) {
+      return false;
+    }
+
+    Class<?> thisClass = org.hibernate.Hibernate.getClass(this);
+    Class<?> thatClass = org.hibernate.Hibernate.getClass(o);
+    if (thisClass != thatClass) {
+      return false;
+    }
+
+    Comment that = (Comment) o;
+    return Objects.equals(getId(), that.getId());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(id);
+  }
 }
