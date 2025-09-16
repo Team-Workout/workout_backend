@@ -21,6 +21,7 @@ import jakarta.persistence.Table;
 import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -69,33 +70,26 @@ public class Member extends BaseEntity {
   @Column(name = "role", insertable = false, updatable = false)
   private Role role;
 
-  @Column(name = "fcm_token")
-  private String fcmToken;
-
+  @Builder.Default
   private Boolean isOpenWorkoutRecord = false;
 
+  @Builder.Default
   private Boolean isOpenBodyImg = false;
-
-  private Boolean isOpenBodyComposition = false;
-
-  public void updateFcmToken(String fcmToken) {
-    this.fcmToken = fcmToken;
-  }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null) {
-      return false;
-    }
+      if (this == o) {
+          return true;
+      }
+      if (o == null) {
+          return false;
+      }
 
     Class<?> thisClass = org.hibernate.Hibernate.getClass(this);
     Class<?> thatClass = org.hibernate.Hibernate.getClass(o);
-    if (thisClass != thatClass) {
-      return false;
-    }
+      if (thisClass != thatClass) {
+          return false;
+      }
 
     Member that = (Member) o;
     return Objects.equals(getId(), that.getId());
@@ -104,5 +98,9 @@ public class Member extends BaseEntity {
   @Override
   public int hashCode() {
     return Objects.hashCode(id);
+  }
+
+  public void updateName(String name) {
+    this.name = name;
   }
 }
