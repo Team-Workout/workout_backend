@@ -1,5 +1,7 @@
 package com.workout.global.config;
 
+import com.workout.auth.service.CustomOAuth2UserService;
+import com.workout.member.repository.MemberRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,8 +30,13 @@ public class SecurityConfig {
   }
 
   @Bean
+  public CustomOAuth2UserService customOAuth2UserService(MemberRepository memberRepository) {
+    return new CustomOAuth2UserService(memberRepository);
+  }
+
+  @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http,
-      SecurityContextRepository securityContextRepository) throws Exception { // 파라미터 추가
+      SecurityContextRepository securityContextRepository, CustomOAuth2UserService customOAuth2UserService) throws Exception { // 파라미터 추가
     http
         .csrf(csrf -> csrf.disable())
         .formLogin(form -> form.disable())
@@ -57,6 +64,11 @@ public class SecurityConfig {
                 "/swagger-ui/**")
             .permitAll()
             .anyRequest().authenticated()
+        )
+        .oauth2Login(oauth2 -> oauth2
+            .userInfoEndpoint(userInfo -> userInfo
+                .userService(customOAuth2UserService)
+            )
         )
         .exceptionHandling(e -> e
             .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
