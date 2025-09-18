@@ -4,6 +4,8 @@ import com.workout.global.exception.RestApiException;
 import com.workout.global.exception.errorcode.WorkoutErrorCode;
 import com.workout.member.domain.Member;
 import com.workout.member.service.MemberService;
+import com.workout.pt.service.contract.PTContractService;
+import com.workout.trainer.service.TrainerService;
 import com.workout.workout.domain.exercise.Exercise;
 import com.workout.workout.domain.routine.Routine;
 import com.workout.workout.domain.routine.RoutineExercise;
@@ -32,16 +34,22 @@ public class RoutineService {
   private final RoutineExerciseRepository routineExerciseRepository;
   private final RoutineSetRepository routineSetRepository;
   private final MemberService memberService;
+  private final PTContractService ptContractService;
+  private final TrainerService trainerService;
+
 
   public RoutineService(
-      RoutineRepository routineRepository,
+      RoutineRepository routineRepository, TrainerService trainerService,
       ExerciseRepository exerciseRepository, RoutineExerciseRepository routineExerciseRepository,
-      RoutineSetRepository routineSetRepository, MemberService memberService) {
+      RoutineSetRepository routineSetRepository, MemberService memberService,
+      PTContractService ptContractService) {
     this.routineRepository = routineRepository;
     this.exerciseRepository = exerciseRepository;
     this.routineExerciseRepository = routineExerciseRepository;
     this.routineSetRepository = routineSetRepository;
     this.memberService = memberService;
+    this.ptContractService = ptContractService;
+    this.trainerService = trainerService;
   }
 
   @Transactional
@@ -153,7 +161,8 @@ public class RoutineService {
 
     // 3. 루틴에 속한 모든 RoutineExercise를 한 번의 쿼리로 조회 (N+1 방지)
     // ※ 참고: RoutineExerciseRepository에 findAllByRoutineIdInOrderByOrderAsc 메소드 추가 필요
-    List<RoutineExercise> allRoutineExercises = routineExerciseRepository.findAllByRoutineIdInOrderByOrderAsc(routineIds);
+    List<RoutineExercise> allRoutineExercises = routineExerciseRepository.findAllByRoutineIdInOrderByOrderAsc(
+        routineIds);
 
     Map<Long, List<RoutineSet>> routineSetsMap;
     if (allRoutineExercises.isEmpty()) {
@@ -163,7 +172,8 @@ public class RoutineService {
       List<Long> allRoutineExerciseIds = allRoutineExercises.stream()
           .map(RoutineExercise::getId)
           .toList();
-      List<RoutineSet> allRoutineSets = routineSetRepository.findAllByRoutineExerciseIdInOrderByOrderAsc(allRoutineExerciseIds);
+      List<RoutineSet> allRoutineSets = routineSetRepository.findAllByRoutineExerciseIdInOrderByOrderAsc(
+          allRoutineExerciseIds);
       // 5. RoutineSet들을 RoutineExercise ID를 기준으로 그룹핑
       routineSetsMap = allRoutineSets.stream()
           .collect(Collectors.groupingBy(rs -> rs.getRoutineExercise().getId()));
@@ -173,13 +183,27 @@ public class RoutineService {
     Map<Long, List<RoutineExercise>> routineExercisesMap = allRoutineExercises.stream()
         .collect(Collectors.groupingBy(re -> re.getRoutine().getId()));
 
-
     // 7. 조회된 데이터를 RoutineResponse DTO 리스트로 조립
     return routines.stream()
         .map(routine -> {
-          List<RoutineExercise> exercisesForRoutine = routineExercisesMap.getOrDefault(routine.getId(), Collections.emptyList());
+          List<RoutineExercise> exercisesForRoutine = routineExercisesMap.getOrDefault(
+              routine.getId(), Collections.emptyList());
           return RoutineResponse.from(routine, exercisesForRoutine, routineSetsMap);
         })
         .collect(Collectors.toList());
   }
+
+  @Transactional
+  public Long createRoutineForMember(@Valid RoutineCreateRequest request, Long trainerId,
+      Long memberId) {
+    trainerService.findById(trainerId);
+    boolean myClient = ptContractService.isMyClient(trainerId, memberId);
+
+    if (myClient) {
+      return createRoutine(request, memberId);
+    }
+
+    throw new RestApiException(WorkoutErrorCode.NOT_ALLOWED_ACCESS);
+  }
+
 }

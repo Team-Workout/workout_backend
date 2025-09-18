@@ -1,4 +1,4 @@
-package com.workout.notification;
+package com.workout.notification.controller;
 
 import com.workout.auth.domain.UserPrincipal;
 import com.workout.global.dto.ApiResponse;

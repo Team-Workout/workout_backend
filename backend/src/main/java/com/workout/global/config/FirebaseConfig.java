@@ -20,7 +20,7 @@ public class FirebaseConfig {
   @Value("${fcm.service-account-key-path}")
   private String keyPath;
 
-  private FirebaseApp firebaseApp; // [추가] FirebaseApp 인스턴스를 저장할 필드
+  private FirebaseApp firebaseApp;
 
   public FirebaseConfig(ResourceLoader resourceLoader) {
     this.resourceLoader = resourceLoader;
@@ -35,10 +35,8 @@ public class FirebaseConfig {
           .setCredentials(GoogleCredentials.fromStream(resource.getInputStream()))
           .build();
 
-      // [수정] 초기화된 앱 인스턴스를 필드에 저장
       this.firebaseApp = FirebaseApp.initializeApp(options);
     } else {
-      // [추가] 이미 초기화된 경우, 기본 앱 인스턴스를 가져와 필드에 저장
       this.firebaseApp = FirebaseApp.getInstance();
     }
   }
