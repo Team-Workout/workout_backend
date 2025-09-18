@@ -2,7 +2,7 @@ package com.workout.feed.dto;
 
 import com.workout.feed.domain.Feed;
 
-public record FeedGridResponse(
+public record FeedGridResponse (
     Long feedId,
     String imageUrl
 ) {

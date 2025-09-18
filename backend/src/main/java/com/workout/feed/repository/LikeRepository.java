@@ -22,4 +22,6 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
   @Query("SELECT count(l) FROM Like l WHERE l.targetType = :targetType AND l.targetId = :targetId")
   Long countByTargetTypeAndTargetId(@Param("targetType") LikeType targetType,
       @Param("targetId") Long targetId);
+
+  void deleteAllByTargetTypeAndTargetId(LikeType likeType, Long feedId);
 }
