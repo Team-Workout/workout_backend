@@ -8,31 +8,34 @@ import com.workout.feed.dto.CommentCreateRequest;
 import com.workout.feed.dto.CommentResponse;
 import com.workout.feed.repository.CommentRepository;
 import com.workout.feed.repository.FeedRepository;
-import com.workout.global.config.CacheInvalidationPublisher;
 import com.workout.global.exception.RestApiException;
 import com.workout.global.exception.errorcode.CommentErrorCode;
 import com.workout.global.exception.errorcode.FeedErrorCode;
 import com.workout.member.domain.Member;
 import com.workout.member.service.MemberService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
 public class CommentService {
+
+  private static final String FEED_COMMENT_COUNT_KEY_PREFIX = "counts:comment:feed:";
   private final CommentRepository commentRepository;
   private final MemberService memberService;
   private final FeedRepository feedRepository;
-  private final CacheInvalidationPublisher cacheInvalidationPublisher;
+  private final RedisTemplate<String, Object> redisTemplate;
 
-  @Cacheable(value = "comments", key = "#feedId + ':' + #pageable.pageNumber")
   public Page<CommentResponse> getComments(Long feedId, Pageable pageable) {
-    return commentRepository.findByFeedIdAndParentIsNull(feedId, pageable).map(CommentResponse::from);
+    return commentRepository.findByFeedIdAndParentIsNull(feedId, pageable)
+        .map(CommentResponse::from);
   }
 
   @Transactional
@@ -51,18 +54,15 @@ public class CommentService {
       throw new RestApiException(CommentErrorCode.INVALID_PARAMETER);
     }
 
-    Comment comment = Comment.builder().feed(feed).member(member).content(request.content()).parent(parent).build();
+    Comment comment = Comment.builder().feed(feed).member(member).content(request.content())
+        .parent(parent).build();
     Comment savedComment = commentRepository.save(comment);
-
-    // Invalidate the feed summary (for comment count) and all comment pages for this feed
-    cacheInvalidationPublisher.publish("feedSummary", String.valueOf(feed.getId()));
-    // This is a simplification. A better approach would be to only evict the first page of comments.
-    // For now, let's assume invalidating by feedId is a prefix-based invalidation.
-    // However, Spring's default cache manager doesn't support prefix eviction easily.
-    // Therefore, invalidating each known page or having a smarter strategy is needed for production.
-    // A simple approach is to have L1 cache on `getComments` be very short-lived.
-    cacheInvalidationPublisher.publish("comments", String.valueOf(feed.getId()));
-
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCommit() {
+        redisTemplate.opsForValue().increment(FEED_COMMENT_COUNT_KEY_PREFIX + feed.getId());
+      }
+    });
     return savedComment.getId();
   }
 
@@ -74,11 +74,19 @@ public class CommentService {
     }
 
     Long feedId = comment.getFeed().getId();
-    deleteCommentAndChildren(comment);
+    // [수정] 삭제된 댓글 수를 받아오도록 변경
+    long deletedCount = deleteCommentAndChildren(comment);
 
-    // Invalidate caches after the transaction
-    cacheInvalidationPublisher.publish("feedSummary", String.valueOf(feedId));
-    cacheInvalidationPublisher.publish("comments", String.valueOf(feedId));
+    // [수정] DB 트랜잭션 커밋 후, 삭제된 개수만큼 Redis 카운터 감소
+    if (deletedCount > 0) {
+      TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        @Override
+        public void afterCommit() {
+          redisTemplate.opsForValue()
+              .decrement(FEED_COMMENT_COUNT_KEY_PREFIX + feedId, deletedCount);
+        }
+      });
+    }
   }
 
   private Comment findCommentById(Long commentId) {
@@ -86,13 +94,15 @@ public class CommentService {
         .orElseThrow(() -> new RestApiException(CommentErrorCode.NOT_FOUND));
   }
 
-  private void deleteCommentAndChildren(Comment comment) {
+  private long deleteCommentAndChildren(Comment comment) {
+    long count = 1;
     List<Comment> children = commentRepository.findByParentId(comment.getId());
     if (children != null && !children.isEmpty()) {
       for (Comment child : children) {
-        deleteCommentAndChildren(child);
+        count += deleteCommentAndChildren(child);
       }
     }
     commentRepository.delete(comment);
+    return count;
   }
 }

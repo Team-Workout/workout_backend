@@ -8,41 +8,37 @@ import com.workout.feed.dto.FeedSummaryResponse;
 import com.workout.feed.repository.CommentRepository;
 import com.workout.feed.repository.FeedRepository;
 import com.workout.feed.repository.LikeRepository;
-import com.workout.global.config.CacheInvalidationPublisher;
 import com.workout.global.exception.RestApiException;
 import com.workout.global.exception.errorcode.FeedErrorCode;
 import com.workout.member.domain.Member;
 import com.workout.member.service.MemberService;
 import com.workout.utils.dto.FileResponse;
 import com.workout.utils.service.FileService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
 public class FeedService {
+
   private final MemberService memberService;
   private final FeedRepository feedRepository;
   private final FileService fileService;
   private final LikeRepository likeRepository;
-  private final CommentRepository commentRepository;
   private final FeedCacheService feedCacheService;
-  private final CacheInvalidationPublisher cacheInvalidationPublisher;
+  private final CommentRepository commentRepository;
 
-  public List<FeedGridResponse> getFeedsForGrid(Long gymId, Long lastFeedId, Long firstFeedId, int size) {
+  public List<FeedGridResponse> getFeedsForGrid(Long gymId, Long lastFeedId, Long firstFeedId,
+      int size) {
     return feedCacheService.getFeedsForGrid(gymId, lastFeedId, firstFeedId, size);
   }
 
-  @Cacheable(value = "feedSummary", key = "#feedId")
   public FeedSummaryResponse getFeedSummary(Long feedId) {
-    Feed feed = feedRepository.findByIdWithMember(feedId)
-        .orElseThrow(() -> new RestApiException(FeedErrorCode.NOT_FOUND));
-    Long likeCount = likeRepository.countByTargetTypeAndTargetId(LikeType.FEED, feedId);
-    Long commentCount = commentRepository.countByFeedId(feedId);
-    return FeedSummaryResponse.of(feed, likeCount, commentCount);
+    return feedCacheService.getFeedSummary(feedId);
   }
 
   @Transactional
@@ -52,7 +48,12 @@ public class FeedService {
     Feed feed = request.toEntity(member, savedFile.getFileUrl());
     feedRepository.save(feed);
 
-    feedCacheService.addFeedToCache(feed);
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCommit() {
+        feedCacheService.addFeedToCache(feed);
+      }
+    });
     return feed.getId();
   }
 
@@ -64,11 +65,18 @@ public class FeedService {
       throw new RestApiException(FeedErrorCode.NOT_AUTHORITY);
     }
 
-    feedCacheService.removeFeedFromCache(feed);
+    // [수정] DB 삭제 로직: 좋아요, 댓글, 피드 순으로 삭제
     likeRepository.deleteAllByTargetTypeAndTargetId(LikeType.FEED, feedId);
+    commentRepository.deleteAllByFeedId(feedId); // 피드에 달린 모든 댓글 삭제
     feedRepository.delete(feed);
     fileService.deletePhysicalFile(feed.getImageUrl());
 
-    cacheInvalidationPublisher.publish("feedSummary", String.valueOf(feedId));
+    // DB 트랜잭션이 성공적으로 커밋된 후에만 캐시를 삭제하여 데이터 정합성 보장
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCommit() {
+        feedCacheService.removeFeedFromCache(feed);
+      }
+    });
   }
 }

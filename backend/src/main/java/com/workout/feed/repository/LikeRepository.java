@@ -12,16 +12,11 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface LikeRepository extends JpaRepository<Like, Long> {
 
-  @Modifying
-  @Query("DELETE FROM Like l WHERE l.targetType = 'FEED' AND l.targetId = :feedId")
-  void deleteAllByFeedId(@Param("feedId") Long feedId);
-
   Optional<Like> findByMemberIdAndTargetTypeAndTargetId(Long userId, LikeType targetType,
       Long targetId);
 
-  @Query("SELECT count(l) FROM Like l WHERE l.targetType = :targetType AND l.targetId = :targetId")
-  Long countByTargetTypeAndTargetId(@Param("targetType") LikeType targetType,
+  @Modifying
+  @Query("DELETE FROM Like l WHERE l.targetType = :targetType AND l.targetId = :targetId")
+  void deleteAllByTargetTypeAndTargetId(@Param("targetType") LikeType targetType,
       @Param("targetId") Long targetId);
-
-  void deleteAllByTargetTypeAndTargetId(LikeType likeType, Long feedId);
 }

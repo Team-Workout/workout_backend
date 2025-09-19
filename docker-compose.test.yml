@@ -79,6 +79,7 @@ services:
     depends_on:
       - prometheus
 
+
 networks:
   my-test-network:
     driver: bridge
