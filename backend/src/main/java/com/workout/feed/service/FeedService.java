@@ -14,64 +14,31 @@ import com.workout.member.domain.Member;
 import com.workout.member.service.MemberService;
 import com.workout.utils.dto.FileResponse;
 import com.workout.utils.service.FileService;
-import jakarta.transaction.Transactional;
 import java.util.List;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
+@RequiredArgsConstructor
 public class FeedService {
 
   private final MemberService memberService;
   private final FeedRepository feedRepository;
   private final FileService fileService;
   private final LikeRepository likeRepository;
+  private final FeedCacheService feedCacheService;
   private final CommentRepository commentRepository;
-
-  public FeedService(MemberService memberService,
-      FeedRepository feedRepository, FileService fileService,
-      LikeRepository likeRepository, CommentRepository commentRepository) {
-    this.memberService = memberService;
-    this.feedRepository = feedRepository;
-    this.fileService = fileService;
-    this.likeRepository = likeRepository;
-    this.commentRepository = commentRepository;
-  }
 
   public List<FeedGridResponse> getFeedsForGrid(Long gymId, Long lastFeedId, Long firstFeedId,
       int size) {
-
-    // 파라미터 유효성 검증: 두 커서가 동시에 들어오면 안 됨
-    if (lastFeedId != null && firstFeedId != null) {
-      throw new RestApiException(FeedErrorCode.INVALID_PARAMETER);
-    }
-
-    List<Feed> feeds;
-    if (firstFeedId != null) {
-      // 최신 피드 조회
-      feeds = feedRepository.findNewerFeedsByGymIdWithCursor(gymId, firstFeedId);
-    } else {
-      Pageable pageable = PageRequest.of(0, size);
-      if (lastFeedId == null) {
-        // 최초 로딩
-        feeds = feedRepository.findByGymIdFirstPage(gymId, pageable);
-      } else {
-        // 과거 피드 조회
-        feeds = feedRepository.findOlderFeedsByGymIdWithCursor(gymId, lastFeedId, pageable);
-      }
-    }
-    return feeds.stream().map(FeedGridResponse::from).toList();
+    return feedCacheService.getFeedsForGrid(gymId, lastFeedId, firstFeedId, size);
   }
 
   public FeedSummaryResponse getFeedSummary(Long feedId) {
-    Feed feed = feedRepository.findByIdWithMember(feedId)
-        .orElseThrow(() -> new RestApiException(FeedErrorCode.NOT_FOUND));
-
-    Long likeCount = likeRepository.countByTargetTypeAndTargetId(LikeType.FEED, feedId);
-    Long commentCount = commentRepository.countByFeedId(feedId);
-
-    return FeedSummaryResponse.of(feed, likeCount, commentCount);
+    return feedCacheService.getFeedSummary(feedId);
   }
 
   @Transactional
@@ -79,19 +46,37 @@ public class FeedService {
     Member member = memberService.findById(userId);
     FileResponse savedFile = fileService.uploadFeedImages(request.image(), member);
     Feed feed = request.toEntity(member, savedFile.getFileUrl());
-    return feedRepository.save(feed).getId();
+    feedRepository.save(feed);
+
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCommit() {
+        feedCacheService.addFeedToCache(feed);
+      }
+    });
+    return feed.getId();
   }
 
   @Transactional
   public void deleteFeed(Long feedId, Long userId) {
-    Feed feed = feedRepository.findById(feedId)
+    Feed feed = feedRepository.findByIdWithMember(feedId)
         .orElseThrow(() -> new RestApiException(FeedErrorCode.NOT_FOUND));
     if (!feed.getMember().getId().equals(userId)) {
       throw new RestApiException(FeedErrorCode.NOT_AUTHORITY);
     }
-    likeRepository.deleteAllByFeedId(feedId);
-    commentRepository.deleteAllByFeedId(feedId);
+
+    // [수정] DB 삭제 로직: 좋아요, 댓글, 피드 순으로 삭제
+    likeRepository.deleteAllByTargetTypeAndTargetId(LikeType.FEED, feedId);
+    commentRepository.deleteAllByFeedId(feedId); // 피드에 달린 모든 댓글 삭제
     feedRepository.delete(feed);
     fileService.deletePhysicalFile(feed.getImageUrl());
+
+    // DB 트랜잭션이 성공적으로 커밋된 후에만 캐시를 삭제하여 데이터 정합성 보장
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCommit() {
+        feedCacheService.removeFeedFromCache(feed);
+      }
+    });
   }
 }
