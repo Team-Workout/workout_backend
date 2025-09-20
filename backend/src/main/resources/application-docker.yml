@@ -60,5 +60,8 @@ default:
         wait-duration-in-open-state: 20s # OPEN 상태 유지 시간: 20초 (기본값: 60s)
         permitted-number-of-calls-in-half-open-state: 5 # HALF-OPEN 상태에서 보낼 테스트 요청 수 (기본값: 10)
 
+springdoc:
+  swagger-ui:
+    url: /v3/api-docs
 fcm:
   service-account-key-path: "file:/app/config/fcm-key.json"
