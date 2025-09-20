@@ -110,5 +110,15 @@ public class FeedController {
     Long commentId = commentService.createComment(request, userId);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(commentId));
   }
+
+  @Operation(summary = "댓글 삭제")
+  @DeleteMapping("{commentId}/comments")
+  public ResponseEntity<ApiResponse<Void>> deleteComment(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @Parameter(description = "댓글 ID") @PathVariable Long commentId) {
+    Long userId = userPrincipal.getUserId();
+    commentService.deleteComment(commentId, userId);
+    return ResponseEntity.ok(ApiResponse.empty());
+  }
   //endregion
 }

@@ -74,10 +74,8 @@ public class CommentService {
     }
 
     Long feedId = comment.getFeed().getId();
-    // [수정] 삭제된 댓글 수를 받아오도록 변경
     long deletedCount = deleteCommentAndChildren(comment);
 
-    // [수정] DB 트랜잭션 커밋 후, 삭제된 개수만큼 Redis 카운터 감소
     if (deletedCount > 0) {
       TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
         @Override
