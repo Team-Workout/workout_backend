@@ -8,15 +8,18 @@ public record CommentResponse(
     String content,
     String authorUsername,
     String authorProfileImageUrl,
-    Instant createdAt
+    Instant createdAt,
+    Long parentId
 ) {
   public static CommentResponse from(Comment comment) {
+    Long parentId = (comment.getParent() != null) ? comment.getParent().getId() : null;
     return new CommentResponse(
         comment.getId(),
         comment.getContent(),
         comment.getMember().getName(),
         comment.getMember().getProfileImageUri(),
-        comment.getCreatedAt()
+        comment.getCreatedAt(),
+        parentId
     );
   }
 }

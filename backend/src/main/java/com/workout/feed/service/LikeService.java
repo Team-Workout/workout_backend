@@ -2,59 +2,52 @@ package com.workout.feed.service;
 
 import com.workout.feed.domain.Like;
 import com.workout.feed.domain.LikeType;
-import com.workout.feed.repository.CommentRepository;
-import com.workout.feed.repository.FeedRepository;
 import com.workout.feed.repository.LikeRepository;
-import com.workout.global.exception.RestApiException;
-import com.workout.global.exception.errorcode.CommentErrorCode;
-import com.workout.global.exception.errorcode.FeedErrorCode;
 import com.workout.member.domain.Member;
 import com.workout.member.service.MemberService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
+@RequiredArgsConstructor
 public class LikeService {
-
   private final LikeRepository likeRepository;
   private final MemberService memberService;
-  private final FeedRepository feedRepository;
-  private final CommentRepository commentRepository;
+  private final RedisTemplate<String, Object> redisTemplate; // RedisTemplate 직접 주입
 
-  public LikeService(LikeRepository likeRepository, MemberService memberService,
-      FeedRepository feedRepository, CommentRepository commentRepository) {
-    this.likeRepository = likeRepository;
-    this.memberService = memberService;
-    this.commentRepository = commentRepository;
-    this.feedRepository = feedRepository;
-  }
+  private static final String FEED_LIKE_COUNT_KEY_PREFIX = "counts:like:feed:";
 
   @Transactional
   public void toggleLike(Long userId, LikeType targetType, Long targetId) {
+    if (targetType != LikeType.FEED) return;
 
-    if (targetType == LikeType.FEED) {
-      if (!feedRepository.existsById(targetId)) {
-        throw new RestApiException(FeedErrorCode.NOT_FOUND);
-      }
-    } else if (targetType == LikeType.COMMENT) {
-      if (!commentRepository.existsById(targetId)) {
-        throw new RestApiException(CommentErrorCode.NOT_FOUND);
-      }
-    } else {
-      throw new RestApiException(FeedErrorCode.INVALID_PARAMETER);
-    }
+    final String likeCountKey = FEED_LIKE_COUNT_KEY_PREFIX + targetId;
 
     likeRepository.findByMemberIdAndTargetTypeAndTargetId(userId, targetType, targetId)
         .ifPresentOrElse(
-            likeRepository::delete, // 이미 좋아요 -> 취소
-            () -> { // 좋아요가 없으면 -> 추가
+            like -> { // 좋아요 취소
+              likeRepository.delete(like);
+              TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                  redisTemplate.opsForValue().decrement(likeCountKey);
+                }
+              });
+            },
+            () -> { // 좋아요 추가
               Member member = memberService.findById(userId);
-              Like newLike = Like.builder()
-                  .member(member)
-                  .targetType(targetType)
-                  .targetId(targetId)
-                  .build();
+              Like newLike = Like.builder().member(member).targetType(targetType).targetId(targetId).build();
               likeRepository.save(newLike);
+              TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                  redisTemplate.opsForValue().increment(likeCountKey);
+                }
+              });
             }
         );
   }

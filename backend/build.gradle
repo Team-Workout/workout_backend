@@ -74,11 +74,24 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-batch'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
+	// L1 로컬 캐시: Caffeine
+	implementation 'com.github.ben-manes.caffeine:caffeine'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+	// L2 글로벌 캐시: Redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+	// 서킷 브레이커: Resilience4j
+	implementation group: 'io.github.resilience4j', name: 'resilience4j-spring-boot3', version: '2.2.0'
+
+	// 분산 락을 쉽게 사용하기 위한 Redisson
+	implementation 'org.redisson:redisson-spring-boot-starter:3.27.2'
 }
 
+/*
 tasks.withType(Test) {
 	useJUnitPlatform()
 	jvmArgs(
 			"-javaagent:${classpath.find { it.name.contains('byte-buddy-agent') }.absolutePath}"
 	)
-}
+}*/
