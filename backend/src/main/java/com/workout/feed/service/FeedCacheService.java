@@ -133,7 +133,6 @@ public class FeedCacheService {
     Long commentCount =
         (counts != null && counts.get(1) != null) ? ((Number) counts.get(1)).longValue() : 0L;
 
-    // 3. DB에서 조회한 정보와 Redis의 카운터 정보를 조합하여 반환
     return FeedSummaryResponse.of(feed, likeCount, commentCount);
   }
 
@@ -191,18 +190,15 @@ public class FeedCacheService {
     }
   }
 
-  // [최종 수정] 저수준 API 대신 고수준 API를 사용하여 직렬화 일관성 보장
   private void populateCache(Long gymId, List<Feed> feeds) {
     final String gymFeedsKey = GYM_FEEDS_KEY_PREFIX + gymId;
 
-    // 1. HASH에 저장할 데이터 준비
     Map<String, FeedGridResponse> feedDetailsMap = feeds.stream()
         .collect(Collectors.toMap(
             feed -> String.valueOf(feed.getId()),
             FeedGridResponse::from
         ));
 
-    // 2. Sorted Set에 저장할 데이터 준비
     Set<ZSetOperations.TypedTuple<Object>> tuples = feeds.stream()
         .map(feed -> new DefaultTypedTuple<>(
             (Object) feed.getId(),
@@ -210,7 +206,6 @@ public class FeedCacheService {
         ))
         .collect(Collectors.toSet());
 
-    // 3. Redis 트랜잭션 안에서 HASH와 ZSET을 한 번에 저장
     redisTemplate.execute(new SessionCallback<>() {
       @Override
       public <K, V> List<Object> execute(RedisOperations<K, V> operations)

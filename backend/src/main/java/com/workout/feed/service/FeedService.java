@@ -65,13 +65,11 @@ public class FeedService {
       throw new RestApiException(FeedErrorCode.NOT_AUTHORITY);
     }
 
-    // [수정] DB 삭제 로직: 좋아요, 댓글, 피드 순으로 삭제
     likeRepository.deleteAllByTargetTypeAndTargetId(LikeType.FEED, feedId);
     commentRepository.deleteAllByFeedId(feedId); // 피드에 달린 모든 댓글 삭제
     feedRepository.delete(feed);
     fileService.deletePhysicalFile(feed.getImageUrl());
 
-    // DB 트랜잭션이 성공적으로 커밋된 후에만 캐시를 삭제하여 데이터 정합성 보장
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
       public void afterCommit() {
