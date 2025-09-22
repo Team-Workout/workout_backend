@@ -17,13 +17,11 @@ import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.util.Objects;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Entity
@@ -72,11 +70,18 @@ public class Member extends BaseEntity {
   @Column(name = "fcm_token")
   private String fcmToken;
 
+  @Builder.Default
   private Boolean isOpenWorkoutRecord = false;
 
+  @Builder.Default
   private Boolean isOpenBodyImg = false;
 
+  @Builder.Default
   private Boolean isOpenBodyComposition = false;
+
+  private String provider;
+
+  private String providerId;
 
   public void updateFcmToken(String fcmToken) {
     this.fcmToken = fcmToken;
@@ -104,5 +109,9 @@ public class Member extends BaseEntity {
   @Override
   public int hashCode() {
     return Objects.hashCode(id);
+  }
+
+  public void updateName(String name) {
+    this.name = name;
   }
 }
