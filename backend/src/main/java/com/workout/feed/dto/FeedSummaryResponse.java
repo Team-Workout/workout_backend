@@ -20,4 +20,24 @@ public record FeedSummaryResponse(
         commentCount
     );
   }
+
+  public static FeedSummaryResponse of(FeedSummaryContent feedSummaryContent, Long likeCount, Long commentCount) {
+    return new FeedSummaryResponse(
+        feedSummaryContent.feedId,
+        feedSummaryContent.imageUrl,
+        feedSummaryContent.authorUsername,
+        feedSummaryContent.authorProfileImageUrl,
+        likeCount,
+        commentCount
+    );
+  }
+
+  public record FeedSummaryContent(
+      Long feedId,
+      String imageUrl,
+      String authorUsername,
+      String authorProfileImageUrl
+  ) {
+
+  }
 }

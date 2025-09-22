@@ -57,14 +57,6 @@ public class FeedController {
     return ResponseEntity.ok(ApiResponse.of(feeds));
   }
 
-  @Operation(summary = "피드 요약 정보 조회", description = "피드 선택 시 보여줄 요약 정보(작성자, 좋아요/댓글 수)를 반환합니다.")
-  @GetMapping("/{feedId}/summary")
-  public ResponseEntity<ApiResponse<FeedSummaryResponse>> getFeedSummary(
-      @Parameter(description = "피드 ID") @PathVariable Long feedId) {
-    FeedSummaryResponse feedSummary = feedService.getFeedSummary(feedId);
-    return ResponseEntity.ok(ApiResponse.of(feedSummary));
-  }
-
   @Operation(summary = "피드 작성", description = "이미지 파일을 업로드하여 새로운 피드를 작성합니다.")
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ApiResponse<Long>> createFeed(
@@ -117,6 +109,16 @@ public class FeedController {
     Long userId = userPrincipal.getUserId();
     Long commentId = commentService.createComment(request, userId);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of(commentId));
+  }
+
+  @Operation(summary = "댓글 삭제")
+  @DeleteMapping("{commentId}/comments")
+  public ResponseEntity<ApiResponse<Void>> deleteComment(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @Parameter(description = "댓글 ID") @PathVariable Long commentId) {
+    Long userId = userPrincipal.getUserId();
+    commentService.deleteComment(commentId, userId);
+    return ResponseEntity.ok(ApiResponse.empty());
   }
   //endregion
 }

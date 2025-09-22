@@ -126,6 +126,7 @@ uploads/
 !.env.sample
 docker-compose.override.yml
 /config/
+docker-compose.test.yml
 
 # 로컬 테스트용 FCM 키 파일 무시
 src/main/resources/config/fcm-key.json

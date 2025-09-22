@@ -5,6 +5,8 @@ spring:
     username: root # 접속 유저를 'root'로 고정합니다.
     password: ${DB_PASSWORD} # 비밀번호는 .env 파일을 통해 계속 주입받습니다.
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 15
   jpa:
     hibernate:
       ddl-auto: validate
@@ -19,6 +21,11 @@ spring:
   batch:
     job:
       enabled: false
+  cache:
+    type: redis
+    redis:
+      time-to-live: 10m
+      cache-null-values: false
 
 management:
   endpoints:
@@ -42,5 +49,19 @@ default:
     image:
       url: ${DEFAULT_PROFILE_IMAGE_URL}
 
+  circuitbreaker:
+    instances:
+      redis-circuit: # FeedCacheService에서 사용한 서킷 브레이커 이름
+        register-health-indicator: true
+        failure-rate-threshold: 60 # 실패율 임계값: 최근 50번의 호출 중 60% 이상 실패 시 OPEN (기본값: 50)
+        sliding-window-type: COUNT_BASED # 카운트 기반으로 실패율 계산
+        sliding-window-size: 50 # 실패율을 계산할 최근 호출의 수 (기본값: 100)
+        minimum-number-of-calls: 20 # 임계값을 계산하기 위한 최소 호출 수 (기본값: 100)
+        wait-duration-in-open-state: 20s # OPEN 상태 유지 시간: 20초 (기본값: 60s)
+        permitted-number-of-calls-in-half-open-state: 5 # HALF-OPEN 상태에서 보낼 테스트 요청 수 (기본값: 10)
+
+springdoc:
+  swagger-ui:
+    url: /v3/api-docs
 fcm:
   service-account-key-path: "file:/app/config/fcm-key.json"
