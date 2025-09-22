@@ -13,8 +13,6 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -80,6 +78,18 @@ public class FileService {
     return savedFiles.stream()
         .map(FileResponse::from)
         .collect(Collectors.toList());
+  }
+
+  @Transactional
+  public FileResponse uploadFeedImages(final MultipartFile file, Member member) {
+    if (file == null) {
+      throw new RestApiException(FileErrorCode.INVALID_FILE_NAME);
+    }
+    UserFile userFileToSave = storeAndCreateUserFile(file, member, ImagePurpose.FEED, null);
+
+    UserFile savedFile = fileRepository.save(userFileToSave);
+
+    return FileResponse.from(savedFile);
   }
 
   @Transactional
@@ -215,7 +225,7 @@ public class FileService {
     deletePhysicalFile(storedFileName);
   }
 
-  private void deletePhysicalFile(String storedFileName) {
+  public void deletePhysicalFile(String storedFileName) {
     try {
       String fullPath = getFullPath(storedFileName);
       File file = new File(fullPath);
