@@ -1,5 +1,7 @@
 package com.workout.email.service;
 
+import com.workout.global.exception.RestApiException;
+import com.workout.global.exception.errorcode.MailErrorCode;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
@@ -7,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.MailException;
-import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,7 @@ public class EmailService {
 
     public void sendEmail(String email) {
         String code = createCode(); // 6자리 코드 생성
-        String content = createContents(code); // HTML 본문 생성
+        String createdContent = createContents(code); // HTML 본문 생성
 
         // Redis에 저장 (TTL 5분)
         redisTemplate.opsForValue().set(email, code, CODE_EXPIRE_SECONDS);
@@ -38,15 +39,15 @@ public class EmailService {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, false, "UTF-8");
             helper.setTo(email);
-            helper.setSubject("Workout 이메일 인증번호입니다.");
-            helper.setText(content, true);
+            helper.setSubject("Workout 회원가입 인증 코드");
+            helper.setText(createdContent, true);
             mailSender.send(mimeMessage);
 
             log.info("인증 이메일 전송 성공: {}", email);
 
         } catch (MessagingException | MailException e) {
             log.error("이메일 전송 실패", e);
-            throw new MailSendException("이메일 전송 실패: " + e.getMessage());
+            throw new RestApiException(MailErrorCode.FAILED_SEND_MAIL);
         }
     }
 
@@ -78,7 +79,6 @@ public class EmailService {
     }
 
     public String createContents(String code){
-        String title = "Workout 이메일 인증 번호";
 
         String content = """
             <html>

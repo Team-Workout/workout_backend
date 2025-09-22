@@ -31,21 +31,21 @@ public class Trainer extends Member {
 
   @BatchSize(size = 100)
   @OneToMany(mappedBy = "trainer", fetch = FetchType.LAZY)
-  private Set<Certification> certifications = new ArrayList<>();
+  private Set<Certification> certifications;
 
   @BatchSize(size = 100)
   @OneToMany(mappedBy = "trainer", fetch = FetchType.LAZY)
-  private Set<Education> educations = new ArrayList<>();
+  private Set<Education> educations;
 
   @BatchSize(size = 100)
   @OneToMany(mappedBy = "trainer", fetch = FetchType.LAZY)
-  private Set<Workexperience> workexpExperiences = new ArrayList<>();
+  private Set<Workexperience> workExperiences;
 
   // TrainerSpecialty는 다대다 관계이므로 별도 처리가 필요할 수 있습니다.
   // 여기서는 간단히 OneToMany로 표현합니다.
   @BatchSize(size = 100)
   @OneToMany(mappedBy = "trainer", fetch = FetchType.LAZY)
-  private Set<TrainerSpecialty> trainerSpecialties = new HashSet<>();
+  private Set<TrainerSpecialty> trainerSpecialties;
 
 
   private String phoneNumber;
