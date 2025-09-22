@@ -1,5 +1,7 @@
 package com.workout.global.config;
 
+import com.workout.auth.service.CustomOAuth2UserService;
+import com.workout.member.repository.MemberRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,19 +19,25 @@ import org.springframework.security.web.context.SecurityContextRepository;
 @EnableWebSecurity
 public class SecurityConfig {
 
-  @Bean
-  public PasswordEncoder passwordEncoder() {
+    @Bean
+    public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
-  }
+    }
 
-  @Bean
-  public SecurityContextRepository securityContextRepository() {
+    @Bean
+    public SecurityContextRepository securityContextRepository() {
     return new HttpSessionSecurityContextRepository();
-  }
+    }
 
-  @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http,
-      SecurityContextRepository securityContextRepository) throws Exception { // 파라미터 추가
+    @Bean
+    public CustomOAuth2UserService customOAuth2UserService(MemberRepository memberRepository) {
+        return new CustomOAuth2UserService(memberRepository);
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+      SecurityContextRepository securityContextRepository,
+      CustomOAuth2UserService customOAuth2UserService) throws Exception { // 파라미터 추가
     http
         .csrf(csrf -> csrf.disable())
         .formLogin(form -> form.disable())
@@ -58,10 +66,16 @@ public class SecurityConfig {
             .permitAll()
             .anyRequest().authenticated()
         )
+
         .exceptionHandling(e -> e
             .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+        )
+        .oauth2Login(oauth2 -> oauth2
+                .userInfoEndpoint(userInfo -> userInfo
+                        .userService(customOAuth2UserService)
+                )
         );
 
     return http.build();
-  }
+    }
 }
