@@ -1,9 +1,13 @@
 package com.workout.member.service;
 
 import com.workout.auth.dto.SignupRequest;
+import com.workout.auth.dto.SocialSignupInfo;
+import com.workout.auth.dto.SocialSignupRequest;
 import com.workout.global.exception.RestApiException;
 import com.workout.global.exception.errorcode.MemberErrorCode;
 import com.workout.gym.domain.Gym;
+import com.workout.gym.service.GymService;
+import com.workout.member.domain.AccountStatus;
 import com.workout.member.domain.Member;
 import com.workout.member.dto.MemberSettingsDto;
 import com.workout.member.repository.MemberRepository;
@@ -25,12 +29,14 @@ public class MemberService {
   private final MemberRepository memberRepository;
   private final PasswordEncoder passwordEncoder;
   private final FileService fileService;
+  private final GymService gymService;
 
   public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder,
-      FileService fileService) {
+      FileService fileService, GymService gymService) {
     this.memberRepository = memberRepository;
     this.passwordEncoder = passwordEncoder;
     this.fileService = fileService;
+    this.gymService = gymService;
   }
 
   public Member authenticate(String email, String password) {
@@ -44,7 +50,7 @@ public class MemberService {
     return member;
   }
 
-  public Long createMember(SignupRequest request, Gym gym) {
+  public Member createMember(SignupRequest request, Gym gym) {
     String encodedPassword = passwordEncoder.encode(request.password());
     Member member = request.toMemberEntity(gym, encodedPassword);
 
@@ -53,7 +59,34 @@ public class MemberService {
     member.setIsOpenBodyComposition(false);
     member.setProfileImageUri(fileService.getDefaultProfileImageUrl());
 
-    return memberRepository.save(member).getId();
+    return memberRepository.save(member);
+  }
+
+  public Member createMember(SocialSignupInfo socialSignupInfo, SocialSignupRequest requestDto) {
+    ensureEmailIsUnique(socialSignupInfo.getEmail());
+
+    // 2. 헬스장 정보 조회
+    Gym gym = gymService.findById(requestDto.gymId());
+
+    String placeholderPassword = passwordEncoder.encode("social_user_" + System.nanoTime());
+
+    Member newMember = Member.builder()
+        .email(socialSignupInfo.getEmail())
+        .name(socialSignupInfo.getName())
+        .password(placeholderPassword)
+        .gym(gym)
+        .gender(requestDto.gender())
+        .role(requestDto.role())
+        .accountStatus(AccountStatus.ACTIVE)
+        .provider(socialSignupInfo.getProvider())
+        .build();
+
+    newMember.setIsOpenWorkoutRecord(false);
+    newMember.setIsOpenBodyImg(false);
+    newMember.setIsOpenBodyComposition(false);
+    newMember.setProfileImageUri(fileService.getDefaultProfileImageUrl());
+
+    return memberRepository.save(newMember);
   }
 
   public void ensureEmailIsUnique(String email) {

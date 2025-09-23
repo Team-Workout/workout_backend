@@ -26,6 +26,7 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - UPLOAD_DIR=/uploads/
       - TZ=Asia/Seoul
+      - SPRING_APP_OAUTH2_AUTHORIZED-REDIRECT-URIS=http://localhost:3000/oauth/callback,http://211.220.34.173/oauth/callback,workoutapp://oauth/callback
     volumes:
       - ./uploads:/uploads
       - ./logs:/app/logs

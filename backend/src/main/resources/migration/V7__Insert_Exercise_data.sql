@@ -57,7 +57,7 @@ INSERT INTO exercise_target_muscle (exercise_id, target_muscle_id, muscle_role) 
 
     -- 27. 레그 컬
     (27,10, 'primary'),   -- HAMSTRINGS
-    (27,11, 'secondary'); -- CALVES
+    (27,11, 'secondary'), -- CALVES
 
     -- 28. 레그 익스텐션
     (28, 9, 'primary'),   -- QUADS
@@ -65,44 +65,44 @@ INSERT INTO exercise_target_muscle (exercise_id, target_muscle_id, muscle_role) 
     -- 29. 힙 쓰러스트
     (29, 8, 'primary'),   -- GLUTES
     (29,10, 'secondary'), -- HAMSTRINGS
-    (29, 9, 'secondary'); -- QUADS 약간 관여
+    (29, 9, 'secondary'), -- QUADS 약간 관여
 
     -- 30. 덤벨 숄더 프레스
     (30, 3, 'primary'),   -- SHOULDERS
     (30, 5, 'secondary'), -- TRICEPS
-    (30, 6, 'secondary'); -- FOREARM 안정화
+    (30, 6, 'secondary'), -- FOREARM 안정화
 
     -- 31. 해머 컬
     (31, 4, 'primary'),   -- BICEPS (특히 상완근)
-    (31, 6, 'secondary'); -- FOREARM
+    (31, 6, 'secondary'), -- FOREARM
 
     -- 32. 트라이셉스 킥백
     (32, 5, 'primary'),   -- TRICEPS
-    (32, 6, 'secondary'); -- FOREARM
+    (32, 6, 'secondary'), -- FOREARM
 
     -- 33. 시티드 오버헤드 프레스
     (33, 3, 'primary'),   -- SHOULDERS
     (33, 5, 'secondary'), -- TRICEPS
-    (33, 6, 'secondary'); -- FOREARM
+    (33, 6, 'secondary'), -- FOREARM
 
     -- 34. 스미스 머신 스쿼트
     (34, 9, 'primary'),   -- QUADS
     (34, 8, 'secondary'), -- GLUTES
     (34,10, 'secondary'), -- HAMSTRINGS
     (34,11, 'secondary'), -- CALVES
-    (34, 7, 'secondary'); -- ABS
+    (34, 7, 'secondary'), -- ABS
 
     -- 35. 카프 레이즈
     (35,11, 'primary'),   -- CALVES
 
     -- 36. 사이드 플랭크
     (36, 7, 'primary'),   -- ABS (특히 외복사근)
-    (36, 8, 'secondary'); -- GLUTES (중둔근 안정화)
+    (36, 8, 'secondary'), -- GLUTES (중둔근 안정화)
 
     -- 37. 플랭크
     (37, 7, 'primary'),   -- ABS (코어 전반)
     (37, 8, 'secondary'), -- GLUTES
-    (37, 2, 'secondary'); -- BACK (척추기립근 안정화)
+    (37, 2, 'secondary'), -- BACK (척추기립근 안정화)
 
     -- 38. 버피
     (38, 7, 'primary'),   -- ABS
@@ -110,31 +110,30 @@ INSERT INTO exercise_target_muscle (exercise_id, target_muscle_id, muscle_role) 
     (38, 8, 'secondary'), -- GLUTES
     (38,10, 'secondary'), -- HAMSTRINGS
     (38,11, 'secondary'), -- CALVES
-    (38, 3, 'secondary'); -- SHOULDERS
+    (38, 3, 'secondary'), -- SHOULDERS
 
     -- 39. 케틀벨 스윙
     (39, 8, 'primary'),   -- GLUTES
     (39,10, 'primary'),   -- HAMSTRINGS
     (39, 7, 'secondary'), -- ABS
-    (39, 9, 'secondary'); -- QUADS
+    (39, 9, 'secondary'), -- QUADS
 
     -- 40. 체스트 딥스
     (40, 1, 'primary'),   -- CHEST (하부 흉근)
     (40, 5, 'primary'),   -- TRICEPS
-    (40, 3, 'secondary'); -- SHOULDERS (전면)
+    (40, 3, 'secondary'), -- SHOULDERS (전면)
 
     -- 41. 트레드밀
     (41, 9, 'primary'),   -- QUADS
     (41,10, 'primary'),   -- HAMSTRINGS
     (41,11, 'primary'),   -- CALVES
-    (41, 8, 'secondary'); -- GLUTES
+    (41, 8, 'secondary'), -- GLUTES
 
     -- 42. 사이클링
     (42, 9, 'primary'),   -- QUADS
     (42,11, 'secondary'), -- CALVES
     (42,10, 'secondary'), -- HAMSTRINGS
-    (42, 8, 'secondary'); -- GLUTES
+    (42, 8, 'secondary') -- GLUTES
         AS newData
 ON DUPLICATE KEY UPDATE muscle_role = newData.muscle_role;
 
-ALTER TABLE member ADD COLUMN provider VARCHAR(255);
