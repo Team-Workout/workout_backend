@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS member
 (
     id                       BIGINT AUTO_INCREMENT PRIMARY KEY,
     gym_id                   BIGINT       NOT NULL,
-    profile_image_uri        VARCHAR(255), -- [수정] profile_image_id를 대체
+    profile_image_uri        VARCHAR(255),
     name                     VARCHAR(255) NOT NULL,
     email                    VARCHAR(255) NOT NULL UNIQUE,
     password                 VARCHAR(255) NOT NULL,
