@@ -17,15 +17,16 @@ services:
 
   spring-app:
     # CI/CD 파이프라인이 APP_IMAGE 환경 변수를 주입합니다.
-    #image: ${APP_IMAGE:-kkddong98/workout_backend:latest}
-    #pull_policy: always
-    build: .
+    image: ${APP_IMAGE:-kkddong98/workout_backend:latest}
+    pull_policy: always
+    #build: .
     container_name: my-spring-app
     env_file: [ ".env" ]
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - UPLOAD_DIR=/uploads/
       - TZ=Asia/Seoul
+      - SPRING_APP_OAUTH2_AUTHORIZED-REDIRECT-URIS=http://localhost:3000/oauth/callback,http://211.220.34.173/oauth/callback,workoutapp://oauth/callback
     volumes:
       - ./uploads:/uploads
       - ./logs:/app/logs

@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
@@ -18,20 +19,28 @@ import org.springframework.security.web.context.SecurityContextRepository;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
+  @Bean
+  public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
-    }
+  }
 
-    @Bean
-    public SecurityContextRepository securityContextRepository() {
+  @Bean
+  public SecurityContextRepository securityContextRepository() {
     return new HttpSessionSecurityContextRepository();
-    }
+  }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+  @Bean
+  public HttpSessionOAuth2AuthorizationRequestRepository httpSessionOAuth2AuthorizationRequestRepository() {
+    return new HttpSessionOAuth2AuthorizationRequestRepository();
+  }
+
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http,
       SecurityContextRepository securityContextRepository,
-      CustomOAuth2UserService customOAuth2UserService,CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler) throws Exception { // 파라미터 추가
+      CustomOAuth2UserService customOAuth2UserService,
+      CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler,
+      CustomAuthenticationFailureHandler customAuthenticationFailureHandler)
+      throws Exception { // 파라미터 추가
     http
         .csrf(csrf -> csrf.disable())
         .formLogin(form -> form.disable())
@@ -65,12 +74,13 @@ public class SecurityConfig {
             .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
         )
         .oauth2Login(oauth2 -> oauth2
-                .userInfoEndpoint(userInfo -> userInfo
-                        .userService(customOAuth2UserService)
-                )
+            .userInfoEndpoint(userInfo -> userInfo
+                .userService(customOAuth2UserService)
+            )
             .successHandler(customAuthenticationSuccessHandler)
+            .failureHandler(customAuthenticationFailureHandler)
         );
 
     return http.build();
-    }
+  }
 }

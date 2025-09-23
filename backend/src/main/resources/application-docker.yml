@@ -1,4 +1,5 @@
 # application-docker.yml (이 내용을 전체 복사하여 붙여넣으세요)
+
 spring:
   datasource:
     url: jdbc:mysql://mysql:3306/workout-db?createDatabaseIfNotExist=true&characterEncoding=UTF-8&serverTimezone=UTC
@@ -48,6 +49,10 @@ spring:
               - profile
               - email
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+  app:
+    oauth2:
+      authorized-redirect-uris:
+        - workoutapp://oauth/callback
 
 management:
   endpoints:
@@ -88,4 +93,3 @@ springdoc:
 
 fcm:
   service-account-key-path: "file:/app/config/fcm-key.json"
-
