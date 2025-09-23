@@ -4,6 +4,7 @@ import com.workout.auth.dto.SignupRequest;
 import com.workout.global.exception.RestApiException;
 import com.workout.global.exception.errorcode.MemberErrorCode;
 import com.workout.gym.domain.Gym;
+import com.workout.member.domain.Member;
 import com.workout.pt.service.contract.PTContractService;
 import com.workout.trainer.domain.Trainer;
 import com.workout.trainer.dto.ProfileResponseDto;
@@ -39,13 +40,13 @@ public class TrainerService {
     this.ptContractService = ptContractService;
   }
 
-  public Long createTrainer(SignupRequest request, Gym gym) {
+  public Member createTrainer(SignupRequest request, Gym gym) {
     String encodedPassword = passwordEncoder.encode(request.password());
     Trainer trainer = request.toTrainerEntity(gym, encodedPassword);
 
     trainer.setProfileImageUri(fileService.getDefaultProfileImageUrl());
 
-    return trainerRepository.save(trainer).getId();
+    return trainerRepository.save(trainer);
   }
 
   @Transactional
