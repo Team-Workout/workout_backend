@@ -72,6 +72,8 @@ jobs:
             echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> .env
             echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
             echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
+            echo "SPRING_APP_OAUTH2_AUTHORIZED-REDIRECT-URIS=${{ secrets.AUTHORIZED_REDIRECT_URIS }}" >> .env
+
             echo ".env file created successfully."
 
             /usr/local/bin/docker-compose pull spring-app

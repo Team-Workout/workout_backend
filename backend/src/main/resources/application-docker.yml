@@ -49,10 +49,6 @@ spring:
               - profile
               - email
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-  app:
-    oauth2:
-      authorized-redirect-uris:
-        - workoutapp://oauth/callback
 
 management:
   endpoints:

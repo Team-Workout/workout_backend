@@ -13,10 +13,6 @@ spring:
   batch:
     job:
       enabled: false
-  app:
-    oauth2:
-      authorized-redirect-uris:
-        - workoutapp://oauth/callback
 
 logging:
   level:
