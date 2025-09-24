@@ -37,12 +37,9 @@ public class AuthController {
   }
 
   @Operation(summary = "세션 로그인", description = "이메일과 비밀번호로 로그인을 요청합니다. 성공 시 응답 본문과 함께 세션 쿠키(SESSION)를 발급합니다.")
-  //
   @ApiResponses(value = {
       @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그인 성공"),
-      //
       @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패 (아이디 또는 비밀번호 불일치)")
-      //
   })
   @PostMapping("/signin")
   public ResponseEntity<ApiResponse<SigninResponse>> signin(
