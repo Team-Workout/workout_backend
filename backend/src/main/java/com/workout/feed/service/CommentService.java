@@ -14,6 +14,8 @@ import com.workout.global.exception.errorcode.FeedErrorCode;
 import com.workout.member.domain.Member;
 import com.workout.member.service.MemberService;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,9 +35,33 @@ public class CommentService {
   private final FeedRepository feedRepository;
   private final RedisTemplate<String, Object> redisTemplate;
 
+
   public Page<CommentResponse> getComments(Long feedId, Pageable pageable) {
-    return commentRepository.findByFeedIdAndParentIsNull(feedId, pageable)
-        .map(CommentResponse::from);
+    Page<Comment> parentComments = commentRepository.findByFeedIdAndParentIsNull(feedId, pageable);
+
+    Page<CommentResponse> responsePage = parentComments.map(CommentResponse::from);
+
+    List<Long> parentIds = parentComments.getContent().stream()
+        .map(Comment::getId)
+        .collect(Collectors.toList());
+
+    if (!parentIds.isEmpty()) {
+      List<Comment> replies = commentRepository.findRepliesByParentIds(parentIds);
+
+      Map<Long, List<CommentResponse>> repliesByParentId = replies.stream()
+          .collect(Collectors.groupingBy(
+              reply -> reply.getParent().getId(),
+              Collectors.mapping(CommentResponse::from, Collectors.toList())
+          ));
+
+      responsePage.getContent().forEach(parentDto -> {
+        if (repliesByParentId.containsKey(parentDto.getCommentId())) {
+          parentDto.setReplies(repliesByParentId.get(parentDto.getCommentId()));
+        }
+      });
+    }
+
+    return responsePage;
   }
 
   @Transactional

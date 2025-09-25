@@ -22,5 +22,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
   @Query(value = "SELECT c FROM Comment c JOIN FETCH c.member m WHERE c.feed.id = :feedId AND c.parent IS NULL",
       countQuery = "SELECT count(c) FROM Comment c WHERE c.feed.id = :feedId AND c.parent IS NULL")
   Page<Comment> findByFeedIdAndParentIsNull(@Param("feedId") Long feedId, Pageable pageable);
+
+  @Query("SELECT c FROM Comment c JOIN FETCH c.member m JOIN FETCH c.parent p WHERE p.id IN :parentIds")
+  List<Comment> findRepliesByParentIds(@Param("parentIds") List<Long> parentIds);
 }
 
