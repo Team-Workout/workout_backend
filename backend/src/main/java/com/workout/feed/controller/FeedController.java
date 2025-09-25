@@ -58,7 +58,7 @@ public class FeedController {
   }
 
   @Operation(summary = "피드 요약 조회", description = "피드의 좋야요, 댓글 수 등을 조회")
-  @GetMapping
+  @GetMapping("/{feedId}")
   public ResponseEntity<ApiResponse<FeedSummaryResponse>> getFeedSummary(
       @Parameter(description = "피드 ID") @RequestParam Long feedId) {
 
@@ -66,7 +66,7 @@ public class FeedController {
     return ResponseEntity.ok(ApiResponse.of(feeds));
   }
 
-  @Operation(summary = "피드 작성", description = "이미지 파일을 업로드하여 새로운 피드를 작성합니다.")
+  @Operation(summary = "피드 작성", description = "이미지 파일을 업로드하여 새로운 피드를 작성합s니다.")
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ApiResponse<Long>> createFeed(
       @AuthenticationPrincipal UserPrincipal userPrincipal,
