@@ -63,9 +63,9 @@ public class SendPtReminderBatchConfig {
         .reader(ptAppointmentReader(null))
         .processor(ptAppointmentToMessageProcessor())
         .writer(fcmMessageWriter())
-        .faultTolerant() // 장애 극복 기능 활성화
-        .skip(NullPointerException.class) // Processor에서 NPE가 발생하면
-        .skipLimit(100) // Job 실행 당 최대 100개까지만 "스킵(무시)"하고 계속 진행
+        .faultTolerant()
+        .skip(NullPointerException.class)
+        .skipLimit(100)
         .build();
   }
 
