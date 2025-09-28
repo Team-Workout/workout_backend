@@ -8,27 +8,30 @@ public record FeedSummaryResponse(
     String authorUsername,
     String authorProfileImageUrl,
     Long likeCount,
-    Long commentCount
+    Long commentCount,
+    boolean isLiked
 ) {
-  public static FeedSummaryResponse of(Feed feed, Long likeCount, Long commentCount) {
+  public static FeedSummaryResponse of(Feed feed, Long likeCount, Long commentCount, boolean isLiked) {
     return new FeedSummaryResponse(
         feed.getId(),
         feed.getImageUrl(),
         feed.getMember().getName(),
         feed.getMember().getProfileImageUri(),
         likeCount,
-        commentCount
+        commentCount,
+        isLiked
     );
   }
 
-  public static FeedSummaryResponse of(FeedSummaryContent feedSummaryContent, Long likeCount, Long commentCount) {
+  public static FeedSummaryResponse of(FeedSummaryContent feedSummaryContent, Long likeCount, Long commentCount, boolean isLiked) {
     return new FeedSummaryResponse(
         feedSummaryContent.feedId,
         feedSummaryContent.imageUrl,
         feedSummaryContent.authorUsername,
         feedSummaryContent.authorProfileImageUrl,
         likeCount,
-        commentCount
+        commentCount,
+        isLiked
     );
   }
 

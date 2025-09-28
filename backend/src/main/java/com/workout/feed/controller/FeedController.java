@@ -60,9 +60,11 @@ public class FeedController {
   @Operation(summary = "피드 요약 조회", description = "피드의 좋야요, 댓글 수 등을 조회")
   @GetMapping("/{feedId}")
   public ResponseEntity<ApiResponse<FeedSummaryResponse>> getFeedSummary(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
       @Parameter(description = "피드 ID") @RequestParam Long feedId) {
 
-    FeedSummaryResponse feeds = feedService.getFeedSummary(feedId);
+    Long userId = userPrincipal.getUserId();
+    FeedSummaryResponse feeds = feedService.getFeedSummary(feedId, userId);
     return ResponseEntity.ok(ApiResponse.of(feeds));
   }
 
