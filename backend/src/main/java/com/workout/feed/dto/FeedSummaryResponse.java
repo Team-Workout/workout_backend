@@ -1,6 +1,7 @@
 package com.workout.feed.dto;
 
 import com.workout.feed.domain.Feed;
+import java.time.Instant;
 
 public record FeedSummaryResponse(
     Long feedId,
@@ -9,6 +10,7 @@ public record FeedSummaryResponse(
     String authorProfileImageUrl,
     Long likeCount,
     Long commentCount,
+    Instant createdAt,
     boolean isLiked
 ) {
   public static FeedSummaryResponse of(Feed feed, Long likeCount, Long commentCount, boolean isLiked) {
@@ -19,6 +21,7 @@ public record FeedSummaryResponse(
         feed.getMember().getProfileImageUri(),
         likeCount,
         commentCount,
+        feed.getCreatedAt(),
         isLiked
     );
   }
@@ -31,6 +34,7 @@ public record FeedSummaryResponse(
         feedSummaryContent.authorProfileImageUrl,
         likeCount,
         commentCount,
+        feedSummaryContent.createdAt,
         isLiked
     );
   }
@@ -39,7 +43,8 @@ public record FeedSummaryResponse(
       Long feedId,
       String imageUrl,
       String authorUsername,
-      String authorProfileImageUrl
+      String authorProfileImageUrl,
+      Instant createdAt
   ) {
 
   }
