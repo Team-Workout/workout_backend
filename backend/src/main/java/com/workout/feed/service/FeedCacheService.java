@@ -2,9 +2,11 @@ package com.workout.feed.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.workout.feed.domain.Feed;
+import com.workout.feed.domain.LikeType;
 import com.workout.feed.dto.FeedGridResponse;
 import com.workout.feed.dto.FeedSummaryResponse;
 import com.workout.feed.repository.FeedRepository;
+import com.workout.feed.repository.LikeRepository;
 import com.workout.global.exception.RestApiException;
 import com.workout.global.exception.errorcode.FeedErrorCode;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -48,6 +50,7 @@ public class FeedCacheService {
   private final RedisTemplate<String, Object> redisTemplate;
   private final RedissonClient redissonClient;
   private final ObjectMapper objectMapper;
+  private final LikeRepository likeRepository;
 
   @CircuitBreaker(name = "redis-circuit", fallbackMethod = "fallbackToDB")
   public List<FeedGridResponse> getFeedsForGrid(Long gymId, Long lastFeedId, Long firstFeedId,
@@ -115,7 +118,7 @@ public class FeedCacheService {
   }
 
   @Transactional(readOnly = true)
-  public FeedSummaryResponse getFeedSummary(Long feedId) {
+  public FeedSummaryResponse getFeedSummary(Long feedId, Long userId) {
     final String feedIdStr = String.valueOf(feedId);
 
     // 1. N+1 방지를 위해 JOIN FETCH로 Feed와 Member를 한 번에 조회
@@ -133,7 +136,13 @@ public class FeedCacheService {
     Long commentCount =
         (counts != null && counts.get(1) != null) ? ((Number) counts.get(1)).longValue() : 0L;
 
-    return FeedSummaryResponse.of(feed, likeCount, commentCount);
+    boolean isLiked = false;
+    if (userId != null) {
+      isLiked = likeRepository.findByMemberIdAndTargetTypeAndTargetId(userId, LikeType.FEED, feedId)
+          .isPresent();
+    }
+
+    return FeedSummaryResponse.of(feed, likeCount, commentCount, isLiked);
   }
 
   private List<FeedGridResponse> getFeedsFromDBWithLock(Long gymId, Long lastFeedId,

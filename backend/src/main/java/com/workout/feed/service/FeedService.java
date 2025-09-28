@@ -37,8 +37,8 @@ public class FeedService {
     return feedCacheService.getFeedsForGrid(gymId, lastFeedId, firstFeedId, size);
   }
 
-  public FeedSummaryResponse getFeedSummary(Long feedId) {
-    return feedCacheService.getFeedSummary(feedId);
+  public FeedSummaryResponse getFeedSummary(Long feedId, Long userId) {
+    return feedCacheService.getFeedSummary(feedId, userId);
   }
 
   @Transactional
